@@ -12,7 +12,8 @@
 
 ### Validated
 
-(None yet — ship to validate)
+**카드/덱 (Phase 01에서 검증)**
+- [x] 1~10 숫자 카드 각 2장(총 20장), 광/열끗 속성 포함 — Validated in Phase 01: project-foundation-shared-types
 
 ### Active
 
@@ -23,7 +24,6 @@
 - [ ] 2~6인 지원, 원형 자리 배치
 
 **카드/덱**
-- [ ] 1~10 숫자 카드 각 2장(총 20장), 광/열끗 속성 포함
 - [ ] 셔플 + 기리/퉁 메커니즘 구현
 - [ ] 패 돌리기: 반시계 방향, 퉁 시 2장씩
 
@@ -110,4 +110,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-29 after initialization*
+*Last updated: 2026-03-29 — Phase 01 complete (모노레포 인프라 + 공유 타입 + createDeck TDD)*
