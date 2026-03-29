@@ -1,5 +1,5 @@
 import { createDeck } from '@sutda/shared';
-import type { Card, GameState, GameMode, PlayerState, RoomPlayer } from '@sutda/shared';
+import type { Card, GameState, GameMode, PlayerState, RoomPlayer, BetAction } from '@sutda/shared';
 
 /**
  * GameEngine 클래스 — 오리지날 모드 게임 플로우 FSM
@@ -385,5 +385,121 @@ export class GameEngine {
     }
 
     return result;
+  }
+
+  // =====================================================================
+  // 베팅 시스템
+  // =====================================================================
+
+  /**
+   * 이번 베팅 라운드에서 액션을 완료한 플레이어 ID 집합
+   * 레이즈 발생 시 레이즈한 플레이어 외 나머지는 초기화됨
+   */
+  private _bettingActed: Set<string> = new Set();
+
+  /**
+   * 베팅 액션 처리 (콜/레이즈/다이/체크)
+   */
+  processBetAction(playerId: string, action: BetAction): void {
+    if (this.state.phase !== 'betting') {
+      throw new Error('INVALID_PHASE');
+    }
+
+    const player = this.state.players.find(p => p.seatIndex === this.state.currentPlayerIndex);
+    if (!player || player.id !== playerId) {
+      throw new Error('NOT_YOUR_TURN');
+    }
+
+    if (!player.isAlive) {
+      throw new Error('INVALID_ACTION');
+    }
+
+    switch (action.type) {
+      case 'call': {
+        const callAmount = this.state.currentBetAmount - player.currentBet;
+        player.currentBet += callAmount;
+        this.state.pot += callAmount;
+        break;
+      }
+      case 'raise': {
+        if (action.amount < 500) {
+          throw new Error('INVALID_ACTION: raise amount must be >= 500');
+        }
+        const callAmount = this.state.currentBetAmount - player.currentBet;
+        player.currentBet += callAmount + action.amount;
+        this.state.pot += callAmount + action.amount;
+        this.state.currentBetAmount = player.currentBet;
+
+        // 레이즈 발생 시 다른 플레이어의 액션 완료 플래그 초기화
+        const allActed = new Set<string>();
+        allActed.add(playerId);
+        this._bettingActed = allActed;
+
+        this._advanceBettingTurn();
+        return;
+      }
+      case 'die': {
+        player.isAlive = false;
+        break;
+      }
+      case 'check': {
+        if (this.state.currentBetAmount > 0) {
+          throw new Error('INVALID_ACTION: cannot check when currentBetAmount > 0');
+        }
+        // 체크: 아무 금액 변화 없음
+        break;
+      }
+    }
+
+    this._bettingActed.add(playerId);
+    this._advanceBettingTurn();
+  }
+
+  /**
+   * 다음 베팅 턴으로 진행
+   */
+  private _advanceBettingTurn(): void {
+    const alivePlayers = this.state.players.filter(p => p.isAlive);
+
+    // 생존자 1명 이하 -> result
+    if (alivePlayers.length <= 1) {
+      this.state.phase = 'result';
+      return;
+    }
+
+    // 베팅 종료 조건 확인
+    if (this._isBettingComplete()) {
+      this.state.phase = 'showdown';
+      return;
+    }
+
+    // 다음 생존 플레이어 찾기 (반시계)
+    const totalPlayers = this.state.players.length;
+    const currentSeatIndex = this.state.currentPlayerIndex;
+
+    for (let i = 1; i <= totalPlayers; i++) {
+      const nextSeatIndex = (currentSeatIndex - i + totalPlayers) % totalPlayers;
+      const nextPlayer = this.state.players.find(p => p.seatIndex === nextSeatIndex);
+      if (nextPlayer && nextPlayer.isAlive) {
+        this.state.currentPlayerIndex = nextSeatIndex;
+        return;
+      }
+    }
+  }
+
+  /**
+   * 베팅 종료 조건 확인
+   * - 모든 생존자가 액션을 완료했고 currentBet === currentBetAmount
+   */
+  private _isBettingComplete(): boolean {
+    const alivePlayers = this.state.players.filter(p => p.isAlive);
+    if (alivePlayers.length <= 1) return true;
+
+    // 모든 생존자가 액션을 완료했는지 확인
+    const allActed = alivePlayers.every(p => this._bettingActed.has(p.id));
+    if (!allActed) return false;
+
+    // 모든 생존자의 currentBet이 currentBetAmount와 동일한지 확인
+    return alivePlayers.every(p => p.currentBet === this.state.currentBetAmount);
   }
 }
