@@ -1,4 +1,4 @@
-import { createDeck } from '@sutda/shared';
+import { createDeck, evaluateHand, compareHands } from '@sutda/shared';
 import type { Card, GameState, GameMode, PlayerState, RoomPlayer, BetAction } from '@sutda/shared';
 
 /**
@@ -501,5 +501,155 @@ export class GameEngine {
 
     // 모든 생존자의 currentBet이 currentBetAmount와 동일한지 확인
     return alivePlayers.every(p => p.currentBet === this.state.currentBetAmount);
+  }
+
+  // =====================================================================
+  // 쇼다운 + 승자 판정
+  // =====================================================================
+
+  /**
+   * 패 공개 (showdown phase에서만 가능)
+   * - 모든 생존자가 공개하면 resolveShowdown 자동 호출
+   */
+  revealCard(playerId: string): void {
+    if (this.state.phase !== 'showdown') {
+      throw new Error('INVALID_PHASE');
+    }
+
+    const player = this.state.players.find(p => p.id === playerId);
+    if (!player || !player.isAlive) {
+      throw new Error('INVALID_ACTION');
+    }
+
+    player.isRevealed = true;
+
+    const alivePlayers = this.state.players.filter(p => p.isAlive);
+    const allRevealed = alivePlayers.every(p => p.isRevealed);
+    if (allRevealed) {
+      this._resolveShowdown();
+    }
+  }
+
+  /**
+   * 쇼다운 해결: evaluateHand + compareHands로 승자/동점 판정
+   */
+  private _resolveShowdown(): void {
+    const alivePlayers = this.state.players.filter(p => p.isAlive);
+
+    const hands = alivePlayers.map(p => ({
+      player: p,
+      hand: evaluateHand(p.cards[0], p.cards[1]),
+    }));
+
+    // 최강 패 찾기
+    let best = hands[0];
+    let tiedPlayers = [hands[0]];
+
+    for (const h of hands.slice(1)) {
+      const result = compareHands(best.hand, h.hand);
+      if (result === 'b') {
+        best = h;
+        tiedPlayers = [h];
+      } else if (result === 'tie') {
+        tiedPlayers.push(h);
+      }
+    }
+
+    if (tiedPlayers.length > 1) {
+      // 동점 -> 재경기 대기
+      this.state.phase = 'rematch-pending';
+      this.state.tiedPlayerIds = tiedPlayers.map(t => t.player.id);
+      return;
+    }
+
+    // 승자 결정
+    this.state.winnerId = best.player.id;
+    this.state.phase = 'result';
+  }
+
+  /**
+   * 동점 재경기 시작 (rematch-pending phase에서만 가능)
+   * - 동점자 외 모두 isAlive=false
+   * - pot 유지, 앤티 없음
+   * - phase=shuffling
+   */
+  startRematch(): void {
+    if (this.state.phase !== 'rematch-pending') {
+      throw new Error('INVALID_PHASE');
+    }
+
+    const tiedIds = this.state.tiedPlayerIds ?? [];
+
+    // 동점자 외 모두 isAlive=false, 동점자는 isAlive=true로 복원
+    this.state.players.forEach(p => {
+      p.isAlive = tiedIds.includes(p.id);
+      p.isRevealed = false;
+      p.currentBet = 0;
+      p.cards = [];
+    });
+
+    // 새 덱 생성
+    this.state.deck = createDeck();
+
+    // 베팅 상태 초기화
+    this.state.currentBetAmount = 0;
+    this._bettingActed = new Set();
+
+    // 동점자 중 첫 번째(dealer 유지 또는 첫 번째 동점자)가 dealer
+    // dealer를 tiedIds[0]으로 설정
+    this.state.players.forEach(p => { p.isDealer = false; });
+    const newDealer = this.state.players.find(p => p.id === tiedIds[0]);
+    if (newDealer) newDealer.isDealer = true;
+
+    this.state.currentPlayerIndex = newDealer?.seatIndex ?? 0;
+
+    // attend-school 건너뜀 (앤티 없음)
+    this.state.phase = 'shuffling';
+  }
+
+  /**
+   * 다음 판 시작 (result phase에서만 가능)
+   * - roundNumber 증가
+   * - 모든 플레이어 리셋
+   * - 이전 판 승자가 dealer
+   * - phase=attend-school
+   */
+  nextRound(): void {
+    if (this.state.phase !== 'result') {
+      throw new Error('INVALID_PHASE');
+    }
+
+    const prevWinnerId = this.state.winnerId;
+
+    this.state.roundNumber += 1;
+    this.state.pot = 0;
+    this.state.currentBetAmount = 0;
+    this.state.winnerId = undefined;
+    this.state.tiedPlayerIds = undefined;
+    this.state.isTtong = false;
+    this.state.attendedPlayerIds = [];
+    this.state.dealerSelectCards = [];
+    this.state.deck = createDeck();
+    this._bettingActed = new Set();
+
+    // 모든 플레이어 리셋
+    this.state.players.forEach(p => {
+      p.cards = [];
+      p.isAlive = true;
+      p.isRevealed = false;
+      p.currentBet = 0;
+      p.isDealer = false;
+    });
+
+    // 이전 승자가 dealer
+    if (prevWinnerId) {
+      const winner = this.state.players.find(p => p.id === prevWinnerId);
+      if (winner) {
+        winner.isDealer = true;
+        this.state.currentPlayerIndex = winner.seatIndex;
+      }
+    }
+
+    this.state.phase = 'attend-school';
   }
 }
