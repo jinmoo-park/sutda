@@ -1,3 +1,4 @@
 // @sutda/shared - 공유 타입 및 유틸리티
-// Phase 1 Plan 02에서 카드 타입과 덱 생성 함수를 추가
-export {};
+export type { CardRank, CardAttribute, Card } from './types/card';
+export { GWANG_RANKS, YEOLKKEUT_RANKS, getCardAttribute } from './types/card';
+export type { GamePhase, GameMode, PlayerState, GameState } from './types/game';
