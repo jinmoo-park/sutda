@@ -35,7 +35,7 @@
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — 모노레포 인프라 세팅 (pnpm + turborepo + 패키지 스캐폴드)
+- [x] 01-01-PLAN.md — 모노레포 인프라 세팅 (pnpm + turborepo + 패키지 스캐폴드)
 - [ ] 01-02-PLAN.md — 공유 타입 정의 + createDeck() TDD (DECK-01)
 
 ### Phase 2: 족보 판정 엔진
@@ -191,7 +191,7 @@ Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. 프로젝트 기반 + 공유 타입 | 0/2 | Planned | - |
+| 1. 프로젝트 기반 + 공유 타입 | 1/2 | In Progress|  |
 | 2. 족보 판정 엔진 | 0/2 | Not started | - |
 | 3. WebSocket 인프라 + 방 관리 | 0/2 | Not started | - |
 | 4. 오리지날 모드 게임 엔진 | 0/3 | Not started | - |
