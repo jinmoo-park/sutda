@@ -33,6 +33,7 @@ export interface ClientToServerEvents {
   'declare-ttong': (data: { roomId: string }) => void;
   'bet-action': (data: { roomId: string; action: BetAction }) => void;
   'reveal-card': (data: { roomId: string }) => void;
+  'next-round': (data: { roomId: string }) => void;
 }
 
 /** 서버 -> 클라이언트 이벤트 */
