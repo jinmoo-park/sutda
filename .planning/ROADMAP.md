@@ -52,7 +52,7 @@ Plans:
 
 Plans:
 - [x] 02-01-PLAN.md — HandEvaluator 타입 정의 + evaluateHand 구현 (TDD) (HAND-01~05)
-- [ ] 02-02-PLAN.md — compareHands + 특수패 비교 + checkGusaTrigger 구현 (TDD) (HAND-04, 06~09)
+- [x] 02-02-PLAN.md — compareHands + 특수패 비교 + checkGusaTrigger 구현 (TDD) (HAND-04, 06~09)
 
 ### Phase 3: WebSocket 인프라 + 방 관리
 **Goal**: 플레이어가 링크로 방에 참여하고 실시간으로 서버와 통신할 수 있다

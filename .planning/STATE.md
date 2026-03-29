@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 02-01-PLAN.md (HandEvaluator 타입 정의 + evaluateHand TDD)
-last_updated: "2026-03-29T11:11:31.663Z"
+status: verifying
+stopped_at: Completed 02-02-PLAN.md (compareHands + checkGusaTrigger TDD)
+last_updated: "2026-03-29T11:15:51.389Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 10
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 
 Phase: 02 (hand-evaluator-engine) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-29
 
 Progress: [░░░░░░░░░░] 0%
@@ -55,6 +55,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-project-foundation-shared-types P01 | 152 | 2 tasks | 17 files |
 | Phase 01-project-foundation-shared-types P02 | 108 | 2 tasks | 7 files |
 | Phase 02 P01 | 166 | 2 tasks | 3 files |
+| Phase 02 P02 | 159 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,8 @@ Recent decisions affecting current work:
 - [Phase 02]: HandType을 string union type으로 정의 - enum 대신 타입 안전성과 가독성 확보
 - [Phase 02]: 점수 체계: 광땡 1100-1300, 땡 1001-1010, 특수조합 10-60, 끗 0-9 - 카테고리 간 자연스러운 비교 가능
 - [Phase 02]: 땡잡이/암행어사는 handType='kkut' + isSpecialBeater=true로 표현 - compareHands에서 특수 로직 우선 적용
+- [Phase 02]: 땡잡이/암행어사 구별은 score 값(0/1)으로 판별 - HandResult 변경 불필요
+- [Phase 02]: compareHands는 순수 비교만 담당, 재경기 트리거는 checkGusaTrigger로 분리
 
 ### Pending Todos
 
@@ -89,6 +92,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T11:11:31.659Z
-Stopped at: Completed 02-01-PLAN.md (HandEvaluator 타입 정의 + evaluateHand TDD)
+Last session: 2026-03-29T11:15:51.384Z
+Stopped at: Completed 02-02-PLAN.md (compareHands + checkGusaTrigger TDD)
 Resume file: None
