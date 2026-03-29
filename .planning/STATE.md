@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Phase 6 context gathered
-last_updated: "2026-03-29T16:09:04.642Z"
+stopped_at: Completed 06-ui-01-PLAN.md
+last_updated: "2026-03-29T23:41:33.554Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 10
-  completed_phases: 5
-  total_plans: 11
-  completed_plans: 11
+  completed_phases: 4
+  total_plans: 14
+  completed_plans: 10
   percent: 40
 ---
 
@@ -66,6 +66,7 @@ Progress: [████░░░░░░] 40%
 | Phase 04-original-mode-game-engine P03 | 4 | 1 tasks | 3 files |
 | Phase 05-chip-system-settlement P01 | 5 | 1 tasks | 6 files |
 | Phase 05-chip-system-settlement P02 | 198 | 2 tasks | 4 files |
+| Phase 06-ui P01 | 7 | 2 tasks | 29 files |
 
 ## Accumulated Context
 
@@ -108,6 +109,8 @@ Recent decisions affecting current work:
 - [Phase 05-chip-system-settlement]: applyRechargeToPlayer는 _updateChipBreakdowns + _updateEffectiveMaxBet 자동 연쇄 — 재충전 후 파생 상태 일관성 보장
 - [Phase 05-chip-system-settlement]: 거부 시 processRechargeVote는 delete 전에 requesterId 추출하여 반환 — 투표자 ID 오염 방지
 - [Phase 05-chip-system-settlement]: recharge-vote 거부 분기에서 result.requesterId 직접 사용 (socket.data.playerId 사용 금지)
+- [Phase 06-ui]: Tailwind v4에서 @apply border-border 미지원 -> @theme inline CSS 변수 직접 정의 방식 채택
+- [Phase 06-ui]: jsdom@24 채택 (v29는 @exodus/bytes ESM 호환성 문제)
 
 ### Pending Todos
 
@@ -121,6 +124,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T16:09:04.637Z
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-ui/06-CONTEXT.md
+Last session: 2026-03-29T23:41:33.550Z
+Stopped at: Completed 06-ui-01-PLAN.md
+Resume file: None
