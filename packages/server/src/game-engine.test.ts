@@ -353,3 +353,189 @@ describe('GameEngine', () => {
     expect(state.currentPlayerIndex).toBe(2);
   });
 });
+
+/** 게임을 betting phase까지 빠르게 진행하는 헬퍼 (dealer=player-0) */
+function advanceToBetting(engine: GameEngine, players: RoomPlayer[]): void {
+  engine.setDealerFromPreviousWinner('player-0');
+  players.forEach(p => engine.attendSchool(p.id));
+  engine.selectMode('player-0', 'original');
+  engine.shuffle('player-0');
+  // dealer=0, 왼쪽 플레이어=seatIndex 1
+  engine.cut('player-1', [10], [1, 0]);
+}
+
+describe('betting system', () => {
+  let players: RoomPlayer[];
+  let engine: GameEngine;
+
+  beforeEach(() => {
+    players = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`,
+      nickname: `Player${i}`,
+      chips: 100000,
+      seatIndex: i,
+      isConnected: true,
+    }));
+    engine = new GameEngine('room1', players, 'original', 2);
+    advanceToBetting(engine, players);
+  });
+
+  it('베팅 phase에 진입하면 currentPlayerIndex가 dealer seatIndex와 동일하다', () => {
+    const state = engine.getState();
+    expect(state.phase).toBe('betting');
+    expect(state.currentPlayerIndex).toBe(0);
+  });
+
+  it('콜: currentBetAmount만큼 pot 증가, currentBet 갱신', () => {
+    // 먼저 dealer(player-0)가 레이즈하여 currentBetAmount를 설정
+    engine.processBetAction('player-0', { type: 'raise', amount: 1000 });
+    const stateAfterRaise = engine.getState();
+    const potAfterRaise = stateAfterRaise.pot;
+
+    // 다음 플레이어(반시계)가 콜
+    const nextPlayer = engine.getState().players.find(
+      p => p.id === `player-${engine.getState().currentPlayerIndex}`
+    );
+    const nextPlayerId = engine.getState().players.find(
+      p => p.seatIndex === engine.getState().currentPlayerIndex
+    )!.id;
+    const playerBeforeBet = engine.getState().players.find(p => p.id === nextPlayerId)!;
+    const callAmount = engine.getState().currentBetAmount - playerBeforeBet.currentBet;
+
+    engine.processBetAction(nextPlayerId, { type: 'call' });
+    const stateAfterCall = engine.getState();
+    const callerAfter = stateAfterCall.players.find(p => p.id === nextPlayerId)!;
+
+    expect(callerAfter.currentBet).toBe(engine.getState().currentBetAmount);
+    expect(stateAfterCall.pot).toBe(potAfterRaise + callAmount);
+  });
+
+  it('레이즈: 콜 금액 + 추가금, currentBetAmount 갱신', () => {
+    const state = engine.getState();
+    const dealerPlayer = state.players.find(p => p.isDealer)!;
+    const prevBetAmount = state.currentBetAmount;
+
+    engine.processBetAction('player-0', { type: 'raise', amount: 1000 });
+
+    const newState = engine.getState();
+    const newDealerState = newState.players.find(p => p.id === 'player-0')!;
+
+    expect(newDealerState.currentBet).toBe(prevBetAmount + 1000);
+    expect(newState.currentBetAmount).toBe(prevBetAmount + 1000);
+    expect(newState.pot).toBeGreaterThan(0);
+  });
+
+  it('다이: isAlive=false', () => {
+    engine.processBetAction('player-0', { type: 'die' });
+    const state = engine.getState();
+    const player = state.players.find(p => p.id === 'player-0')!;
+    expect(player.isAlive).toBe(false);
+  });
+
+  it('체크: currentBetAmount===0일 때 가능하고 베팅 없이 진행된다', () => {
+    // currentBetAmount가 0인 상태에서 체크
+    const state = engine.getState();
+    expect(state.currentBetAmount).toBe(0);
+    const potBefore = state.pot;
+
+    engine.processBetAction('player-0', { type: 'check' });
+
+    const newState = engine.getState();
+    expect(newState.pot).toBe(potBefore); // pot 변화 없음
+  });
+
+  it('체크: currentBetAmount>0일 때 에러', () => {
+    engine.processBetAction('player-0', { type: 'raise', amount: 500 });
+    // 이제 currentBetAmount > 0
+    const nextPlayerId = engine.getState().players.find(
+      p => p.seatIndex === engine.getState().currentPlayerIndex
+    )!.id;
+
+    expect(() => engine.processBetAction(nextPlayerId, { type: 'check' })).toThrow();
+  });
+
+  it('순서: 선(dealer) 기준 반시계 방향으로 베팅', () => {
+    const state = engine.getState();
+    // dealer가 player-0 (seatIndex=0), 반시계 다음은 seatIndex=3
+    expect(state.currentPlayerIndex).toBe(0);
+
+    engine.processBetAction('player-0', { type: 'check' });
+
+    const nextState = engine.getState();
+    // 반시계: dealer(0) -> seatIndex 3
+    expect(nextState.currentPlayerIndex).toBe(3);
+  });
+
+  it('순서: 다이한 플레이어 건너뛰기', () => {
+    // player-0 체크, player-3가 차례
+    engine.processBetAction('player-0', { type: 'check' });
+    // player-3 다이
+    engine.processBetAction('player-3', { type: 'die' });
+
+    const nextState = engine.getState();
+    // player-3 die 후 다음은 seatIndex=2
+    expect(nextState.currentPlayerIndex).toBe(2);
+  });
+
+  it('종료: 모든 생존자 currentBet === currentBetAmount이고 모두 액션 완료 시 showdown 전환', () => {
+    // 4명이 모두 체크하면 showdown
+    engine.processBetAction('player-0', { type: 'check' });
+    engine.processBetAction('player-3', { type: 'check' });
+    engine.processBetAction('player-2', { type: 'check' });
+    engine.processBetAction('player-1', { type: 'check' });
+
+    expect(engine.getState().phase).toBe('showdown');
+  });
+
+  it('종료: 전원 체크 시 showdown 전환', () => {
+    // 모두 체크하면 showdown
+    engine.processBetAction('player-0', { type: 'check' });
+    engine.processBetAction('player-3', { type: 'check' });
+    engine.processBetAction('player-2', { type: 'check' });
+    engine.processBetAction('player-1', { type: 'check' });
+
+    expect(engine.getState().phase).toBe('showdown');
+  });
+
+  it('종료: 생존자 1명이면 result 전환', () => {
+    // 3명이 다이하면 마지막 1명 승리
+    engine.processBetAction('player-0', { type: 'die' });
+    engine.processBetAction('player-3', { type: 'die' });
+    engine.processBetAction('player-2', { type: 'die' });
+
+    expect(engine.getState().phase).toBe('result');
+  });
+
+  it('레이즈 후 순환: 다른 플레이어에게 다시 차례가 돌아옴', () => {
+    // player-0 체크, player-3 체크, player-2 레이즈 -> player-1이 다음, 이후 player-0에게도 다시 차례
+    engine.processBetAction('player-0', { type: 'check' });
+    engine.processBetAction('player-3', { type: 'check' });
+    engine.processBetAction('player-2', { type: 'raise', amount: 1000 });
+
+    // player-1이 다음 (반시계: 2->1)
+    expect(engine.getState().currentPlayerIndex).toBe(1);
+  });
+
+  it('레이즈 최솟값: 500원 미만이면 에러', () => {
+    expect(() => engine.processBetAction('player-0', { type: 'raise', amount: 400 })).toThrow();
+  });
+
+  it('NOT_YOUR_TURN: 자기 턴이 아닌 플레이어가 베팅 시도', () => {
+    // player-0가 현재 턴인데 player-1이 베팅
+    expect(() => engine.processBetAction('player-1', { type: 'check' })).toThrow('NOT_YOUR_TURN');
+  });
+
+  it('INVALID_PHASE: betting이 아닌 phase에서 베팅 시도', () => {
+    const engine2 = new GameEngine('room2', players, 'original', 2);
+    engine2.setDealerFromPreviousWinner('player-0');
+    players.forEach(p => engine2.attendSchool(p.id));
+    // mode-select phase
+    expect(() => engine2.processBetAction('player-0', { type: 'check' })).toThrow('INVALID_PHASE');
+  });
+
+  it('INVALID_ACTION: 이미 다이한 플레이어가 베팅 시도', () => {
+    engine.processBetAction('player-0', { type: 'die' });
+    // player-3이 차례인데 player-0가 다시 시도
+    expect(() => engine.processBetAction('player-0', { type: 'call' })).toThrow();
+  });
+});
