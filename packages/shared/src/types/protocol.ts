@@ -15,7 +15,10 @@ export interface ErrorPayload {
     | 'NOT_YOUR_TURN'
     | 'INVALID_CUT'
     | 'ALREADY_ATTENDED'
-    | 'INVALID_ACTION';
+    | 'INVALID_ACTION'
+    | 'RECHARGE_IN_PROGRESS'
+    | 'RECHARGE_NOT_FOUND'
+    | 'INSUFFICIENT_CHIPS';
   message: string;
 }
 
@@ -34,6 +37,8 @@ export interface ClientToServerEvents {
   'bet-action': (data: { roomId: string; action: BetAction }) => void;
   'reveal-card': (data: { roomId: string }) => void;
   'next-round': (data: { roomId: string }) => void;
+  'recharge-request': (data: { roomId: string; amount: number }) => void;
+  'recharge-vote': (data: { roomId: string; approved: boolean }) => void;
 }
 
 /** 서버 -> 클라이언트 이벤트 */
@@ -45,6 +50,9 @@ export interface ServerToClientEvents {
   'error': (data: ErrorPayload) => void;
   'game-state': (data: GameState) => void;
   'game-error': (data: { code: string; message: string }) => void;
+  'recharge-requested': (data: { requesterId: string; requesterNickname: string; amount: number }) => void;
+  'recharge-vote-update': (data: { votedCount: number; totalNeeded: number; approved: boolean }) => void;
+  'recharge-result': (data: { requesterId: string; approved: boolean; newChips?: number }) => void;
 }
 
 /** Socket.IO 서버 간 이벤트 (사용하지 않지만 타입 완전성) */

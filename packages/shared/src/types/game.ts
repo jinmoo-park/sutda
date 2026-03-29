@@ -1,5 +1,13 @@
 import type { Card } from './card';
 
+/** 칩 단위별 개수 (per CHIP-04, D-12) */
+export interface ChipBreakdown {
+  ten_thousand: number;
+  five_thousand: number;
+  one_thousand: number;
+  five_hundred: number;
+}
+
 /** 게임 진행 단계 */
 export type GamePhase =
   | 'waiting'          // 대기 중 (방에서 게임 시작 전)
@@ -41,6 +49,7 @@ export interface PlayerState {
   currentBet: number;     // 현재 판에서 베팅한 총액
   isDealer: boolean;      // 선 플레이어 여부
   seatIndex: number;      // 자리 번호 (0부터)
+  chipBreakdown: ChipBreakdown;  // 칩 단위별 개수 (per CHIP-04, D-12)
 }
 
 /** 전체 게임 상태 */
@@ -59,4 +68,5 @@ export interface GameState {
   attendedPlayerIds: string[];    // 등교한 플레이어 ID 목록
   winnerId?: string;              // 이번 판 승자 ID (result phase에서 설정)
   tiedPlayerIds?: string[];       // 동점자 ID 목록 (rematch-pending phase에서 설정)
+  effectiveMaxBet?: number;       // 현재 턴 플레이어의 유효 스택 상한 (per D-11)
 }

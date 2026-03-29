@@ -1,5 +1,5 @@
 import { createDeck, evaluateHand, compareHands } from '@sutda/shared';
-import type { Card, GameState, GameMode, PlayerState, RoomPlayer, BetAction } from '@sutda/shared';
+import type { Card, GameState, GameMode, PlayerState, RoomPlayer, BetAction, ChipBreakdown } from '@sutda/shared';
 
 /**
  * GameEngine 클래스 — 오리지날 모드 게임 플로우 FSM
@@ -26,6 +26,7 @@ export class GameEngine {
       currentBet: 0,
       isDealer: false,
       seatIndex: p.seatIndex,
+      chipBreakdown: GameEngine.calculateChipBreakdown(p.chips),
     }));
 
     this.state = {
@@ -47,6 +48,97 @@ export class GameEngine {
   /** 현재 게임 상태 반환 (읽기 전용) */
   getState(): Readonly<GameState> {
     return this.state;
+  }
+
+  // =====================================================================
+  // 칩 계산 메서드
+  // =====================================================================
+
+  /**
+   * 칩 금액을 단위별 개수로 분해 (그리디)
+   */
+  static calculateChipBreakdown(chips: number): ChipBreakdown {
+    let remaining = chips;
+    const ten_thousand = Math.floor(remaining / 10000);
+    remaining %= 10000;
+    const five_thousand = Math.floor(remaining / 5000);
+    remaining %= 5000;
+    const one_thousand = Math.floor(remaining / 1000);
+    remaining %= 1000;
+    const five_hundred = Math.floor(remaining / 500);
+    return { ten_thousand, five_thousand, one_thousand, five_hundred };
+  }
+
+  /**
+   * 모든 플레이어의 chipBreakdown을 현재 chips 기준으로 갱신
+   */
+  private _updateChipBreakdowns(): void {
+    for (const p of this.state.players) {
+      p.chipBreakdown = GameEngine.calculateChipBreakdown(p.chips);
+    }
+  }
+
+  /**
+   * 현재 턴 플레이어의 effectiveMaxBet을 계산하여 state에 반영
+   * betting phase에서만 유효, 그 외 phase에서는 undefined
+   */
+  private _updateEffectiveMaxBet(): void {
+    if (this.state.phase !== 'betting') {
+      this.state.effectiveMaxBet = undefined;
+      return;
+    }
+    const currentPlayer = this.state.players.find(p => p.seatIndex === this.state.currentPlayerIndex);
+    if (!currentPlayer) {
+      this.state.effectiveMaxBet = undefined;
+      return;
+    }
+    this.state.effectiveMaxBet = this.calculateEffectiveMaxBet(currentPlayer.id);
+  }
+
+  /**
+   * 현재 플레이어의 유효 스택 상한 계산 (per D-11)
+   * - 내 잔액 < 상대 최대 잔액: 내 잔액 반환
+   * - 내 잔액 >= 상대 최대 잔액: 생존 상대 중 최대 잔액 반환
+   * - 생존 상대 없음: 0 반환
+   */
+  calculateEffectiveMaxBet(playerId: string): number {
+    const player = this.state.players.find(p => p.id === playerId);
+    if (!player) return 0;
+    const alivePlayers = this.state.players.filter(p => p.isAlive && p.id !== playerId);
+    if (alivePlayers.length === 0) return 0;
+    const myAvailable = player.chips;
+    const maxOpponent = Math.max(...alivePlayers.map(p => p.chips));
+    if (myAvailable < maxOpponent) return myAvailable;
+    // 내가 가장 부자면 생존 상대 중 최대값이 천장
+    const opponentChips = alivePlayers.map(p => p.chips).sort((a, b) => b - a);
+    return opponentChips[0];
+  }
+
+  /**
+   * 승자에게 pot 전액 합산 (per D-01)
+   * pot은 result phase에서 표시용으로 유지, nextRound()에서 0 리셋
+   */
+  private settleChips(): void {
+    if (!this.state.winnerId) return;
+    const winner = this.state.players.find(p => p.id === this.state.winnerId);
+    if (winner) {
+      winner.chips += this.state.pot;
+    }
+    this._updateChipBreakdowns();
+  }
+
+  /**
+   * 재충전 승인 시 GameEngine 상태를 안전하게 갱신 (Plan 02 Task 2에서 호출)
+   * 칩 갱신 후 chipBreakdown과 effectiveMaxBet 파생 상태를 자동으로 재계산
+   */
+  applyRechargeToPlayer(playerId: string, newChips: number): void {
+    const player = this.state.players.find(p => p.id === playerId);
+    if (!player) {
+      throw new Error('PLAYER_NOT_FOUND');
+    }
+    player.chips = newChips;
+    this._updateChipBreakdowns();
+    this._updateEffectiveMaxBet();
   }
 
   /**
@@ -168,8 +260,14 @@ export class GameEngine {
       throw new Error('ALREADY_ATTENDED');
     }
 
+    const player = this.state.players.find(p => p.id === playerId);
+    if (player) {
+      player.chips -= 500;
+    }
     this.state.pot += 500;
     this.state.attendedPlayerIds.push(playerId);
+
+    this._updateChipBreakdowns();
 
     // 모든 플레이어가 등교했는지 확인
     if (this.state.attendedPlayerIds.length === this.state.players.length) {
@@ -362,6 +460,8 @@ export class GameEngine {
     this.state.phase = 'betting';
     // dealer가 첫 베팅
     this.state.currentPlayerIndex = dealerSeatIndex;
+    this._updateChipBreakdowns();
+    this._updateEffectiveMaxBet();
   }
 
   /**
@@ -417,6 +517,7 @@ export class GameEngine {
     switch (action.type) {
       case 'call': {
         const callAmount = this.state.currentBetAmount - player.currentBet;
+        player.chips -= callAmount;
         player.currentBet += callAmount;
         this.state.pot += callAmount;
         break;
@@ -426,6 +527,8 @@ export class GameEngine {
           throw new Error('INVALID_ACTION: raise amount must be >= 500');
         }
         const callAmount = this.state.currentBetAmount - player.currentBet;
+        const totalDeducted = callAmount + action.amount;
+        player.chips -= totalDeducted;
         player.currentBet += callAmount + action.amount;
         this.state.pot += callAmount + action.amount;
         this.state.currentBetAmount = player.currentBet;
@@ -461,8 +564,12 @@ export class GameEngine {
   private _advanceBettingTurn(): void {
     const alivePlayers = this.state.players.filter(p => p.isAlive);
 
-    // 생존자 1명 이하 -> result
+    // 생존자 1명 이하 -> result (생존자에게 pot 합산)
     if (alivePlayers.length <= 1) {
+      if (alivePlayers.length === 1) {
+        this.state.winnerId = alivePlayers[0].id;
+        this.settleChips();  // 마지막 생존자에게 pot 합산
+      }
       this.state.phase = 'result';
       return;
     }
@@ -482,6 +589,7 @@ export class GameEngine {
       const nextPlayer = this.state.players.find(p => p.seatIndex === nextSeatIndex);
       if (nextPlayer && nextPlayer.isAlive) {
         this.state.currentPlayerIndex = nextSeatIndex;
+        this._updateEffectiveMaxBet();
         return;
       }
     }
@@ -564,6 +672,7 @@ export class GameEngine {
 
     // 승자 결정
     this.state.winnerId = best.player.id;
+    this.settleChips();  // pot을 승자에게 합산 (per D-01)
     this.state.phase = 'result';
   }
 
