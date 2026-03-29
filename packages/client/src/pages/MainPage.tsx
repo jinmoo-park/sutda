@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast, Toaster } from 'sonner';
 import { useGameStore } from '@/store/gameStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,14 +9,17 @@ export function MainPage() {
   const [mode, setMode] = useState<'home' | 'join'>('home');
   const [nickname, setNickname] = useState('');
   const [roomId, setRoomId] = useState('');
-  const [initialChips] = useState(100000);
+  const [initialChips, setInitialChips] = useState(100000);
   const navigate = useNavigate();
   const { socket, connect } = useGameStore();
 
   const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
 
   const handleCreateRoom = () => {
-    if (!nickname.trim()) return;
+    if (!nickname.trim()) {
+      toast.error('닉네임을 입력해 주세요.');
+      return;
+    }
     if (!socket) connect(serverUrl);
     const s = useGameStore.getState().socket;
     if (!s) return;
@@ -26,7 +30,14 @@ export function MainPage() {
   };
 
   const handleJoinRoom = () => {
-    if (!nickname.trim() || !roomId.trim()) return;
+    if (!nickname.trim()) {
+      toast.error('닉네임을 입력해 주세요.');
+      return;
+    }
+    if (!roomId.trim()) {
+      toast.error('방 코드를 입력해 주세요.');
+      return;
+    }
     navigate(`/room/${roomId.trim()}`);
   };
 
@@ -43,6 +54,18 @@ export function MainPage() {
               onChange={(e) => setNickname(e.target.value)}
               maxLength={10}
             />
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">
+                초기 칩 금액 (만원 단위)
+              </label>
+              <Input
+                type="number"
+                value={initialChips}
+                min={10000}
+                step={10000}
+                onChange={(e) => setInitialChips(Number(e.target.value))}
+              />
+            </div>
             <Button className="w-full" onClick={handleCreateRoom}>
               방 만들기
             </Button>
@@ -65,6 +88,18 @@ export function MainPage() {
               value={roomId}
               onChange={(e) => setRoomId(e.target.value)}
             />
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">
+                초기 칩 금액 (만원 단위)
+              </label>
+              <Input
+                type="number"
+                value={initialChips}
+                min={10000}
+                step={10000}
+                onChange={(e) => setInitialChips(Number(e.target.value))}
+              />
+            </div>
             <Button className="w-full" onClick={handleJoinRoom}>
               참여하기
             </Button>
@@ -74,6 +109,7 @@ export function MainPage() {
           </div>
         )}
       </div>
+      <Toaster />
     </div>
   );
 }
