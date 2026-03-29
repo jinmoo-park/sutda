@@ -27,6 +27,7 @@ export interface PlayerState {
   chips: number;
   cards: Card[];
   isAlive: boolean;       // 다이하지 않았는지
+  isRevealed: boolean;    // showdown에서 패를 공개했는지 (모두 true가 되면 승패 판정)
   currentBet: number;     // 현재 판에서 베팅한 총액
   isDealer: boolean;      // 선 플레이어 여부
   seatIndex: number;      // 자리 번호 (0부터)
