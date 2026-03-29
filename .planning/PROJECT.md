@@ -20,6 +20,11 @@
 - [x] 구사·멍텅구리구사 재경기 트리거 로직 — Validated in Phase 02: hand-evaluator-engine
 - [x] 땡잡이·암행어사 처리 (compareHands 특수 비교) — Validated in Phase 02: hand-evaluator-engine
 
+**칩 시스템 및 정산 (Phase 05에서 검증)**
+- [x] 칩/포인트 추적 (ChipBreakdown, effectiveMaxBet) — Validated in Phase 05: chip-system-settlement
+- [x] 금액 소진 시 재충전 플로우 (다른 플레이어 동의 필요) — Validated in Phase 05: chip-system-settlement
+- [x] 게임 결과 pot 정산 (settleChips) + chips 차감 (attendSchool, bet actions) — Validated in Phase 05: chip-system-settlement
+
 ### Validated (continued)
 
 **인프라 (Phase 03에서 검증)**
@@ -47,8 +52,8 @@
 - [x] 땡잡이·암행어사 처리 (땡값 없음) — Phase 02 완료
 
 **베팅 시스템**
-- [ ] 칩/포인트 추적 (만원 단위, 기본 100,000원)
-- [ ] 금액 소진 시 만원 단위로 재충전 (다른 플레이어 동의 필요)
+- [x] 칩/포인트 추적 (만원 단위, 기본 100,000원) — Phase 05 완료
+- [x] 금액 소진 시 만원 단위로 재충전 (다른 플레이어 동의 필요) — Phase 05 완료
 - [ ] 땡값: 오리지날 모드 한정, 다이한 땡 보유자 → 승자에게 일땡~구땡 500원, 광땡·장땡 1000원
 
 **게임 모드 (5종)**
