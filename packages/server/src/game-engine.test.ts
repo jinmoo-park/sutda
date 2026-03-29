@@ -1005,3 +1005,336 @@ describe('full flow integration', () => {
     expect(engine.getState().phase).toBe('result');
   });
 });
+
+// ============================================================
+// 칩 정산 시스템 테스트 (Phase 05-01)
+// ============================================================
+
+describe('calculateChipBreakdown', () => {
+  it('13500원 -> { ten_thousand:1, five_thousand:0, one_thousand:3, five_hundred:1 }', () => {
+    const result = GameEngine.calculateChipBreakdown(13500);
+    expect(result).toEqual({ ten_thousand: 1, five_thousand: 0, one_thousand: 3, five_hundred: 1 });
+  });
+
+  it('0원 -> 모든 단위 0', () => {
+    const result = GameEngine.calculateChipBreakdown(0);
+    expect(result).toEqual({ ten_thousand: 0, five_thousand: 0, one_thousand: 0, five_hundred: 0 });
+  });
+
+  it('500원 -> { ten_thousand:0, five_thousand:0, one_thousand:0, five_hundred:1 }', () => {
+    const result = GameEngine.calculateChipBreakdown(500);
+    expect(result).toEqual({ ten_thousand: 0, five_thousand: 0, one_thousand: 0, five_hundred: 1 });
+  });
+
+  it('25500원 -> { ten_thousand:2, five_thousand:1, one_thousand:0, five_hundred:1 }', () => {
+    const result = GameEngine.calculateChipBreakdown(25500);
+    expect(result).toEqual({ ten_thousand: 2, five_thousand: 1, one_thousand: 0, five_hundred: 1 });
+  });
+});
+
+describe('칩 정산 — attendSchool chips 차감', () => {
+  it('attendSchool 시 플레이어 chips가 500 차감된다 (100000 -> 99500)', () => {
+    const players4 = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`,
+      nickname: `Player${i}`,
+      chips: 100000,
+      seatIndex: i,
+      isConnected: true,
+    }));
+    const engine = new GameEngine('room1', players4, 'original', 2);
+    engine.setDealerFromPreviousWinner('player-0');
+    engine.attendSchool('player-0');
+    const state = engine.getState();
+    const p0 = state.players.find(p => p.id === 'player-0')!;
+    expect(p0.chips).toBe(99500);
+  });
+});
+
+describe('칩 정산 — processBetAction chips 차감', () => {
+  let players4: import('@sutda/shared').RoomPlayer[];
+  let engine: GameEngine;
+
+  beforeEach(() => {
+    players4 = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`,
+      nickname: `Player${i}`,
+      chips: 100000,
+      seatIndex: i,
+      isConnected: true,
+    }));
+    engine = new GameEngine('room1', players4, 'original', 2);
+    advanceToBetting(engine, players4);
+  });
+
+  it('콜 시 callAmount만큼 chips가 차감된다', () => {
+    // player-0 레이즈 1000
+    engine.processBetAction('player-0', { type: 'raise', amount: 1000 });
+    const chipsBefore = engine.getState().players.find(p => p.id === 'player-3')!.chips;
+    const callAmount = engine.getState().currentBetAmount - engine.getState().players.find(p => p.id === 'player-3')!.currentBet;
+    engine.processBetAction('player-3', { type: 'call' });
+    const chipsAfter = engine.getState().players.find(p => p.id === 'player-3')!.chips;
+    expect(chipsAfter).toBe(chipsBefore - callAmount);
+  });
+
+  it('레이즈 시 callAmount + raiseAmount만큼 chips가 차감된다', () => {
+    const chipsBefore = engine.getState().players.find(p => p.id === 'player-0')!.chips;
+    engine.processBetAction('player-0', { type: 'raise', amount: 1000 });
+    const chipsAfter = engine.getState().players.find(p => p.id === 'player-0')!.chips;
+    // raise에서 callAmount=0 (currentBetAmount=0, currentBet=0), raiseAmount=1000
+    expect(chipsAfter).toBe(chipsBefore - 1000);
+  });
+});
+
+describe('칩 정산 — 승자 pot 합산', () => {
+  it('승자 결정 시 pot 전액이 승자 chips에 합산된다', () => {
+    const players4 = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`,
+      nickname: `Player${i}`,
+      chips: 100000,
+      seatIndex: i,
+      isConnected: true,
+    }));
+    const engine = new GameEngine('room1', players4, 'original', 2);
+    advanceToShowdown(engine, players4);
+
+    const state = engine.getState() as import('@sutda/shared').GameState;
+    // player-0를 확실한 승자로 설정
+    state.players[0].cards = [{ rank: 3, attribute: 'gwang' }, { rank: 8, attribute: 'gwang' }]; // 삼팔광땡
+    state.players[1].cards = [{ rank: 1, attribute: 'gwang' }, { rank: 8, attribute: 'gwang' }]; // 일팔광땡
+    state.players[2].cards = [{ rank: 1, attribute: 'gwang' }, { rank: 3, attribute: 'gwang' }]; // 일삼광땡
+    state.players[3].cards = [{ rank: 9, attribute: 'normal' }, { rank: 9, attribute: 'normal' }]; // 구땡
+
+    const potBefore = state.pot;
+    const winner0ChipsBefore = state.players.find(p => p.id === 'player-0')!.chips;
+
+    engine.revealCard('player-0');
+    engine.revealCard('player-1');
+    engine.revealCard('player-2');
+    engine.revealCard('player-3');
+
+    const finalState = engine.getState();
+    expect(finalState.phase).toBe('result');
+    expect(finalState.winnerId).toBe('player-0');
+    const winner0After = finalState.players.find(p => p.id === 'player-0')!;
+    expect(winner0After.chips).toBe(winner0ChipsBefore + potBefore);
+  });
+
+  it('승자 결정 후 pot이 result phase에서 유지된다 (nextRound에서 0 리셋)', () => {
+    const players4 = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`,
+      nickname: `Player${i}`,
+      chips: 100000,
+      seatIndex: i,
+      isConnected: true,
+    }));
+    const engine = new GameEngine('room1', players4, 'original', 2);
+    advanceToShowdown(engine, players4);
+
+    const state = engine.getState() as import('@sutda/shared').GameState;
+    state.players[0].cards = [{ rank: 3, attribute: 'gwang' }, { rank: 8, attribute: 'gwang' }];
+    state.players[1].cards = [{ rank: 1, attribute: 'gwang' }, { rank: 8, attribute: 'gwang' }];
+    state.players[2].cards = [{ rank: 1, attribute: 'gwang' }, { rank: 3, attribute: 'gwang' }];
+    state.players[3].cards = [{ rank: 9, attribute: 'normal' }, { rank: 9, attribute: 'normal' }];
+
+    engine.revealCard('player-0');
+    engine.revealCard('player-1');
+    engine.revealCard('player-2');
+    engine.revealCard('player-3');
+
+    const finalState = engine.getState();
+    expect(finalState.phase).toBe('result');
+    // pot은 result에서 유지 (0이 아님)
+    expect(finalState.pot).toBeGreaterThan(0);
+
+    // nextRound에서 pot 리셋
+    engine.nextRound();
+    expect(engine.getState().pot).toBe(0);
+  });
+
+  it('동점 재경기(rematch-pending) 시 chips 이동 없음, pot 유지', () => {
+    const players4 = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`,
+      nickname: `Player${i}`,
+      chips: 100000,
+      seatIndex: i,
+      isConnected: true,
+    }));
+    const engine = new GameEngine('room1', players4, 'original', 2);
+    advanceToShowdown(engine, players4);
+
+    const state = engine.getState() as import('@sutda/shared').GameState;
+    // player-2, player-3 동점
+    state.players[0].cards = [{ rank: 1, attribute: 'gwang' }, { rank: 9, attribute: 'normal' }];
+    state.players[1].cards = [{ rank: 2, attribute: 'normal' }, { rank: 8, attribute: 'normal' }];
+    state.players[2].cards = [{ rank: 1, attribute: 'gwang' }, { rank: 3, attribute: 'gwang' }];
+    state.players[3].cards = [{ rank: 1, attribute: 'gwang' }, { rank: 3, attribute: 'gwang' }];
+
+    const chipsBefore = state.players.map(p => p.chips);
+    const potBefore = state.pot;
+
+    engine.revealCard('player-0');
+    engine.revealCard('player-1');
+    engine.revealCard('player-2');
+    engine.revealCard('player-3');
+
+    const finalState = engine.getState();
+    expect(finalState.phase).toBe('rematch-pending');
+    // 칩 이동 없음
+    finalState.players.forEach((p, i) => {
+      expect(p.chips).toBe(chipsBefore[i]);
+    });
+    // pot 유지
+    expect(finalState.pot).toBe(potBefore);
+  });
+
+  it('생존자 1명만 남아 result phase 진입 시에도 pot이 승자에게 합산된다', () => {
+    const players4 = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`,
+      nickname: `Player${i}`,
+      chips: 100000,
+      seatIndex: i,
+      isConnected: true,
+    }));
+    const engine = new GameEngine('room1', players4, 'original', 2);
+    advanceToBetting(engine, players4);
+
+    const potBefore = engine.getState().pot;
+    const winner1ChipsBefore = engine.getState().players.find(p => p.id === 'player-1')!.chips;
+
+    // 3명 다이 -> player-1만 생존
+    engine.processBetAction('player-0', { type: 'die' });
+    engine.processBetAction('player-3', { type: 'die' });
+    engine.processBetAction('player-2', { type: 'die' });
+
+    const finalState = engine.getState();
+    expect(finalState.phase).toBe('result');
+    const winner = finalState.players.find(p => p.id === 'player-1')!;
+    expect(winner.chips).toBe(winner1ChipsBefore + potBefore);
+  });
+});
+
+describe('calculateEffectiveMaxBet', () => {
+  it('내 잔액 < 상대 최대 잔액이면 내 잔액 반환', () => {
+    const players4: import('@sutda/shared').RoomPlayer[] = [
+      { id: 'p0', nickname: 'A', chips: 3000, seatIndex: 0, isConnected: true },
+      { id: 'p1', nickname: 'B', chips: 10000, seatIndex: 1, isConnected: true },
+      { id: 'p2', nickname: 'C', chips: 8000, seatIndex: 2, isConnected: true },
+    ];
+    const engine = new GameEngine('room1', players4, 'original', 2);
+    // p0의 chips=3000, 상대방 최대=10000 -> 내 잔액(3000) 반환
+    expect(engine.calculateEffectiveMaxBet('p0')).toBe(3000);
+  });
+
+  it('내 잔액 >= 상대 최대 잔액이면 생존자 중 두 번째로 큰 잔액 반환', () => {
+    const players4: import('@sutda/shared').RoomPlayer[] = [
+      { id: 'p0', nickname: 'A', chips: 20000, seatIndex: 0, isConnected: true },
+      { id: 'p1', nickname: 'B', chips: 10000, seatIndex: 1, isConnected: true },
+      { id: 'p2', nickname: 'C', chips: 8000, seatIndex: 2, isConnected: true },
+    ];
+    const engine = new GameEngine('room1', players4, 'original', 2);
+    // p0의 chips=20000, 상대방 최대=10000 -> 10000 반환
+    expect(engine.calculateEffectiveMaxBet('p0')).toBe(10000);
+  });
+
+  it('다이한 플레이어는 계산에서 제외된다', () => {
+    const players4: import('@sutda/shared').RoomPlayer[] = [
+      { id: 'p0', nickname: 'A', chips: 20000, seatIndex: 0, isConnected: true },
+      { id: 'p1', nickname: 'B', chips: 10000, seatIndex: 1, isConnected: true },
+      { id: 'p2', nickname: 'C', chips: 50000, seatIndex: 2, isConnected: true },
+    ];
+    const engine = new GameEngine('room1', players4, 'original', 2);
+    // p2를 죽은 것으로 설정
+    const state = engine.getState() as import('@sutda/shared').GameState;
+    state.players.find(p => p.id === 'p2')!.isAlive = false;
+    // p0(20000): 생존 상대=p1(10000), 내잔액(20000)>=상대최대(10000) -> 10000
+    expect(engine.calculateEffectiveMaxBet('p0')).toBe(10000);
+  });
+
+  it('생존자 1명(나만)이면 0 반환', () => {
+    const players4: import('@sutda/shared').RoomPlayer[] = [
+      { id: 'p0', nickname: 'A', chips: 20000, seatIndex: 0, isConnected: true },
+      { id: 'p1', nickname: 'B', chips: 10000, seatIndex: 1, isConnected: true },
+    ];
+    const engine = new GameEngine('room1', players4, 'original', 2);
+    const state = engine.getState() as import('@sutda/shared').GameState;
+    state.players.find(p => p.id === 'p1')!.isAlive = false;
+    expect(engine.calculateEffectiveMaxBet('p0')).toBe(0);
+  });
+});
+
+describe('chipBreakdown 및 effectiveMaxBet — game-state 포함', () => {
+  it('각 플레이어의 chipBreakdown이 game-state에 포함된다', () => {
+    const players4 = Array.from({ length: 2 }, (_, i) => ({
+      id: `player-${i}`,
+      nickname: `Player${i}`,
+      chips: 100000,
+      seatIndex: i,
+      isConnected: true,
+    }));
+    const engine = new GameEngine('room1', players4, 'original', 2);
+    const state = engine.getState();
+    state.players.forEach(p => {
+      expect(p.chipBreakdown).toBeDefined();
+      expect(p.chipBreakdown.ten_thousand).toBe(10);
+      expect(p.chipBreakdown.five_thousand).toBe(0);
+      expect(p.chipBreakdown.one_thousand).toBe(0);
+      expect(p.chipBreakdown.five_hundred).toBe(0);
+    });
+  });
+
+  it('effectiveMaxBet이 betting phase에서 game-state에 포함된다', () => {
+    const players4 = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`,
+      nickname: `Player${i}`,
+      chips: 100000,
+      seatIndex: i,
+      isConnected: true,
+    }));
+    const engine = new GameEngine('room1', players4, 'original', 2);
+    advanceToBetting(engine, players4);
+    const state = engine.getState();
+    expect(state.phase).toBe('betting');
+    expect(state.effectiveMaxBet).toBeDefined();
+  });
+});
+
+describe('applyRechargeToPlayer', () => {
+  let players4: import('@sutda/shared').RoomPlayer[];
+  let engine: GameEngine;
+
+  beforeEach(() => {
+    players4 = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`,
+      nickname: `Player${i}`,
+      chips: 100000,
+      seatIndex: i,
+      isConnected: true,
+    }));
+    engine = new GameEngine('room1', players4, 'original', 2);
+    advanceToBetting(engine, players4);
+  });
+
+  it('해당 플레이어의 chips가 newChips로 갱신된다', () => {
+    engine.applyRechargeToPlayer('player-0', 200000);
+    const p = engine.getState().players.find(p => p.id === 'player-0')!;
+    expect(p.chips).toBe(200000);
+  });
+
+  it('호출 후 모든 플레이어의 chipBreakdown이 재계산된다', () => {
+    engine.applyRechargeToPlayer('player-0', 15500);
+    const p = engine.getState().players.find(p => p.id === 'player-0')!;
+    expect(p.chipBreakdown).toEqual({ ten_thousand: 1, five_thousand: 1, one_thousand: 0, five_hundred: 1 });
+  });
+
+  it('호출 후 effectiveMaxBet이 재계산된다 (betting phase인 경우)', () => {
+    const stateBefore = engine.getState();
+    expect(stateBefore.phase).toBe('betting');
+    engine.applyRechargeToPlayer('player-0', 500000);
+    const stateAfter = engine.getState();
+    expect(stateAfter.effectiveMaxBet).toBeDefined();
+  });
+
+  it('존재하지 않는 playerId면 에러 throw', () => {
+    expect(() => engine.applyRechargeToPlayer('non-existent', 100000)).toThrow('PLAYER_NOT_FOUND');
+  });
+});
