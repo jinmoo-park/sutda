@@ -2,12 +2,12 @@
 phase: 4
 slug: original-mode-game-engine
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-03-29
 ---
 
-# Phase 4 — Validation Strategy
+# Phase 4 -- Validation Strategy
 
 > Per-phase validation contract for feedback sampling during execution.
 
@@ -36,24 +36,26 @@ created: 2026-03-29
 
 ## Per-Task Verification Map
 
-| Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
-|---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 4-W0-01 | 01 | 0 | SEAT-02, SEAT-03, DECK-02~05, BET-01~06, MODE-OG-02 | unit/integration | `pnpm --filter @sutda/server test` | ❌ Wave 0 | ⬜ pending |
-| 4-01-01 | 01 | 1 | SEAT-01, SEAT-02, SEAT-03 | unit | `pnpm --filter @sutda/server test` | ❌ Wave 0 | ⬜ pending |
-| 4-02-01 | 02 | 1 | DECK-02, DECK-03, DECK-04, DECK-05 | unit | `pnpm --filter @sutda/server test` | ❌ Wave 0 | ⬜ pending |
-| 4-03-01 | 03 | 2 | BET-01, BET-02, BET-03, BET-04, BET-05, BET-06 | unit | `pnpm --filter @sutda/server test` | ❌ Wave 0 | ⬜ pending |
-| 4-04-01 | 04 | 2 | MODE-OG-01, MODE-OG-02 | integration | `pnpm --filter @sutda/server test` | ❌ Wave 0 | ⬜ pending |
+각 플랜이 TDD 방식(tdd="true")으로 테스트를 먼저 작성하므로 별도의 Wave 0 태스크가 불필요하다. 테스트 파일은 각 태스크 내에서 RED -> GREEN 순서로 생성된다.
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+| Task ID | Plan | Wave | Requirement | Test Type | Automated Command | Status |
+|---------|------|------|-------------|-----------|-------------------|--------|
+| 4-01-T1 | 01 | 1 | SEAT-01, SEAT-02, SEAT-03, DECK-02~05, MODE-OG-01 | unit (TDD) | `pnpm --filter @sutda/shared build && pnpm --filter @sutda/server test` | pending |
+| 4-02-T1 | 02 | 2 | BET-01, BET-02, BET-03, BET-04, BET-05, BET-06 | unit (TDD) | `pnpm --filter @sutda/server test` | pending |
+| 4-02-T2 | 02 | 2 | MODE-OG-02, D-22~D-24 | unit+integration (TDD) | `pnpm --filter @sutda/shared build && pnpm --filter @sutda/server test` | pending |
+| 4-03-T1 | 03 | 3 | SEAT-01, MODE-OG-02 | integration | `pnpm --filter @sutda/server test` | pending |
+
+*Status: pending / green / red / flaky*
 
 ---
 
-## Wave 0 Requirements
+## TDD Nyquist Compliance
 
-- [ ] `packages/server/src/game-engine.test.ts` — GameEngine 단위 테스트 (모든 REQ 커버: SEAT-02, SEAT-03, DECK-02~05, BET-01~06, MODE-OG-02)
-- [ ] `packages/server/src/game-engine.ts` — GameEngine 구현체 (테스트 우선 작성 후 구현)
+모든 코드 생성 태스크(04-01 Task 1, 04-02 Task 1/2)가 `tdd="true"` 속성을 가지며, 테스트를 먼저 작성(RED)한 후 구현(GREEN)하는 방식으로 진행한다. 이를 통해:
 
-*기존 vitest 인프라는 준비됨. 새 파일만 추가하면 됨.*
+- 모든 태스크가 `<automated>` verify 명령을 보유
+- 연속 3개 태스크가 automated verify 없이 지나가는 경우 없음
+- 별도 Wave 0 없이도 테스트 커버리지 확보
 
 ---
 
@@ -68,11 +70,11 @@ created: 2026-03-29
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 30s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or TDD-based test creation
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] TDD plans cover all requirements (Wave 0 unnecessary)
+- [x] No watch-mode flags
+- [x] Feedback latency < 30s
+- [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** pending
