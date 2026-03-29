@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 06-ui-01-PLAN.md
-last_updated: "2026-03-29T23:41:33.554Z"
-last_activity: 2026-03-29
+stopped_at: Completed 06-ui-02-PLAN.md
+last_updated: "2026-03-30T00:00:00.000Z"
+last_activity: 2026-03-30
 progress:
   total_phases: 10
   completed_phases: 4
   total_plans: 14
-  completed_plans: 10
-  percent: 40
+  completed_plans: 11
+  percent: 44
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 ## Current Position
 
 Phase: 6
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-03-29
+Plan: 2 (completed)
+Status: In progress — Plan 02 complete
+Last activity: 2026-03-30
 
-Progress: [████░░░░░░] 40%
+Progress: [████░░░░░░] 44%
 
 ## Performance Metrics
 
@@ -67,6 +67,7 @@ Progress: [████░░░░░░] 40%
 | Phase 05-chip-system-settlement P01 | 5 | 1 tasks | 6 files |
 | Phase 05-chip-system-settlement P02 | 198 | 2 tasks | 4 files |
 | Phase 06-ui P01 | 7 | 2 tasks | 29 files |
+| Phase 06-ui P02 | 8 | 3 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -111,6 +112,9 @@ Recent decisions affecting current work:
 - [Phase 05-chip-system-settlement]: recharge-vote 거부 분기에서 result.requesterId 직접 사용 (socket.data.playerId 사용 금지)
 - [Phase 06-ui]: Tailwind v4에서 @apply border-border 미지원 -> @theme inline CSS 변수 직접 정의 방식 채택
 - [Phase 06-ui]: jsdom@24 채택 (v29는 @exodus/bytes ESM 호환성 문제)
+- [Phase 06-ui-02]: evaluateHand를 클라이언트에서 직접 호출하여 족보명 인라인 표시 — 서버 result phase 이전에도 플레이어에게 자신의 패 정보 제공
+- [Phase 06-ui-02]: PlayerSeat 모바일/데스크톱 이중 렌더 채택 — CSS custom properties 원형 배치는 md 이상, 모바일은 별도 flex 아이템
+- [Phase 06-ui-02]: RoomPage waiting/게임진행/result 3단계 FSM, join-room emit은 06-03에서 통합
 
 ### Pending Todos
 
@@ -124,6 +128,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T23:41:33.550Z
-Stopped at: Completed 06-ui-01-PLAN.md
+Last session: 2026-03-30T00:00:00.000Z
+Stopped at: Completed 06-ui-02-PLAN.md
 Resume file: None

@@ -117,7 +117,7 @@ Plans:
 
 Plans:
 - [x] 06-01-PLAN.md — 패키지 설치 + Tailwind v4 + shadcn/ui 초기화 + Zustand 스토어 + 라우팅 스켈레톤
-- [ ] 06-02-PLAN.md — 게임 컴포넌트 + 레이아웃 패널 + 대기실 + RoomPage 상태 머신
+- [x] 06-02-PLAN.md — 게임 컴포넌트 + 레이아웃 패널 + 대기실 + RoomPage 상태 머신
 - [ ] 06-03-PLAN.md — 5개 특수 모달 + 결과 화면 + RoomPage 최종 통합
 
 ### Phase 7: 세장섯다 + 한장공유 모드
@@ -196,7 +196,7 @@ Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 3. WebSocket 인프라 + 방 관리 | 2/2 | Complete | 2026-03-29 |
 | 4. 오리지날 모드 게임 엔진 | 3/3 | Complete | 2026-03-29 |
 | 5. 칩 시스템 + 승패 정산 | 2/2 | Complete   | 2026-03-29 |
-| 6. 클라이언트 UI 와이어프레임 | 1/3 | In Progress|  |
+| 6. 클라이언트 UI 와이어프레임 | 2/3 | In Progress|  |
 | 7. 세장섯다 + 한장공유 모드 | 0/2 | Not started | - |
 | 8. 후회의섯다 + 인디언섯다 모드 | 0/3 | Not started | - |
 | 9. 특수 규칙 (땡값 + 94재경기) | 0/2 | Not started | - |
