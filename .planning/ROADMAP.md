@@ -48,11 +48,11 @@ Plans:
   3. 땡잡이(3+7)가 구땡~일땡을 이기고 장땡/광땡에게 지는 특수 비교가 작동한다
   4. 암행어사(열끗4+열끗7)가 일팔/일삼광땡을 이기고 삼팔광땡에게 지는 비교가 작동한다
   5. 동점 처리와 구사/멍텅구리구사 판별이 올바르게 작동한다
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [x] 02-01-PLAN.md — HandEvaluator 타입 정의 + evaluateHand 구현 (TDD) (HAND-01~05)
+- [ ] 02-02-PLAN.md — compareHands + 특수패 비교 + checkGusaTrigger 구현 (TDD) (HAND-04, 06~09)
 
 ### Phase 3: WebSocket 인프라 + 방 관리
 **Goal**: 플레이어가 링크로 방에 참여하고 실시간으로 서버와 통신할 수 있다
@@ -192,7 +192,7 @@ Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. 프로젝트 기반 + 공유 타입 | 2/2 | Complete   | 2026-03-29 |
-| 2. 족보 판정 엔진 | 0/2 | Not started | - |
+| 2. 족보 판정 엔진 | 0/2 | Planned | - |
 | 3. WebSocket 인프라 + 방 관리 | 0/2 | Not started | - |
 | 4. 오리지날 모드 게임 엔진 | 0/3 | Not started | - |
 | 5. 칩 시스템 + 승패 정산 | 0/2 | Not started | - |

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 01-02-PLAN.md (카드/게임 타입 정의 + createDeck TDD)
-last_updated: "2026-03-29T10:35:42.796Z"
+status: executing
+stopped_at: Completed 02-01-PLAN.md (HandEvaluator 타입 정의 + evaluateHand TDD)
+last_updated: "2026-03-29T11:11:31.663Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 10
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 4
+  completed_plans: 3
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** 아무 설치 없이 링크 하나로 친구들과 실시간으로 섯다를 즐길 수 있어야 한다.
-**Current focus:** Phase 01 — project-foundation-shared-types
+**Current focus:** Phase 02 — hand-evaluator-engine
 
 ## Current Position
 
-Phase: 2
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 02 (hand-evaluator-engine) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-03-29
 
 Progress: [░░░░░░░░░░] 0%
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 01-project-foundation-shared-types P01 | 152 | 2 tasks | 17 files |
 | Phase 01-project-foundation-shared-types P02 | 108 | 2 tasks | 7 files |
+| Phase 02 P01 | 166 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,9 @@ Recent decisions affecting current work:
 - [Phase 01-project-foundation-shared-types]: Card 인터페이스에 isSpecial 제거 - attribute(gwang/yeolkkeut/normal)로 특수 여부 직접 표현
 - [Phase 01-project-foundation-shared-types]: createDeck()은 셔플 없이 정렬된 순수 함수 반환 - 셔플은 게임 엔진에서 별도 처리
 - [Phase 01-project-foundation-shared-types]: vitest@3 선택 - Vite 기반 ESM 네이티브, shared(type:module)와 완전 호환
+- [Phase 02]: HandType을 string union type으로 정의 - enum 대신 타입 안전성과 가독성 확보
+- [Phase 02]: 점수 체계: 광땡 1100-1300, 땡 1001-1010, 특수조합 10-60, 끗 0-9 - 카테고리 간 자연스러운 비교 가능
+- [Phase 02]: 땡잡이/암행어사는 handType='kkut' + isSpecialBeater=true로 표현 - compareHands에서 특수 로직 우선 적용
 
 ### Pending Todos
 
@@ -85,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T10:32:36.105Z
-Stopped at: Completed 01-02-PLAN.md (카드/게임 타입 정의 + createDeck TDD)
+Last session: 2026-03-29T11:11:31.659Z
+Stopped at: Completed 02-01-PLAN.md (HandEvaluator 타입 정의 + evaluateHand TDD)
 Resume file: None
