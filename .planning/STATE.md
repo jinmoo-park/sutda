@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-03-29T14:34:44.814Z"
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-03-29T14:42:28.559Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 10
   completed_phases: 3
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 8
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 ## Current Position
 
 Phase: 04 (original-mode-game-engine) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-03-29
 
@@ -59,6 +59,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03 P01 | - | 2 tasks | 3 files |
 | Phase 03 P02 | 15 | 2 tasks | 5 files |
 | Phase 04-original-mode-game-engine P01 | 4 | 1 tasks | 5 files |
+| Phase 04-original-mode-game-engine P02 | 6 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,9 @@ Recent decisions affecting current work:
 - [Phase 04-01]: completeAttendSchool()를 public으로 노출 — 타임아웃 처리 시 외부 호출 필요
 - [Phase 04-01]: cut 후 자동으로 dealCards() 호출 — FSM 전환 일관성 유지
 - [Phase 04-01]: declareTtong 후 phase=betting — 퉁 선언 후 즉시 betting 전환
+- [Phase 04-02]: 베팅 액션 완료 추적에 private Set(_bettingActed)을 GameEngine 필드로 관리
+- [Phase 04-02]: 레이즈 발생 시 _bettingActed를 레이즈한 플레이어만 남기고 초기화 — 순환 재베팅 구현
+- [Phase 04-02]: nextRound는 winnerId를 dealer로 설정한 후 attend-school phase로 전환
 
 ### Pending Todos
 
@@ -104,6 +108,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T14:34:44.810Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-03-29T14:42:28.555Z
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None
