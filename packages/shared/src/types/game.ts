@@ -2,17 +2,18 @@ import type { Card } from './card';
 
 /** 게임 진행 단계 */
 export type GamePhase =
-  | 'waiting'        // 대기 중 (방에서 게임 시작 전)
-  | 'dealer-select'  // 밤일낮장 카드 선택 중 (첫 판 선 결정)
-  | 'attend-school'  // 학교 간다 (앤티 500원)
-  | 'mode-select'    // 선 플레이어가 게임 모드 선택 중
-  | 'shuffling'      // 셔플 중
-  | 'cutting'        // 기리 진행 중
-  | 'dealing'        // 패 돌리기 중
-  | 'betting'        // 베팅 중
-  | 'showdown'       // 족보 비교 / 승패 결정
-  | 'result'         // 결과 표시
-  | 'finished';      // 게임 종료
+  | 'waiting'          // 대기 중 (방에서 게임 시작 전)
+  | 'dealer-select'    // 밤일낮장 카드 선택 중 (첫 판 선 결정)
+  | 'attend-school'    // 학교 간다 (앤티 500원)
+  | 'mode-select'      // 선 플레이어가 게임 모드 선택 중
+  | 'shuffling'        // 셔플 중
+  | 'cutting'          // 기리 진행 중
+  | 'dealing'          // 패 돌리기 중
+  | 'betting'          // 베팅 중
+  | 'showdown'         // 족보 비교 / 승패 결정
+  | 'result'           // 결과 표시
+  | 'rematch-pending'  // 동점 재경기 대기
+  | 'finished';        // 게임 종료
 
 /** 게임 모드 */
 export type GameMode =
@@ -56,4 +57,6 @@ export interface GameState {
   dealerSelectCards?: { playerId: string; cardIndex: number }[];  // 밤일낮장 선택 기록
   isTtong: boolean;               // 퉁 여부
   attendedPlayerIds: string[];    // 등교한 플레이어 ID 목록
+  winnerId?: string;              // 이번 판 승자 ID (result phase에서 설정)
+  tiedPlayerIds?: string[];       // 동점자 ID 목록 (rematch-pending phase에서 설정)
 }

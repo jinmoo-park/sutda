@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GameEngine } from './game-engine';
-import type { RoomPlayer } from '@sutda/shared';
+import type { RoomPlayer, GameState } from '@sutda/shared';
 
 /** 테스트용 플레이어 목록 생성 헬퍼 */
 function makePlayers(count: number): RoomPlayer[] {
@@ -537,5 +537,471 @@ describe('betting system', () => {
     engine.processBetAction('player-0', { type: 'die' });
     // player-3이 차례인데 player-0가 다시 시도
     expect(() => engine.processBetAction('player-0', { type: 'call' })).toThrow();
+  });
+});
+
+/** betting -> showdown까지 진행하는 헬퍼 (모두 체크) */
+function advanceToShowdown(engine: GameEngine, players: RoomPlayer[]): void {
+  advanceToBetting(engine, players);
+  // 4명 모두 체크
+  engine.processBetAction('player-0', { type: 'check' });
+  engine.processBetAction('player-3', { type: 'check' });
+  engine.processBetAction('player-2', { type: 'check' });
+  engine.processBetAction('player-1', { type: 'check' });
+}
+
+describe('showdown', () => {
+  let players: RoomPlayer[];
+  let engine: GameEngine;
+
+  beforeEach(() => {
+    players = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`,
+      nickname: `Player${i}`,
+      chips: 100000,
+      seatIndex: i,
+      isConnected: true,
+    }));
+    engine = new GameEngine('room1', players, 'original', 2);
+    advanceToShowdown(engine, players);
+  });
+
+  it('showdown phase에 진입되어 있다', () => {
+    expect(engine.getState().phase).toBe('showdown');
+  });
+
+  it('revealCard: isRevealed=true, 아직 미공개자 있으면 phase 유지', () => {
+    engine.revealCard('player-0');
+    const state = engine.getState();
+    const p = state.players.find(p => p.id === 'player-0')!;
+    expect(p.isRevealed).toBe(true);
+    expect(state.phase).toBe('showdown');
+  });
+
+  it('revealCard: 전원 공개 시 승자 결정, phase=result 또는 rematch-pending', () => {
+    engine.revealCard('player-0');
+    engine.revealCard('player-1');
+    engine.revealCard('player-2');
+    engine.revealCard('player-3');
+
+    const state = engine.getState();
+    expect(['result', 'rematch-pending']).toContain(state.phase);
+  });
+
+  it('revealCard: 다이한 플레이어 시도 시 에러', () => {
+    // 다이한 플레이어가 있는 상태로 만들기 위해 다른 엔진 사용
+    const engine2 = new GameEngine('room2', players, 'original', 2);
+    advanceToBetting(engine2, players);
+    engine2.processBetAction('player-0', { type: 'die' });
+    // 나머지 체크로 showdown 진입
+    engine2.processBetAction('player-3', { type: 'check' });
+    engine2.processBetAction('player-2', { type: 'check' });
+    engine2.processBetAction('player-1', { type: 'check' });
+
+    expect(engine2.getState().phase).toBe('showdown');
+    expect(() => engine2.revealCard('player-0')).toThrow();
+  });
+
+  it('revealCard: showdown phase 아닐 때 에러', () => {
+    const engine2 = new GameEngine('room2', players, 'original', 2);
+    advanceToBetting(engine2, players);
+    // betting phase에서 revealCard 시도
+    expect(() => engine2.revealCard('player-0')).toThrow('INVALID_PHASE');
+  });
+
+  it('승자 판정: 전원 공개 시 winnerId 설정 (result phase)', () => {
+    engine.revealCard('player-0');
+    engine.revealCard('player-1');
+    engine.revealCard('player-2');
+    engine.revealCard('player-3');
+
+    const state = engine.getState();
+    if (state.phase === 'result') {
+      expect(state.winnerId).toBeDefined();
+      expect(players.map(p => p.id)).toContain(state.winnerId);
+    } else {
+      // rematch-pending인 경우
+      expect(state.tiedPlayerIds).toBeDefined();
+      expect(state.tiedPlayerIds!.length).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it('동점: 2명 동점 시 phase=rematch-pending, tiedPlayerIds 설정 (카드 조작)', () => {
+    // 이 테스트는 같은 점수를 가진 카드 조합을 직접 설정해서 테스트
+    // engine 내부 state를 통해 카드를 직접 조작 (망통 vs 망통: 1+9=10->0끗 vs 2+8=10->0끗)
+    const state = engine.getState() as GameState;
+    // player-0: 1(normal) + 9(normal) = 0끗
+    // player-1: 2(normal) + 8(normal) = 0끗
+    // player-2: 3(normal) + 7(normal) = 0끗 -> 땡잡이가 아닌 케이스 (3+7 둘 다 normal이면 땡잡이!)
+    // -> 다른 카드 조합으로: 1(gwang) + 9(normal) = 0끗 , 2(normal) + 8(gwang) = 0끗
+    state.players[0].cards = [
+      { rank: 1, attribute: 'gwang' },
+      { rank: 9, attribute: 'normal' },
+    ];
+    state.players[1].cards = [
+      { rank: 2, attribute: 'normal' },
+      { rank: 8, attribute: 'gwang' },
+    ];
+    state.players[2].cards = [
+      { rank: 1, attribute: 'gwang' },
+      { rank: 3, attribute: 'gwang' },
+    ]; // 일삼광땡 (최강)
+    state.players[3].cards = [
+      { rank: 1, attribute: 'gwang' },
+      { rank: 3, attribute: 'gwang' },
+    ]; // 동점: 일삼광땡
+
+    engine.revealCard('player-0');
+    engine.revealCard('player-1');
+    engine.revealCard('player-2');
+    engine.revealCard('player-3');
+
+    const finalState = engine.getState();
+    expect(finalState.phase).toBe('rematch-pending');
+    expect(finalState.tiedPlayerIds).toContain('player-2');
+    expect(finalState.tiedPlayerIds).toContain('player-3');
+  });
+});
+
+describe('rematch', () => {
+  let players: RoomPlayer[];
+
+  beforeEach(() => {
+    players = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`,
+      nickname: `Player${i}`,
+      chips: 100000,
+      seatIndex: i,
+      isConnected: true,
+    }));
+  });
+
+  function advanceToRematch(engine: GameEngine): void {
+    advanceToShowdown(engine, players);
+    const state = engine.getState() as GameState;
+    // 동점 상황 만들기: player-2, player-3가 최강 동점
+    state.players[0].cards = [
+      { rank: 1, attribute: 'gwang' },
+      { rank: 9, attribute: 'normal' },
+    ];
+    state.players[1].cards = [
+      { rank: 2, attribute: 'normal' },
+      { rank: 8, attribute: 'normal' },
+    ];
+    state.players[2].cards = [
+      { rank: 1, attribute: 'gwang' },
+      { rank: 3, attribute: 'gwang' },
+    ]; // 일삼광땡
+    state.players[3].cards = [
+      { rank: 1, attribute: 'gwang' },
+      { rank: 3, attribute: 'gwang' },
+    ]; // 동점: 일삼광땡
+
+    engine.revealCard('player-0');
+    engine.revealCard('player-1');
+    engine.revealCard('player-2');
+    engine.revealCard('player-3');
+  }
+
+  it('startRematch: 동점자만 alive, pot 유지, phase=shuffling', () => {
+    const engine = new GameEngine('room1', players, 'original', 2);
+    advanceToRematch(engine);
+
+    expect(engine.getState().phase).toBe('rematch-pending');
+    const potBefore = engine.getState().pot;
+
+    engine.startRematch();
+
+    const state = engine.getState();
+    expect(state.phase).toBe('shuffling');
+    expect(state.pot).toBe(potBefore); // pot 유지
+
+    // 동점자(player-2, player-3)만 alive
+    const alive = state.players.filter(p => p.isAlive);
+    expect(alive.map(p => p.id).sort()).toEqual(['player-2', 'player-3'].sort());
+  });
+
+  it('startRematch: 앤티 없음 (attendedPlayerIds 사용하지 않음)', () => {
+    const engine = new GameEngine('room1', players, 'original', 2);
+    advanceToRematch(engine);
+    engine.startRematch();
+
+    const state = engine.getState();
+    // rematch에서는 attend-school을 건너뜀 (phase=shuffling으로 바로 전환)
+    expect(state.phase).toBe('shuffling');
+  });
+
+  it('startRematch: rematch-pending이 아닌 phase에서 호출 시 INVALID_PHASE 에러', () => {
+    const engine = new GameEngine('room1', players, 'original', 2);
+    engine.setDealerFromPreviousWinner('player-0');
+    players.forEach(p => engine.attendSchool(p.id));
+    // mode-select phase
+    expect(() => engine.startRematch()).toThrow('INVALID_PHASE');
+  });
+});
+
+describe('nextRound', () => {
+  let players: RoomPlayer[];
+
+  beforeEach(() => {
+    players = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`,
+      nickname: `Player${i}`,
+      chips: 100000,
+      seatIndex: i,
+      isConnected: true,
+    }));
+  });
+
+  function advanceToResult(engine: GameEngine): string {
+    advanceToShowdown(engine, players);
+    const state = engine.getState() as GameState;
+    // 승자가 명확하도록 카드 조작: player-0가 최강
+    state.players[0].cards = [
+      { rank: 3, attribute: 'gwang' },
+      { rank: 8, attribute: 'gwang' },
+    ]; // 삼팔광땡
+    state.players[1].cards = [
+      { rank: 1, attribute: 'gwang' },
+      { rank: 8, attribute: 'gwang' },
+    ]; // 일팔광땡
+    state.players[2].cards = [
+      { rank: 1, attribute: 'gwang' },
+      { rank: 3, attribute: 'gwang' },
+    ]; // 일삼광땡
+    state.players[3].cards = [
+      { rank: 9, attribute: 'normal' },
+      { rank: 9, attribute: 'normal' },
+    ]; // 구땡
+
+    engine.revealCard('player-0');
+    engine.revealCard('player-1');
+    engine.revealCard('player-2');
+    engine.revealCard('player-3');
+
+    return 'player-0'; // 승자
+  }
+
+  it('nextRound: roundNumber 증가, 모든 플레이어 리셋', () => {
+    const engine = new GameEngine('room1', players, 'original', 2);
+    advanceToResult(engine);
+    expect(engine.getState().phase).toBe('result');
+    const prevRound = engine.getState().roundNumber;
+
+    engine.nextRound();
+
+    const state = engine.getState();
+    expect(state.roundNumber).toBe(prevRound + 1);
+    // 모든 플레이어 리셋
+    state.players.forEach(p => {
+      expect(p.cards).toHaveLength(0);
+      expect(p.isAlive).toBe(true);
+      expect(p.isRevealed).toBe(false);
+      expect(p.currentBet).toBe(0);
+    });
+    expect(state.pot).toBe(0);
+    expect(state.currentBetAmount).toBe(0);
+  });
+
+  it('nextRound: 이전 승자가 dealer', () => {
+    const engine = new GameEngine('room1', players, 'original', 2);
+    const winnerId = advanceToResult(engine);
+    engine.nextRound();
+
+    const dealer = engine.getState().players.find(p => p.isDealer);
+    expect(dealer).toBeDefined();
+    expect(dealer!.id).toBe(winnerId);
+  });
+
+  it('nextRound: phase=attend-school', () => {
+    const engine = new GameEngine('room1', players, 'original', 2);
+    advanceToResult(engine);
+    engine.nextRound();
+    expect(engine.getState().phase).toBe('attend-school');
+  });
+
+  it('nextRound: result가 아닌 phase에서 호출 시 INVALID_PHASE 에러', () => {
+    const engine = new GameEngine('room1', players, 'original', 2);
+    engine.setDealerFromPreviousWinner('player-0');
+    players.forEach(p => engine.attendSchool(p.id));
+    // mode-select phase
+    expect(() => engine.nextRound()).toThrow('INVALID_PHASE');
+  });
+});
+
+describe('rematch-pending phase FSM validation', () => {
+  let players: RoomPlayer[];
+  let engine: GameEngine;
+
+  beforeEach(() => {
+    players = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`,
+      nickname: `Player${i}`,
+      chips: 100000,
+      seatIndex: i,
+      isConnected: true,
+    }));
+    engine = new GameEngine('room1', players, 'original', 2);
+    advanceToShowdown(engine, players);
+
+    // 동점 상황으로 rematch-pending 진입
+    const state = engine.getState() as GameState;
+    state.players[0].cards = [
+      { rank: 1, attribute: 'gwang' },
+      { rank: 9, attribute: 'normal' },
+    ];
+    state.players[1].cards = [
+      { rank: 2, attribute: 'normal' },
+      { rank: 8, attribute: 'normal' },
+    ];
+    state.players[2].cards = [
+      { rank: 1, attribute: 'gwang' },
+      { rank: 3, attribute: 'gwang' },
+    ];
+    state.players[3].cards = [
+      { rank: 1, attribute: 'gwang' },
+      { rank: 3, attribute: 'gwang' },
+    ];
+
+    engine.revealCard('player-0');
+    engine.revealCard('player-1');
+    engine.revealCard('player-2');
+    engine.revealCard('player-3');
+
+    expect(engine.getState().phase).toBe('rematch-pending');
+  });
+
+  it('rematch-pending에서 processBetAction 호출 시 INVALID_PHASE 에러', () => {
+    expect(() => engine.processBetAction('player-0', { type: 'check' })).toThrow('INVALID_PHASE');
+  });
+
+  it('rematch-pending에서 shuffle 호출 시 INVALID_PHASE 에러', () => {
+    expect(() => engine.shuffle('player-0')).toThrow('INVALID_PHASE');
+  });
+
+  it('rematch-pending에서 nextRound 호출 시 INVALID_PHASE 에러', () => {
+    expect(() => engine.nextRound()).toThrow('INVALID_PHASE');
+  });
+});
+
+describe('full flow integration', () => {
+  let players: RoomPlayer[];
+
+  beforeEach(() => {
+    players = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`,
+      nickname: `Player${i}`,
+      chips: 100000,
+      seatIndex: i,
+      isConnected: true,
+    }));
+  });
+
+  it('오리지날 모드 전체 플로우: attend -> mode -> shuffle -> cut -> deal -> bet -> showdown -> result', () => {
+    const engine = new GameEngine('room1', players, 'original', 2);
+
+    // attend-school
+    engine.setDealerFromPreviousWinner('player-0');
+    expect(engine.getState().phase).toBe('attend-school');
+    players.forEach(p => engine.attendSchool(p.id));
+
+    // mode-select
+    expect(engine.getState().phase).toBe('mode-select');
+    engine.selectMode('player-0', 'original');
+
+    // shuffling
+    expect(engine.getState().phase).toBe('shuffling');
+    engine.shuffle('player-0');
+
+    // cutting -> dealing -> betting
+    expect(engine.getState().phase).toBe('cutting');
+    engine.cut('player-1', [10], [1, 0]);
+    expect(engine.getState().phase).toBe('betting');
+
+    // 각 플레이어 2장 확인
+    engine.getState().players.filter(p => p.isAlive).forEach(p => {
+      expect(p.cards).toHaveLength(2);
+    });
+
+    // betting: 전원 체크 -> showdown
+    engine.processBetAction('player-0', { type: 'check' });
+    engine.processBetAction('player-3', { type: 'check' });
+    engine.processBetAction('player-2', { type: 'check' });
+    engine.processBetAction('player-1', { type: 'check' });
+    expect(engine.getState().phase).toBe('showdown');
+
+    // showdown: 전원 공개
+    engine.revealCard('player-0');
+    engine.revealCard('player-1');
+    engine.revealCard('player-2');
+    engine.revealCard('player-3');
+
+    const state = engine.getState();
+    expect(['result', 'rematch-pending']).toContain(state.phase);
+  });
+
+  it('2판 연속: 1판 승자가 2판 선으로 자동 설정', () => {
+    const engine = new GameEngine('room1', players, 'original', 2);
+    engine.setDealerFromPreviousWinner('player-0');
+    players.forEach(p => engine.attendSchool(p.id));
+    engine.selectMode('player-0', 'original');
+    engine.shuffle('player-0');
+    engine.cut('player-1', [10], [1, 0]);
+
+    // 전원 체크 -> showdown
+    engine.processBetAction('player-0', { type: 'check' });
+    engine.processBetAction('player-3', { type: 'check' });
+    engine.processBetAction('player-2', { type: 'check' });
+    engine.processBetAction('player-1', { type: 'check' });
+
+    // 카드 조작으로 player-1 승리
+    const state = engine.getState() as GameState;
+    state.players[0].cards = [
+      { rank: 9, attribute: 'normal' },
+      { rank: 9, attribute: 'normal' },
+    ]; // 구땡 2위
+    state.players[1].cards = [
+      { rank: 3, attribute: 'gwang' },
+      { rank: 8, attribute: 'gwang' },
+    ]; // 삼팔광땡 1위
+    state.players[2].cards = [
+      { rank: 1, attribute: 'gwang' },
+      { rank: 9, attribute: 'normal' },
+    ]; // 0끗
+    state.players[3].cards = [
+      { rank: 2, attribute: 'normal' },
+      { rank: 3, attribute: 'normal' },
+    ]; // 5끗
+
+    engine.revealCard('player-0');
+    engine.revealCard('player-1');
+    engine.revealCard('player-2');
+    engine.revealCard('player-3');
+
+    expect(engine.getState().phase).toBe('result');
+    expect(engine.getState().winnerId).toBe('player-1');
+
+    // 2판 시작
+    engine.nextRound();
+    const newDealer = engine.getState().players.find(p => p.isDealer);
+    expect(newDealer!.id).toBe('player-1'); // 승자가 선
+  });
+
+  it('모든 플레이어 다이 시 마지막 1명 즉시 승리', () => {
+    const engine = new GameEngine('room1', players, 'original', 2);
+    engine.setDealerFromPreviousWinner('player-0');
+    players.forEach(p => engine.attendSchool(p.id));
+    engine.selectMode('player-0', 'original');
+    engine.shuffle('player-0');
+    engine.cut('player-1', [10], [1, 0]);
+
+    expect(engine.getState().phase).toBe('betting');
+
+    // 3명 다이 -> 마지막 1명 result
+    engine.processBetAction('player-0', { type: 'die' });
+    engine.processBetAction('player-3', { type: 'die' });
+    engine.processBetAction('player-2', { type: 'die' });
+
+    expect(engine.getState().phase).toBe('result');
   });
 });
