@@ -67,8 +67,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Socket.IO 프로토콜 타입 + 서버 부트스트랩 + RoomManager (INFRA-01, 03, 04, 06)
-- [ ] 03-02-PLAN.md — RoomManager 단위 테스트 + Socket.IO 통합 테스트 (INFRA-01~03, 05, 06)
+- [x] 03-01-PLAN.md — Socket.IO 프로토콜 타입 + 서버 부트스트랩 + RoomManager (INFRA-01, 03, 04, 06)
+- [x] 03-02-PLAN.md — RoomManager 단위 테스트 + Socket.IO 통합 테스트 (INFRA-01~03, 05, 06)
 
 ### Phase 4: 오리지날 모드 게임 엔진
 **Goal**: 서버에서 오리지날 섯다 한 판의 전체 플로우가 완전히 작동한다
@@ -193,7 +193,7 @@ Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 |-------|----------------|--------|-----------|
 | 1. 프로젝트 기반 + 공유 타입 | 2/2 | Complete   | 2026-03-29 |
 | 2. 족보 판정 엔진 | 0/2 | Planned | - |
-| 3. WebSocket 인프라 + 방 관리 | 0/2 | Planned | - |
+| 3. WebSocket 인프라 + 방 관리 | 2/2 | Complete | 2026-03-29 |
 | 4. 오리지날 모드 게임 엔진 | 0/3 | Not started | - |
 | 5. 칩 시스템 + 승패 정산 | 0/2 | Not started | - |
 | 6. 클라이언트 UI 와이어프레임 | 0/3 | Not started | - |

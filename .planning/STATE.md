@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 02-02-PLAN.md (compareHands + checkGusaTrigger TDD)
-last_updated: "2026-03-29T11:18:50.186Z"
+status: Phase 03 완료, 다음 Phase 대기
+stopped_at: Phase 03 Plan 02 complete
+last_updated: "2026-03-29T13:27:42.010Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 10
-  completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
+  completed_phases: 3
+  total_plans: 6
+  completed_plans: 6
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** 아무 설치 없이 링크 하나로 친구들과 실시간으로 섯다를 즐길 수 있어야 한다.
-**Current focus:** Phase 02 — hand-evaluator-engine
+**Current focus:** Phase 03 — websocket (완료)
 
 ## Current Position
 
-Phase: 3
+Phase: 4
 Plan: Not started
-Status: Phase complete — ready for verification
+Status: Phase 03 완료, 다음 Phase 대기
 Last activity: 2026-03-29
 
 Progress: [░░░░░░░░░░] 0%
@@ -56,6 +56,8 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-project-foundation-shared-types P02 | 108 | 2 tasks | 7 files |
 | Phase 02 P01 | 166 | 2 tasks | 3 files |
 | Phase 02 P02 | 159 | 2 tasks | 5 files |
+| Phase 03 P01 | - | 2 tasks | 3 files |
+| Phase 03 P02 | 15 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -79,6 +81,12 @@ Recent decisions affecting current work:
 - [Phase 02]: 땡잡이/암행어사는 handType='kkut' + isSpecialBeater=true로 표현 - compareHands에서 특수 로직 우선 적용
 - [Phase 02]: 땡잡이/암행어사 구별은 score 값(0/1)으로 판별 - HandResult 변경 불필요
 - [Phase 02]: compareHands는 순수 비교만 담당, 재경기 트리거는 checkGusaTrigger로 분리
+- [Phase 03-01]: 방 ID를 crypto.randomUUID().slice(0, 8)로 생성 — 충돌 안전성 우선 (D-01)
+- [Phase 03-01]: 재접속 식별을 닉네임+방코드 조합으로 처리, 대기실 동일 닉네임 차단 (D-04~D-06)
+- [Phase 03-01]: 인메모리 Map 저장, 방장 승계는 입장 순서 기준 다음 플레이어 (D-12, D-14)
+- [Phase 03-02]: beforeAll/afterAll을 Promise 기반으로 구현 (vitest의 done 콜백 미지원)
+- [Phase 03-02]: Promise.all 병렬 연결 대기로 다중 클라이언트 race condition 방지
+- [Phase 03-02]: NODE_ENV !== 'test' 조건부 listen으로 테스트 중 포트 충돌 방지
 
 ### Pending Todos
 
@@ -92,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T11:15:51.384Z
-Stopped at: Completed 02-02-PLAN.md (compareHands + checkGusaTrigger TDD)
-Resume file: None
+Last session: 2026-03-29T13:30:00.000Z
+Stopped at: Phase 03 Plan 02 complete
+Resume file: 다음 Phase 확인 필요
