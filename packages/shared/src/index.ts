@@ -2,4 +2,8 @@
 export type { CardRank, CardAttribute, Card } from './types/card';
 export { GWANG_RANKS, YEOLKKEUT_RANKS, getCardAttribute } from './types/card';
 export type { GamePhase, GameMode, PlayerState, GameState } from './types/game';
+export type { HandType, HandResult } from './types/hand';
 export { createDeck } from './deck';
+export { evaluateHand } from './hand/evaluator';
+export { compareHands } from './hand/compare';
+export { checkGusaTrigger } from './hand/gusa';
