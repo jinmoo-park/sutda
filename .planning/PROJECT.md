@@ -15,6 +15,11 @@
 **카드/덱 (Phase 01에서 검증)**
 - [x] 1~10 숫자 카드 각 2장(총 20장), 광/열끗 속성 포함 — Validated in Phase 01: project-foundation-shared-types
 
+**족보 판정 (Phase 02에서 검증)**
+- [x] 전체 족보 판정: 광땡 3종 > 장땡~일땡 > 알리~새륙 > 끗(망통~아홉끗) — Validated in Phase 02: hand-evaluator-engine
+- [x] 구사·멍텅구리구사 재경기 트리거 로직 — Validated in Phase 02: hand-evaluator-engine
+- [x] 땡잡이·암행어사 처리 (compareHands 특수 비교) — Validated in Phase 02: hand-evaluator-engine
+
 ### Active
 
 **핵심 인프라**
@@ -28,9 +33,9 @@
 - [ ] 패 돌리기: 반시계 방향, 퉁 시 2장씩
 
 **족보 및 판정**
-- [ ] 전체 족보 판정: 광땡 3종 > 장땡~일땡 > 알리~새륙 > 끗(망통~아홉끗)
-- [ ] 구사·멍텅구리구사 재경기 트리거 로직
-- [ ] 땡잡이·암행어사 처리 (땡값 없음)
+- [x] 전체 족보 판정: 광땡 3종 > 장땡~일땡 > 알리~새륙 > 끗(망통~아홉끗) — Phase 02 완료
+- [x] 구사·멍텅구리구사 재경기 트리거 로직 — Phase 02 완료
+- [x] 땡잡이·암행어사 처리 (땡값 없음) — Phase 02 완료
 - [ ] **패 공개 액션**: showdown 진입 시 자동 비교 없음. 생존 플레이어 각자가 "공개" 버튼을 눌러야 자신의 패가 공개되고, 모든 생존자가 공개 완료한 시점에 승패 판정 실행 (긴장감·눈치전·트래쉬토크 시간 확보)
 
 **베팅 시스템**
@@ -111,4 +116,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-29 — Phase 01 complete (모노레포 인프라 + 공유 타입 + createDeck TDD)*
+*Last updated: 2026-03-29 — Phase 02 complete (족보 판정 엔진: evaluateHand + compareHands + checkGusaTrigger TDD, 96/96 테스트 통과)*
