@@ -99,7 +99,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — 칩 정산 로직 + ChipBreakdown/effectiveMaxBet 타입 확장 + TDD (CHIP-01, CHIP-02, CHIP-04, CHIP-05)
+- [x] 05-01-PLAN.md — 칩 정산 로직 + ChipBreakdown/effectiveMaxBet 타입 확장 + TDD (CHIP-01, CHIP-02, CHIP-04, CHIP-05)
 - [ ] 05-02-PLAN.md — 재충전 투표 플로우 + Socket.IO 핸들러 + 유효 스택 검증 (CHIP-03, CHIP-05)
 
 ### Phase 6: 클라이언트 UI 와이어프레임
@@ -195,7 +195,7 @@ Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 2. 족보 판정 엔진 | 0/2 | Planned | - |
 | 3. WebSocket 인프라 + 방 관리 | 2/2 | Complete | 2026-03-29 |
 | 4. 오리지날 모드 게임 엔진 | 3/3 | Complete | 2026-03-29 |
-| 5. 칩 시스템 + 승패 정산 | 0/2 | Planned | - |
+| 5. 칩 시스템 + 승패 정산 | 1/2 | In Progress|  |
 | 6. 클라이언트 UI 와이어프레임 | 0/3 | Not started | - |
 | 7. 세장섯다 + 한장공유 모드 | 0/2 | Not started | - |
 | 8. 후회의섯다 + 인디언섯다 모드 | 0/3 | Not started | - |

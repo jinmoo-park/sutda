@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Phase 04 전체 완료
-stopped_at: Completed 04-03-PLAN.md
-last_updated: "2026-03-29T14:53:37.392Z"
+status: executing
+stopped_at: Completed 05-chip-system-settlement-01-PLAN.md
+last_updated: "2026-03-29T15:40:38.775Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 10
   completed_phases: 4
-  total_plans: 9
-  completed_plans: 9
+  total_plans: 11
+  completed_plans: 10
   percent: 40
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** 아무 설치 없이 링크 하나로 친구들과 실시간으로 섯다를 즐길 수 있어야 한다.
-**Current focus:** Phase 04 완료 -- 다음: Phase 05 (추가 게임 모드 또는 UI)
+**Current focus:** Phase 05 — chip-system-settlement
 
 ## Current Position
 
-Phase: 5
-Plan: Not started
-Status: Phase 04 전체 완료
+Phase: 05 (chip-system-settlement) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-03-29
 
 Progress: [████░░░░░░] 40%
@@ -64,6 +64,7 @@ Progress: [████░░░░░░] 40%
 | Phase 04-original-mode-game-engine P01 | 4 | 1 tasks | 5 files |
 | Phase 04-original-mode-game-engine P02 | 6 | 2 tasks | 3 files |
 | Phase 04-original-mode-game-engine P03 | 4 | 1 tasks | 3 files |
+| Phase 05-chip-system-settlement P01 | 5 | 1 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -102,6 +103,8 @@ Recent decisions affecting current work:
 - [Phase 04-03]: handleGameAction 헬퍼 패턴 — 액션 실행 후 game-state 브로드캐스트, 에러 시 game-error 개별 전송
 - [Phase 04-03]: gameEngines Map export — 테스트에서 직접 engine state 접근 가능
 - [Phase 04-03]: start-game에서 mode='original'은 초기값, select-mode 이벤트로 실제 모드 결정 (D-01, MODE-OG-01 부합)
+- [Phase 05-chip-system-settlement]: pot은 result phase에서 표시용으로 유지, nextRound()에서 0 리셋 (D-01 부합)
+- [Phase 05-chip-system-settlement]: applyRechargeToPlayer는 _updateChipBreakdowns + _updateEffectiveMaxBet 자동 연쇄 — 재충전 후 파생 상태 일관성 보장
 
 ### Pending Todos
 
@@ -115,6 +118,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T15:59:00Z
-Stopped at: Completed 04-03-PLAN.md
+Last session: 2026-03-29T15:40:38.770Z
+Stopped at: Completed 05-chip-system-settlement-01-PLAN.md
 Resume file: None
