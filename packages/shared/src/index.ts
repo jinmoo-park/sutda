@@ -2,3 +2,4 @@
 export type { CardRank, CardAttribute, Card } from './types/card';
 export { GWANG_RANKS, YEOLKKEUT_RANKS, getCardAttribute } from './types/card';
 export type { GamePhase, GameMode, PlayerState, GameState } from './types/game';
+export { createDeck } from './deck';
