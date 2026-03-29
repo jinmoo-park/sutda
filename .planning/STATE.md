@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Phase 03 완료, 다음 Phase 대기
-stopped_at: Phase 03 Plan 02 complete
-last_updated: "2026-03-29T13:27:42.010Z"
+status: executing
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-03-29T14:34:44.814Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 10
   completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 9
+  completed_plans: 7
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** 아무 설치 없이 링크 하나로 친구들과 실시간으로 섯다를 즐길 수 있어야 한다.
-**Current focus:** Phase 03 — websocket (완료)
+**Current focus:** Phase 04 — original-mode-game-engine
 
 ## Current Position
 
-Phase: 4
-Plan: Not started
-Status: Phase 03 완료, 다음 Phase 대기
+Phase: 04 (original-mode-game-engine) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
 Last activity: 2026-03-29
 
 Progress: [░░░░░░░░░░] 0%
@@ -58,6 +58,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02 P02 | 159 | 2 tasks | 5 files |
 | Phase 03 P01 | - | 2 tasks | 3 files |
 | Phase 03 P02 | 15 | 2 tasks | 5 files |
+| Phase 04-original-mode-game-engine P01 | 4 | 1 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,9 @@ Recent decisions affecting current work:
 - [Phase 03-02]: beforeAll/afterAll을 Promise 기반으로 구현 (vitest의 done 콜백 미지원)
 - [Phase 03-02]: Promise.all 병렬 연결 대기로 다중 클라이언트 race condition 방지
 - [Phase 03-02]: NODE_ENV !== 'test' 조건부 listen으로 테스트 중 포트 충돌 방지
+- [Phase 04-01]: completeAttendSchool()를 public으로 노출 — 타임아웃 처리 시 외부 호출 필요
+- [Phase 04-01]: cut 후 자동으로 dealCards() 호출 — FSM 전환 일관성 유지
+- [Phase 04-01]: declareTtong 후 phase=betting — 퉁 선언 후 즉시 betting 전환
 
 ### Pending Todos
 
@@ -100,6 +104,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T13:30:00.000Z
-Stopped at: Phase 03 Plan 02 complete
-Resume file: 다음 Phase 확인 필요
+Last session: 2026-03-29T14:34:44.810Z
+Stopped at: Completed 04-01-PLAN.md
+Resume file: None
