@@ -20,32 +20,39 @@
 - [x] 구사·멍텅구리구사 재경기 트리거 로직 — Validated in Phase 02: hand-evaluator-engine
 - [x] 땡잡이·암행어사 처리 (compareHands 특수 비교) — Validated in Phase 02: hand-evaluator-engine
 
+### Validated (continued)
+
+**인프라 (Phase 03에서 검증)**
+- [x] 실시간 멀티플레이어 동기화 (WebSocket/Socket.IO) — Validated in Phase 03: websocket
+- [x] 링크 공유로 방 참여 (방 코드 포함 URL) — Validated in Phase 03: websocket
+- [x] 닉네임만으로 입장, 회원가입 불필요 — Validated in Phase 03: websocket
+
+**오리지날 모드 게임 엔진 (Phase 04에서 검증)**
+- [x] 셔플 + 기리/퉁 메커니즘 구현 — Validated in Phase 04: original-mode-game-engine
+- [x] 패 돌리기: 반시계 방향, 퉁 시 2장씩 — Validated in Phase 04: original-mode-game-engine
+- [x] **패 공개 액션**: showdown에서 각자 "공개" 버튼, 전원 공개 후 승패 판정 — Validated in Phase 04: original-mode-game-engine
+- [x] 콜 / 레이즈 (자유 금액) / 다이 / 체크 — Validated in Phase 04: original-mode-game-engine
+- [x] 오리지날: 2장 + 베팅 + 족보 비교 — Validated in Phase 04: original-mode-game-engine
+- [x] 선 결정: 첫판 밤일낮장(18:00~05:59 낮은 숫자, 06:00~17:59 높은 숫자) — Validated in Phase 04: original-mode-game-engine
+- [x] 동점 재경기(rematch-pending): 동점자만 참여, pot 유지, 앤티 없음 — Validated in Phase 04: original-mode-game-engine
+
 ### Active
 
 **핵심 인프라**
-- [ ] 실시간 멀티플레이어 동기화 (WebSocket)
-- [ ] 링크 공유로 방 참여 (방 코드 포함 URL)
-- [ ] 닉네임만으로 입장, 회원가입 불필요
-- [ ] 2~6인 지원, 원형 자리 배치
-
-**카드/덱**
-- [ ] 셔플 + 기리/퉁 메커니즘 구현
-- [ ] 패 돌리기: 반시계 방향, 퉁 시 2장씩
+- [ ] 2~6인 지원, 원형 자리 배치 (UI)
 
 **족보 및 판정**
 - [x] 전체 족보 판정: 광땡 3종 > 장땡~일땡 > 알리~새륙 > 끗(망통~아홉끗) — Phase 02 완료
 - [x] 구사·멍텅구리구사 재경기 트리거 로직 — Phase 02 완료
 - [x] 땡잡이·암행어사 처리 (땡값 없음) — Phase 02 완료
-- [ ] **패 공개 액션**: showdown 진입 시 자동 비교 없음. 생존 플레이어 각자가 "공개" 버튼을 눌러야 자신의 패가 공개되고, 모든 생존자가 공개 완료한 시점에 승패 판정 실행 (긴장감·눈치전·트래쉬토크 시간 확보)
 
 **베팅 시스템**
-- [ ] 콜 / 레이즈 (자유 금액) / 다이
 - [ ] 칩/포인트 추적 (만원 단위, 기본 100,000원)
 - [ ] 금액 소진 시 만원 단위로 재충전 (다른 플레이어 동의 필요)
 - [ ] 땡값: 오리지날 모드 한정, 다이한 땡 보유자 → 승자에게 일땡~구땡 500원, 광땡·장땡 1000원
 
 **게임 모드 (5종)**
-- [ ] 오리지날: 2장 + 베팅 + 족보 비교
+- [x] 오리지날: 2장 + 베팅 + 족보 비교 — Phase 04 완료
 - [ ] 세장섯다: 2장 → 베팅 → 1장 추가 → 3장 중 2장 조합
 - [ ] 한장공유: 선이 공유패 1장 지정 → 각자 1장 받아 조합
 - [ ] 후회의섯다: 전 20장 공개 → 순서대로 가져가기 → 2장 선택 후 베팅
@@ -116,4 +123,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-29 — Phase 03 complete (WebSocket 인프라: Socket.IO 서버 + RoomManager + 프로토콜 타입, 24/24 테스트 통과, INFRA-01~06 충족)*
+*Last updated: 2026-03-29 — Phase 04 complete (오리지날 모드 게임 엔진: GameEngine FSM + 베팅/쇼다운/승패판정 + Socket.IO 연결, 185/185 테스트 통과, SEAT-01~03, DECK-02~05, MODE-OG-01~02, BET-01~06 충족)*
