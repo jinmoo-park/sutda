@@ -32,11 +32,11 @@
   2. shared 패키지에 카드 타입(숫자, 광/열끗/일반 속성)이 정의되어 server/client에서 import 가능하다
   3. 20장 덱 생성 함수가 올바른 카드 구성(1~10 각 2장, 광: 1,3,8 / 열끗: 4,7,9)을 반환한다
   4. 게임 상태, 메시지 프로토콜 타입이 shared에 정의되어 있다
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md — 모노레포 인프라 세팅 (pnpm + turborepo + 패키지 스캐폴드)
+- [ ] 01-02-PLAN.md — 공유 타입 정의 + createDeck() TDD (DECK-01)
 
 ### Phase 2: 족보 판정 엔진
 **Goal**: 모든 카드 조합에 대해 정확한 족보 판정과 승패 비교가 가능하다
@@ -191,7 +191,7 @@ Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. 프로젝트 기반 + 공유 타입 | 0/2 | Not started | - |
+| 1. 프로젝트 기반 + 공유 타입 | 0/2 | Planned | - |
 | 2. 족보 판정 엔진 | 0/2 | Not started | - |
 | 3. WebSocket 인프라 + 방 관리 | 0/2 | Not started | - |
 | 4. 오리지날 모드 게임 엔진 | 0/3 | Not started | - |
