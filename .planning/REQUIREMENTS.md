@@ -31,10 +31,10 @@
 ### 족보 판정 (HAND)
 
 - [ ] **HAND-01**: 삼팔광땡(3광+8광), 일팔광땡(1광+8광), 일삼광땡(1광+3광)을 올바르게 판정한다
-- [ ] **HAND-02**: 장땡(10×2)~일땡(1×2) 10종 땡을 올바르게 판정한다
+- [ ] **HAND-02**: 장땡(10x2)~일땡(1x2) 10종 땡을 올바르게 판정한다
 - [ ] **HAND-03**: 알리(1+2), 독사(1+4), 구삥(1+9), 장삥(1+10), 장사(10+4), 새륙(4+6) 특수 조합을 올바르게 판정한다
 - [ ] **HAND-04**: 구사(4+9 일반), 멍텅구리구사(열끗4+열끗9), 땡잡이(3+7), 암행어사(열끗4+열끗7)를 올바르게 판정한다
-- [ ] **HAND-08**: 땡잡이(3+7)는 장땡 미만의 모든 땡(구땡~일땡)을 이긴다 (장땡·광땡에게는 진다)
+- [ ] **HAND-08**: 땡잡이(3+7)는 장땡 미만의 모든 땡(구땡~일땡)을 이긴다 (장땡/광땡에게는 진다)
 - [ ] **HAND-09**: 암행어사(열끗4+열끗7)는 일팔광땡(1광+8광)과 일삼광땡(1광+3광)을 이긴다 (삼팔광땡에게는 진다)
 - [ ] **HAND-05**: 특수 조합이 없는 경우 두 수의 합의 일의 자리(끗)를 계산한다 (망통=0끗~아홉끗)
 - [ ] **HAND-06**: 족보 우선순위 비교: 광땡 3종 > 장땡~일땡 > 알리~새륙 > 끗 순으로 승자를 결정한다
@@ -57,35 +57,35 @@
 - [ ] **CHIP-04**: 칩은 500원 / 1,000원 / 5,000원 / 10,000원 단위로 시각적으로 구분되어 표시된다
 - [ ] **CHIP-05**: 베팅/레이즈 시 칩 단위 버튼(500/1000/5000/10000)으로 금액을 조합하여 입력할 수 있다
 
-### 게임 모드 — 오리지날 (MODE-OG)
+### 게임 모드 -- 오리지날 (MODE-OG)
 
 - [ ] **MODE-OG-01**: 선 플레이어가 게임 시작 전 "오리지날" 모드를 선택할 수 있다
-- [ ] **MODE-OG-02**: 2장 배분 → 베팅 → 족보 비교 → 승패 결정의 기본 플로우가 작동한다
-- [ ] **MODE-OG-03**: 오리지날 모드에서만 땡값 규칙이 적용된다 (다이한 땡 보유자 → 승자에게 일땡~구땡 500원, 광땡·장땡 1000원)
+- [ ] **MODE-OG-02**: 2장 배분 -> 베팅 -> 족보 비교 -> 승패 결정의 기본 플로우가 작동한다
+- [ ] **MODE-OG-03**: 오리지날 모드에서만 땡값 규칙이 적용된다 (다이한 땡 보유자 -> 승자에게 일땡~구땡 500원, 광땡/장땡 1000원)
 
-### 게임 모드 — 세장섯다 (MODE-SJ)
+### 게임 모드 -- 세장섯다 (MODE-SJ)
 
 - [ ] **MODE-SJ-01**: 선 플레이어가 "세장섯다" 모드를 선택할 수 있다
-- [ ] **MODE-SJ-02**: 2장 배분 → 베팅(세 번째 카드 안 보고 다이 가능) → 1장 추가 배분 → 3장 중 2장 조합으로 족보 비교
+- [ ] **MODE-SJ-02**: 2장 배분 -> 베팅(세 번째 카드 안 보고 다이 가능) -> 1장 추가 배분 -> 3장 중 2장 조합으로 족보 비교
 
-### 게임 모드 — 한장공유 (MODE-SH)
+### 게임 모드 -- 한장공유 (MODE-SH)
 
 - [ ] **MODE-SH-01**: 선 플레이어가 "한장공유" 모드를 선택할 수 있다
 - [ ] **MODE-SH-02**: 선 플레이어가 공유 카드 1장을 20장 중에서 지정한다
 - [ ] **MODE-SH-03**: 각 플레이어는 1장씩 받아 공유 카드와 조합하여 족보를 비교한다
 - [ ] **MODE-SH-04**: 베팅 후 최종 족보 승패를 결정한다
 
-### 게임 모드 — 후회의섯다 (MODE-HR)
+### 게임 모드 -- 후회의섯다 (MODE-HR)
 
 - [ ] **MODE-HR-01**: 선 플레이어가 "후회의섯다" 모드를 선택할 수 있다
 - [ ] **MODE-HR-02**: 20장 전부를 뒤집어 판에 깔고, 오른쪽부터 반시계 방향으로 1장씩 가져간다 (5인 이하: 4장, 6인: 3장)
 - [ ] **MODE-HR-03**: 각 플레이어는 뒤집힌 패 중 2장을 선택하고, 선택하지 않은 카드를 공개하여 "후회"한다
 - [ ] **MODE-HR-04**: 베팅 후 선택한 2장으로 족보를 비교하여 승패를 결정한다
 
-### 게임 모드 — 인디언섯다 (MODE-IN)
+### 게임 모드 -- 인디언섯다 (MODE-IN)
 
 - [ ] **MODE-IN-01**: 선 플레이어가 "인디언섯다" 모드를 선택할 수 있다
-- [ ] **MODE-IN-02**: 오른쪽부터 1장 배분 — 받은 카드는 본인에게는 안 보이고 다른 플레이어에게는 보인다
+- [ ] **MODE-IN-02**: 오른쪽부터 1장 배분 -- 받은 카드는 본인에게는 안 보이고 다른 플레이어에게는 보인다
 - [ ] **MODE-IN-03**: 첫 베팅(자신의 카드 못 보고, 타인 카드 보며 베팅)
 - [ ] **MODE-IN-04**: 베팅 종료 후 각 플레이어에게 1장 추가 배분 (이 카드는 본인만 볼 수 있다)
 - [ ] **MODE-IN-05**: 최종 베팅 후 2장 족보를 비교하여 승패를 결정한다
@@ -97,7 +97,7 @@
 - [ ] **RULE-03**: 재경기 시 다이한 플레이어는 판돈의 절반을 추가로 내면 재참여할 수 있다
 - [ ] **RULE-04**: 땡잡이(3+7) 또는 암행어사(열끗4+열끗7)로 땡/광땡을 이긴 경우 땡값이 없다
 
-### UI / UX — 와이어프레임 (UI)
+### UI / UX -- 와이어프레임 (UI)
 
 - [ ] **UI-01**: 메인 화면에서 방 생성 또는 링크로 참여를 선택할 수 있다
 - [ ] **UI-02**: 게임 테이블 화면에 원형으로 플레이어 자리, 카드, 칩 잔액이 표시된다
@@ -153,29 +153,78 @@
 
 ## Traceability
 
-*(로드맵 생성 후 채워짐)*
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01~06 | TBD | Pending |
-| SEAT-01~03 | TBD | Pending |
-| DECK-01~05 | TBD | Pending |
-| HAND-01~07 | TBD | Pending |
-| BET-01~06 | TBD | Pending |
-| CHIP-01~03 | TBD | Pending |
-| MODE-OG-01~03 | TBD | Pending |
-| MODE-SJ-01~02 | TBD | Pending |
-| MODE-SH-01~04 | TBD | Pending |
-| MODE-HR-01~04 | TBD | Pending |
-| MODE-IN-01~05 | TBD | Pending |
-| RULE-01~04 | TBD | Pending |
-| UI-01~08 | TBD | Pending |
+| DECK-01 | Phase 1 | Pending |
+| HAND-01 | Phase 2 | Pending |
+| HAND-02 | Phase 2 | Pending |
+| HAND-03 | Phase 2 | Pending |
+| HAND-04 | Phase 2 | Pending |
+| HAND-05 | Phase 2 | Pending |
+| HAND-06 | Phase 2 | Pending |
+| HAND-07 | Phase 2 | Pending |
+| HAND-08 | Phase 2 | Pending |
+| HAND-09 | Phase 2 | Pending |
+| INFRA-01 | Phase 3 | Pending |
+| INFRA-02 | Phase 3 | Pending |
+| INFRA-03 | Phase 3 | Pending |
+| INFRA-04 | Phase 3 | Pending |
+| INFRA-05 | Phase 3 | Pending |
+| INFRA-06 | Phase 3 | Pending |
+| SEAT-02 | Phase 4 | Pending |
+| SEAT-03 | Phase 4 | Pending |
+| DECK-02 | Phase 4 | Pending |
+| DECK-03 | Phase 4 | Pending |
+| DECK-04 | Phase 4 | Pending |
+| DECK-05 | Phase 4 | Pending |
+| MODE-OG-01 | Phase 4 | Pending |
+| MODE-OG-02 | Phase 4 | Pending |
+| BET-01 | Phase 4 | Pending |
+| BET-02 | Phase 4 | Pending |
+| BET-03 | Phase 4 | Pending |
+| BET-04 | Phase 4 | Pending |
+| BET-05 | Phase 4 | Pending |
+| BET-06 | Phase 4 | Pending |
+| CHIP-01 | Phase 5 | Pending |
+| CHIP-02 | Phase 5 | Pending |
+| CHIP-03 | Phase 5 | Pending |
+| CHIP-04 | Phase 5 | Pending |
+| CHIP-05 | Phase 5 | Pending |
+| UI-01 | Phase 6 | Pending |
+| UI-02 | Phase 6 | Pending |
+| UI-03 | Phase 6 | Pending |
+| UI-04 | Phase 6 | Pending |
+| UI-05 | Phase 6 | Pending |
+| UI-06 | Phase 6 | Pending |
+| UI-07 | Phase 6 | Pending |
+| UI-08 | Phase 6 | Pending |
+| MODE-SJ-01 | Phase 7 | Pending |
+| MODE-SJ-02 | Phase 7 | Pending |
+| MODE-SH-01 | Phase 7 | Pending |
+| MODE-SH-02 | Phase 7 | Pending |
+| MODE-SH-03 | Phase 7 | Pending |
+| MODE-SH-04 | Phase 7 | Pending |
+| MODE-HR-01 | Phase 8 | Pending |
+| MODE-HR-02 | Phase 8 | Pending |
+| MODE-HR-03 | Phase 8 | Pending |
+| MODE-HR-04 | Phase 8 | Pending |
+| MODE-IN-01 | Phase 8 | Pending |
+| MODE-IN-02 | Phase 8 | Pending |
+| MODE-IN-03 | Phase 8 | Pending |
+| MODE-IN-04 | Phase 8 | Pending |
+| MODE-IN-05 | Phase 8 | Pending |
+| MODE-OG-03 | Phase 9 | Pending |
+| RULE-01 | Phase 9 | Pending |
+| RULE-02 | Phase 9 | Pending |
+| RULE-03 | Phase 9 | Pending |
+| RULE-04 | Phase 9 | Pending |
+| SEAT-01 | Phase 10 | Pending |
 
 **Coverage:**
-- v1 requirements: 57 total
-- Mapped to phases: 0 (TBD — roadmap 생성 후 업데이트)
-- Unmapped: 54 ⚠️
+- v1 requirements: 64 total
+- Mapped to phases: 64/64
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-29*
-*Last updated: 2026-03-29 after initial definition*
+*Last updated: 2026-03-29 after roadmap creation*
