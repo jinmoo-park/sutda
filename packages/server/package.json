@@ -1,0 +1,19 @@
+{
+  "name": "@sutda/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@sutda/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7",
+    "tsx": "^4"
+  }
+}
