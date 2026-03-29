@@ -44,6 +44,9 @@ const ERROR_MESSAGES: Record<string, string> = {
   ALREADY_ATTENDED: '이미 등교했습니다.',
   INVALID_ACTION: '수행할 수 없는 액션입니다.',
   GAME_NOT_FOUND: '게임을 찾을 수 없습니다.',
+  RECHARGE_IN_PROGRESS: '이미 재충전 요청이 진행 중입니다.',
+  RECHARGE_NOT_FOUND: '재충전 요청을 찾을 수 없습니다.',
+  INSUFFICIENT_CHIPS: '칩이 부족합니다.',
 };
 
 type ErrorCode = ErrorPayload['code'];
@@ -186,7 +189,22 @@ io.on('connection', (socket) => {
 
   socket.on('bet-action', ({ roomId, action }) => {
     handleGameAction(socket, roomId, () => {
-      getEngine(roomId).processBetAction(socket.data.playerId, action);
+      const engine = getEngine(roomId);
+      if (action.type === 'raise') {
+        const state = engine.getState() as GameState;
+        const currentPlayer = state.players.find(
+          p => p.seatIndex === state.currentPlayerIndex
+        );
+        if (currentPlayer) {
+          const effectiveMax = engine.calculateEffectiveMaxBet(currentPlayer.id);
+          const callAmount = state.currentBetAmount - currentPlayer.currentBet;
+          const totalNeeded = callAmount + action.amount;
+          if (totalNeeded > effectiveMax) {
+            throw new Error('INSUFFICIENT_CHIPS');
+          }
+        }
+      }
+      engine.processBetAction(socket.data.playerId, action);
     });
   });
 
@@ -200,6 +218,72 @@ io.on('connection', (socket) => {
     handleGameAction(socket, roomId, () => {
       getEngine(roomId).nextRound();
     });
+  });
+
+  // recharge-request 핸들러
+  socket.on('recharge-request', ({ roomId, amount }) => {
+    try {
+      const result = roomManager.requestRecharge(roomId, socket.data.playerId, amount);
+      // 요청자 제외 다른 플레이어에게 투표 요청 전송
+      socket.to(roomId).emit('recharge-requested', {
+        requesterId: result.requesterId,
+        requesterNickname: result.requesterNickname,
+        amount: result.amount,
+      });
+      // 요청자에게는 투표 진행 상태 전송
+      socket.emit('recharge-vote-update', {
+        votedCount: 0,
+        totalNeeded: result.totalNeeded,
+        approved: true,
+      });
+    } catch (err: any) {
+      socket.emit('game-error', {
+        code: err.message || 'UNKNOWN_ERROR',
+        message: ERROR_MESSAGES[err.message] || err.message || '알 수 없는 오류',
+      });
+    }
+  });
+
+  // recharge-vote 핸들러
+  socket.on('recharge-vote', ({ roomId, approved }) => {
+    try {
+      const result = roomManager.processRechargeVote(roomId, socket.data.playerId, approved);
+      if (result.complete) {
+        if (result.approved) {
+          const rechargeResult = roomManager.applyRecharge(roomId);
+          io.to(roomId).emit('recharge-result', {
+            requesterId: rechargeResult.requesterId,
+            approved: true,
+            newChips: rechargeResult.newChips,
+          });
+          // GameEngine 상태에도 칩 반영 — applyRechargeToPlayer를 사용하여
+          // chipBreakdown과 effectiveMaxBet이 자동으로 재계산되도록 보장
+          const engine = gameEngines.get(roomId);
+          if (engine) {
+            engine.applyRechargeToPlayer(rechargeResult.requesterId, rechargeResult.newChips);
+            io.to(roomId).emit('game-state', engine.getState() as GameState);
+          }
+        } else {
+          // 거부 시: result.requesterId를 사용 (socket.data.playerId는 투표자이므로 사용 금지)
+          io.to(roomId).emit('recharge-result', {
+            requesterId: result.requesterId,
+            approved: false,
+          });
+        }
+      } else {
+        // 투표 진행 상태 업데이트 (방 전체에)
+        io.to(roomId).emit('recharge-vote-update', {
+          votedCount: result.votedCount,
+          totalNeeded: result.totalNeeded,
+          approved: true,
+        });
+      }
+    } catch (err: any) {
+      socket.emit('game-error', {
+        code: err.message || 'UNKNOWN_ERROR',
+        message: ERROR_MESSAGES[err.message] || err.message || '알 수 없는 오류',
+      });
+    }
   });
 
   // 연결 끊김 처리

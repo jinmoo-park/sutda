@@ -321,6 +321,122 @@ describe('게임 이벤트 핸들러 통합 테스트', () => {
     expect(afterBet).toBeDefined();
   });
 
+  describe('재충전 플로우 통합', () => {
+    it('재충전 요청 시 다른 플레이어에게 recharge-requested 이벤트 전달', async () => {
+      const { host, joiner, roomId } = await setupGameStarted();
+      clients.push(host, joiner);
+
+      // joiner가 recharge-requested를 수신할 준비
+      const rechargeRequestedPromise = waitForEvent<{ requesterId: string; requesterNickname: string; amount: number }>(joiner, 'recharge-requested');
+      host.emit('recharge-request', { roomId, amount: 50000 });
+      const requested = await rechargeRequestedPromise;
+
+      expect(requested.amount).toBe(50000);
+      expect(requested.requesterNickname).toBe('방장');
+    });
+
+    it('전원 동의 시 recharge-result (approved:true) 브로드캐스트', async () => {
+      const { host, joiner, roomId } = await setupGameStarted();
+      clients.push(host, joiner);
+
+      // host가 재충전 요청
+      host.emit('recharge-request', { roomId, amount: 50000 });
+      await waitForEvent<any>(joiner, 'recharge-requested');
+
+      // joiner가 동의 투표
+      const hostResultPromise = waitForEvent<{ requesterId: string; approved: boolean; newChips?: number }>(host, 'recharge-result');
+      const joinerResultPromise = waitForEvent<{ requesterId: string; approved: boolean; newChips?: number }>(joiner, 'recharge-result');
+      joiner.emit('recharge-vote', { roomId, approved: true });
+
+      const [hostResult, joinerResult] = await Promise.all([hostResultPromise, joinerResultPromise]);
+
+      expect(hostResult.approved).toBe(true);
+      expect(hostResult.newChips).toBe(150000); // 100000 + 50000
+      expect(joinerResult.approved).toBe(true);
+    });
+
+    it('재충전 거부 시 requesterId가 요청자 ID인지 확인 (투표자 ID가 아님)', async () => {
+      const { host, joiner, roomId } = await setupGameStarted();
+      clients.push(host, joiner);
+
+      // host(방장)가 재충전 요청
+      host.emit('recharge-request', { roomId, amount: 30000 });
+      await waitForEvent<any>(joiner, 'recharge-requested');
+
+      // joiner가 거부 투표
+      const hostResultPromise = waitForEvent<{ requesterId: string; approved: boolean }>(host, 'recharge-result');
+      const joinerResultPromise = waitForEvent<{ requesterId: string; approved: boolean }>(joiner, 'recharge-result');
+      joiner.emit('recharge-vote', { roomId, approved: false });
+
+      const [hostResult, joinerResult] = await Promise.all([hostResultPromise, joinerResultPromise]);
+
+      expect(hostResult.approved).toBe(false);
+      // requesterId는 요청자(host)의 ID여야 함 — 투표자(joiner) ID가 아님
+      expect(hostResult.requesterId).toBeDefined();
+      expect(hostResult.requesterId).not.toBe(joiner.id);
+      expect(joinerResult.approved).toBe(false);
+      expect(joinerResult.requesterId).toBe(hostResult.requesterId);
+    });
+  });
+
+  describe('유효 스택 상한 초과 레이즈 거부', () => {
+    it('effectiveMaxBet 초과 레이즈 시 INSUFFICIENT_CHIPS game-error 반환', async () => {
+      const { host, joiner, roomId } = await setupGameStarted();
+      clients.push(host, joiner);
+
+      // engine 직접 접근하여 betting phase로 설정 및 chips를 작게 설정
+      const engine = gameEngines.get(roomId)!;
+      const engineState = (engine as any).state;
+      engineState.phase = 'betting';
+      engineState.currentBetAmount = 0;
+      // player[0] chips=1000, player[1] chips=100000 → effectiveMaxBet for player[0] = 1000
+      engineState.players[0].chips = 1000;
+      engineState.players[0].currentBet = 0;
+      engineState.players[1].chips = 100000;
+      engineState.players[1].currentBet = 0;
+      engineState.currentPlayerIndex = 0;
+
+      // currentPlayer index=0 가 raise 99999 시도 → effectiveMaxBet=1000 초과
+      const errorPromise = waitForEvent<{ code: string; message: string }>(host, 'game-error');
+      host.emit('bet-action', { roomId, action: { type: 'raise', amount: 99999 } });
+
+      try {
+        const error = await Promise.race([
+          errorPromise,
+          new Promise<{ code: string; message: string }>((resolve) => {
+            host.once('game-error', resolve);
+          }),
+          new Promise<{ code: string; message: string }>((_, reject) => setTimeout(() => reject(new Error('timeout')), 1000)),
+        ]);
+        // host가 currentPlayer가 아닐 수 있으므로 joiner로 재시도
+        if (error.code === 'NOT_YOUR_TURN') {
+          engineState.currentPlayerIndex = 1;
+          engineState.players[1].chips = 1000;
+          engineState.players[1].currentBet = 0;
+          const error2Promise = waitForEvent<{ code: string; message: string }>(joiner, 'game-error');
+          joiner.emit('bet-action', { roomId, action: { type: 'raise', amount: 99999 } });
+          const error2 = await error2Promise;
+          expect(error2.code).toBe('INSUFFICIENT_CHIPS');
+        } else {
+          expect(error.code).toBe('INSUFFICIENT_CHIPS');
+        }
+      } catch (e: any) {
+        if (e.message === 'timeout') {
+          // host가 NOT_YOUR_TURN이 아니라 단순히 에러가 안 온 경우 — joiner로 시도
+          engineState.currentPlayerIndex = 1;
+          engineState.players[1].chips = 1000;
+          engineState.players[1].currentBet = 0;
+          const error2Promise = waitForEvent<{ code: string; message: string }>(joiner, 'game-error');
+          joiner.emit('bet-action', { roomId, action: { type: 'raise', amount: 99999 } });
+          const error2 = await error2Promise;
+          expect(error2.code).toBe('INSUFFICIENT_CHIPS');
+        } else {
+          throw e;
+        }
+      }
+    });
+  });
+
   it('next-round 이벤트로 다음 판 시작 및 roundNumber 증가 확인', async () => {
     const { host, joiner, roomId } = await setupGameStarted();
     clients.push(host, joiner);
