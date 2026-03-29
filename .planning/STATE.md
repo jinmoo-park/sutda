@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 01-01-PLAN.md (모노레포 루트 설정 + 패키지 스캐폴드)
-last_updated: "2026-03-29T10:28:45.827Z"
+status: verifying
+stopped_at: Completed 01-02-PLAN.md (카드/게임 타입 정의 + createDeck TDD)
+last_updated: "2026-03-29T10:32:36.110Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 10
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 
 Phase: 01 (project-foundation-shared-types) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-29
 
 Progress: [░░░░░░░░░░] 0%
@@ -53,6 +53,7 @@ Progress: [░░░░░░░░░░] 0%
 
 *Updated after each plan completion*
 | Phase 01-project-foundation-shared-types P01 | 152 | 2 tasks | 17 files |
+| Phase 01-project-foundation-shared-types P02 | 108 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,9 @@ Recent decisions affecting current work:
 - [Phase 01-project-foundation-shared-types]: pnpm workspaces + turborepo 조합 채택 (shared -> server/client 빌드 파이프라인)
 - [Phase 01-project-foundation-shared-types]: tsconfig.base.json 상속 패턴 채택 (strict: true, ES2022, moduleResolution: bundler)
 - [Phase 01-project-foundation-shared-types]: React 19 + Vite 6 클라이언트 스택 채택 (SSR 불필요한 실시간 SPA)
+- [Phase 01-project-foundation-shared-types]: Card 인터페이스에 isSpecial 제거 - attribute(gwang/yeolkkeut/normal)로 특수 여부 직접 표현
+- [Phase 01-project-foundation-shared-types]: createDeck()은 셔플 없이 정렬된 순수 함수 반환 - 셔플은 게임 엔진에서 별도 처리
+- [Phase 01-project-foundation-shared-types]: vitest@3 선택 - Vite 기반 ESM 네이티브, shared(type:module)와 완전 호환
 
 ### Pending Todos
 
@@ -81,6 +85,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T10:28:45.823Z
-Stopped at: Completed 01-01-PLAN.md (모노레포 루트 설정 + 패키지 스캐폴드)
+Last session: 2026-03-29T10:32:36.105Z
+Stopped at: Completed 01-02-PLAN.md (카드/게임 타입 정의 + createDeck TDD)
 Resume file: None

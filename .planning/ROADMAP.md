@@ -10,7 +10,7 @@
 - Integer phases (1, 2, 3): 계획된 작업 단위
 - Decimal phases (2.1, 2.2): 긴급 삽입 (INSERTED 표시)
 
-- [ ] **Phase 1: 프로젝트 기반 + 공유 타입** - 모노레포 구조, 공유 타입 패키지, 카드 모델 정의
+- [x] **Phase 1: 프로젝트 기반 + 공유 타입** - 모노레포 구조, 공유 타입 패키지, 카드 모델 정의 (completed 2026-03-29)
 - [ ] **Phase 2: 족보 판정 엔진** - HandEvaluator 순수 함수 구현 및 포괄적 TDD
 - [ ] **Phase 3: WebSocket 인프라 + 방 관리** - Socket.IO 서버, 방 생성/참여/재접속, 메시지 프로토콜
 - [ ] **Phase 4: 오리지날 모드 게임 엔진** - FSM 게임 엔진, 덱/패 돌리기, 선 결정, 베팅 시스템
@@ -36,7 +36,7 @@
 
 Plans:
 - [x] 01-01-PLAN.md — 모노레포 인프라 세팅 (pnpm + turborepo + 패키지 스캐폴드)
-- [ ] 01-02-PLAN.md — 공유 타입 정의 + createDeck() TDD (DECK-01)
+- [x] 01-02-PLAN.md — 공유 타입 정의 + createDeck() TDD (DECK-01)
 
 ### Phase 2: 족보 판정 엔진
 **Goal**: 모든 카드 조합에 대해 정확한 족보 판정과 승패 비교가 가능하다
@@ -191,7 +191,7 @@ Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. 프로젝트 기반 + 공유 타입 | 1/2 | In Progress|  |
+| 1. 프로젝트 기반 + 공유 타입 | 2/2 | Complete   | 2026-03-29 |
 | 2. 족보 판정 엔진 | 0/2 | Not started | - |
 | 3. WebSocket 인프라 + 방 관리 | 0/2 | Not started | - |
 | 4. 오리지날 모드 게임 엔진 | 0/3 | Not started | - |
