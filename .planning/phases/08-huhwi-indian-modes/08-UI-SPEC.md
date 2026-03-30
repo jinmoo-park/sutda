@@ -1,7 +1,8 @@
 ---
 phase: 8
 slug: huhwi-indian-modes
-status: draft
+status: approved
+reviewed_at: 2026-03-30
 shadcn_initialized: true
 preset: style=default, baseColor=slate, cssVariables=true
 created: 2026-03-30
