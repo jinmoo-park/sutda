@@ -580,6 +580,15 @@ export class GameEngine {
     // 한장공유: 딜러가 공유카드를 먼저 선택해야 함 (per D-03)
     if (mode === 'shared-card') {
       this.state.phase = 'shared-card-select';
+    } else if (mode === 'gollagolla') {
+      // 골라골라: 기리 없음 — 자동 셔플 후 바로 카드 선택 화면으로 진입
+      const shuffled = [...this.state.deck];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      this.state.deck = shuffled;
+      this._dealCardsGollagolla();
     } else {
       this.state.phase = 'shuffling';
     }

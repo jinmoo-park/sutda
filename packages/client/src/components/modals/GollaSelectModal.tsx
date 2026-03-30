@@ -45,23 +45,25 @@ export function GollaSelectModal({ open, roomId }: GollaSelectModalProps) {
     if (alreadyDone || submitted) return;
     if (takenByOthers.has(idx)) return;
 
-    setPendingIndices(prev => {
-      if (prev.includes(idx)) {
-        // 토글 해제
-        return prev.filter(i => i !== idx);
-      }
-      if (prev.length >= 2) return prev;  // 이미 2장 선택 중이면 무시
-      const next = [...prev, idx];
-      if (next.length === 2) {
-        // 2장 완료 → 자동 확정 emit
-        setSubmitted(true);
-        socket?.emit('select-gollagolla-cards', {
-          roomId,
-          cardIndices: [next[0], next[1]] as [number, number],
-        });
-      }
-      return next;
-    });
+    // 새 선택 목록 계산 (state updater 밖에서 — StrictMode 이중 호출로 인한 emit 중복 방지)
+    let newIndices: number[];
+    if (pendingIndices.includes(idx)) {
+      newIndices = pendingIndices.filter(i => i !== idx);
+    } else if (pendingIndices.length >= 2) {
+      return;
+    } else {
+      newIndices = [...pendingIndices, idx];
+    }
+
+    setPendingIndices(newIndices);
+
+    if (newIndices.length === 2) {
+      setSubmitted(true);
+      socket?.emit('select-gollagolla-cards', {
+        roomId,
+        cardIndices: [newIndices[0], newIndices[1]] as [number, number],
+      });
+    }
   };
 
   // phase가 gollagolla-select를 벗어나면(betting으로 전환) 상태 리셋

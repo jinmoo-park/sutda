@@ -109,6 +109,15 @@ export function RoomPage() {
         return;
       }
 
+      // 인디언섯다: 첫 패는 본인에게 숨겨지므로 카드 확인 오버레이 표시 안 함
+      if (gameState.mode === 'indian') {
+        const counts: Record<string, number> = {};
+        players.forEach(p => { counts[p.id] = 1; });
+        setVisibleCardCounts(counts);
+        prevPhaseRef.current = gameState.phase;
+        return;
+      }
+
       // 한장공유는 1장씩 1라운드, 나머지는 1장씩 2라운드
       const cardRounds = gameState.mode === 'shared-card' ? 1 : 2;
 
