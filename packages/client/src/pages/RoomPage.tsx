@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input';
 export function RoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
   const { socket, connect, gameState, roomState, myPlayerId, error, clearError } = useGameStore();
-  const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
+  const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
 
   // 닉네임 + 입장 상태
   const [nickname, setNickname] = useState('');

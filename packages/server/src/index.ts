@@ -108,10 +108,8 @@ io.on('connection', (socket) => {
       socket.data.nickname = nickname;
       socket.data.roomId = roomId;
       socket.join(roomId);
-      // 참여한 플레이어에게 전체 방 상태 전송
-      socket.emit('room-state', room);
-      // 기존 플레이어들에게 새 플레이어 알림
-      socket.to(roomId).emit('player-joined', player);
+      // 방 전체에 갱신된 상태 브로드캐스트 (방장 포함 모든 클라이언트 갱신)
+      io.to(roomId).emit('room-state', room);
     } catch (err: any) {
       emitError(socket, err.message as ErrorCode);
     }

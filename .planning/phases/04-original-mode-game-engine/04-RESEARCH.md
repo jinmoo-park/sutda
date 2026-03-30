@@ -402,20 +402,13 @@ export interface ServerToClientEvents {
 
 ## Open Questions
 
-1. **베팅 라운드 초기 `currentBetAmount` 값**
-   - What we know: 등교(앤티) 500원이 pot에 들어간다. 베팅 라운드 시작 시점에는 아직 아무도 베팅하지 않은 상태.
-   - What's unclear: `currentBetAmount`를 0으로 시작할지, 500(등교금)으로 시작할지. 0이면 첫 플레이어가 "체크(0원 콜)"를 할 수 있게 됨.
-   - Recommendation: Claude's Discretion 영역. 전통적인 포커 룰에서는 앤티 후 0원으로 시작하여 첫 베터가 금액을 올리는 방식이 일반적. `currentBetAmount = 0`으로 시작 권장.
+~~1. **베팅 라운드 초기 `currentBetAmount` 값**~~ → **해소 (D-13)**: `currentBetAmount = 0`으로 시작. 학교 앤티는 pot에만 반영. 첫 베팅 최솟값 500원.
 
-2. **기리 복수 분할 최대 분할 수**
-   - What we know: D-09에서 "복수 분할 + 재조립 지원" 명시. 최대값 미정.
-   - What's unclear: 분할 수가 많을수록 UX가 복잡해짐. 클라이언트 인터랙션 설계에 영향.
-   - Recommendation: Claude's Discretion. 서버 로직은 분할 수 제한 없이(`segments.flat()`) 구현하고, UX 제한은 클라이언트에서 처리.
+~~2. **기리 복수 분할 최대 분할 수**~~ → **해소 (D-26)**: 서버는 무제한. Phase 6 UI에서 최대 5더미 제한.
 
-3. **동점(tie) 처리**
-   - What we know: `compareHands()` 가 `'tie'`를 반환할 수 있음. HAND-07에 "분팟 또는 재경기" 하우스룰 기본값 언급.
-   - What's unclear: Phase 4에서 tie 발생 시 어떻게 처리할지. Phase 9에서 확장될 수 있는 재경기 로직과 충돌 가능성.
-   - Recommendation: Phase 4에서는 tie 발생 시 `result` phase로 전환하고 `winnerId: null` (분팟)으로 처리. Phase 5에서 정산 로직 구현 시 분팟 처리.
+~~3. **동점(tie) 처리**~~ → **해소 (D-22~D-25)**: 동점자끼리 재경기. 판돈 유지, 앤티 없음. 다이 플레이어 및 하위 패 플레이어 참여 불가. `compareHands()`가 `'tie'` 반환 시 `GameEngine`이 `rematch` 페이즈로 전환하여 동점자만 남긴 채 새 라운드 시작.
+
+**추가 결정 (D-21)**: 체크 옵션 — `currentBetAmount === 0`인 상태에서 선택 가능. 모두 체크하면 베팅 라운드 종료. 이후 레이즈 발생 시 체크한 플레이어에게 다시 액션 기회 부여.
 
 ---
 

@@ -8,7 +8,21 @@
       "Bash(node \"$HOME/.claude/get-shit-done/bin/gsd-tools.cjs\" commit \"docs: complete project research\" --files .planning/research/)",
       "Bash(node \"$HOME/.claude/get-shit-done/bin/gsd-tools.cjs\" commit \"docs: define v1 requirements\" --files .planning/REQUIREMENTS.md)",
       "Bash(node \"$HOME/.claude/get-shit-done/bin/gsd-tools.cjs\" commit \"docs: create roadmap and state\" --files .planning/ROADMAP.md .planning/STATE.md .planning/REQUIREMENTS.md)",
-      "Skill(gsd:plan-phase)"
+      "Skill(gsd:plan-phase)",
+      "Bash(pnpm --filter @sutda/shared run build)",
+      "Bash(node \"$HOME/.claude/get-shit-done/bin/gsd-tools.cjs\" phase-plan-index \"01\")",
+      "Bash(node:*)",
+      "Read(//c/Users/Jinmoo Park/Desktop/sutda/$HOME/.claude/get-shit-done/references/**)",
+      "Read(//c/Users/Jinmoo Park/Desktop/sutda/$HOME/.claude/**)",
+      "Bash(xargs grep:*)",
+      "Bash(npx turbo:*)",
+      "Bash(npx vitest:*)",
+      "Bash(pnpm add:*)",
+      "Bash(ls:*)",
+      "Bash(echo \"exit: $?\")",
+      "WebSearch",
+      "WebFetch(domain:ui.shadcn.com)",
+      "Skill(gsd:ui-phase)"
     ]
   }
 }

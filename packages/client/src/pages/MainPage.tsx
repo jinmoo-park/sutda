@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast, Toaster } from 'sonner';
 import { useGameStore } from '@/store/gameStore';
@@ -11,18 +11,25 @@ export function MainPage() {
   const [roomId, setRoomId] = useState('');
   const [initialChips, setInitialChips] = useState(100000);
   const navigate = useNavigate();
-  const { socket, connect } = useGameStore();
+  const { connect } = useGameStore();
 
-  const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
+  const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+
+  // 마운트 시 미리 연결 — 클릭 시 lazy-connect는 race condition 유발
+  useEffect(() => {
+    connect(serverUrl);
+  }, [connect, serverUrl]);
 
   const handleCreateRoom = () => {
     if (!nickname.trim()) {
       toast.error('닉네임을 입력해 주세요.');
       return;
     }
-    if (!socket) connect(serverUrl);
     const s = useGameStore.getState().socket;
-    if (!s) return;
+    if (!s) {
+      toast.error('서버에 연결 중입니다. 잠시 후 다시 시도해 주세요.');
+      return;
+    }
     s.emit('create-room', { nickname: nickname.trim(), initialChips });
     s.once('room-created', ({ roomId }) => {
       navigate(`/room/${roomId}`);
