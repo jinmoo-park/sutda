@@ -110,11 +110,12 @@ export function ResultScreen({ gameState, myPlayerId, roomId }: ResultScreenProp
             }
           }
 
-          // 칩 변동 계산
+          // 칩 변동 계산 (앤티 500원 포함)
           const isWinner = player.id === gameState.winnerId;
+          const ante = 500;
           const chipDelta = isWinner
-            ? gameState.pot - player.currentBet
-            : -player.currentBet;
+            ? gameState.pot - player.currentBet - ante
+            : -(player.currentBet + ante);
 
           return (
             <div

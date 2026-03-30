@@ -1119,8 +1119,21 @@ export class GameEngine {
     this.state.currentBetAmount = 0;
     this._bettingActed = new Set();
 
-    // dealer 결정: 구사 재경기면 구사 보유자, 그 외엔 동점자 중 첫 번째
-    const dealerId = this.state.rematchDealerId ?? tiedIds[0];
+    // dealer 결정: 구사 재경기면 구사 보유자, 그 외엔 이전 선의 반시계 다음 동점자
+    let dealerId = this.state.rematchDealerId;
+    if (!dealerId) {
+      const prevDealerSeatIndex = this.getDealerSeatIndex();
+      const totalPlayers = this.state.players.length;
+      for (let i = 1; i <= totalPlayers; i++) {
+        const candidateSeat = (prevDealerSeatIndex - i + totalPlayers) % totalPlayers;
+        const candidate = this.state.players.find(p => p.seatIndex === candidateSeat);
+        if (candidate && tiedIds.includes(candidate.id)) {
+          dealerId = candidate.id;
+          break;
+        }
+      }
+      if (!dealerId) dealerId = tiedIds[0];
+    }
     this.state.players.forEach(p => { p.isDealer = false; });
     const newDealer = this.state.players.find(p => p.id === dealerId);
     if (newDealer) newDealer.isDealer = true;

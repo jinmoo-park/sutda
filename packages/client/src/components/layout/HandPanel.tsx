@@ -12,6 +12,7 @@ interface HandPanelProps {
   phase?: GamePhase;
   onSelectCards?: (indices: number[]) => void;
   sharedCard?: Card;
+  visibleCardCount?: number;
 }
 
 const HAND_TYPE_KOREAN: Record<string, string> = {
@@ -37,12 +38,13 @@ const HAND_TYPE_KOREAN: Record<string, string> = {
   kkut: '끗',
 };
 
-export function HandPanel({ myPlayer, phase, onSelectCards, sharedCard }: HandPanelProps) {
+export function HandPanel({ myPlayer, phase, onSelectCards, sharedCard, visibleCardCount }: HandPanelProps) {
   const [showReference, setShowReference] = useState(false);
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
-  const cards = myPlayer?.cards ?? [];
+  const allCards = myPlayer?.cards ?? [];
+  const cards = visibleCardCount !== undefined ? allCards.slice(0, visibleCardCount) : allCards;
   const alreadySelected = (myPlayer?.selectedCards?.length ?? 0) >= 2;
 
   const isCardSelectMode =
