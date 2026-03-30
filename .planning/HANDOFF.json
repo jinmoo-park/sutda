@@ -1,0 +1,38 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-03-30T15:06:39.783Z",
+  "phase": "08",
+  "phase_name": "huhwi-indian-modes",
+  "phase_dir": ".planning/phases/08-huhwi-indian-modes",
+  "plan": null,
+  "task": null,
+  "total_tasks": null,
+  "status": "paused",
+  "completed_tasks": [
+    {"id": 1, "name": "08-01: 공유 타입 + GameEngine 신규 모드 전략 구현", "status": "done", "commit": "542c83d"},
+    {"id": 2, "name": "08-02: 소켓 핸들러 + per-player emit 개편", "status": "done", "commit": "fa85a23"},
+    {"id": 3, "name": "08-03: GollaSelectModal + ModeSelectModal/HandPanel/RoomPage 수정", "status": "done", "commit": "81012ae"},
+    {"id": 4, "name": "Post-UAT 버그 수정 3건", "status": "done", "commit": "690bc49"}
+  ],
+  "remaining_tasks": [],
+  "blockers": [],
+  "human_actions_pending": [
+    {
+      "action": "3개 버그 수정 재테스트: 골라골라 기리 없음 확인 / 인디언 모드 크래시 없음 확인 / 골라골라 카드 선택 오류 없음 확인",
+      "context": "Phase 8 실행은 완료되어 ROADMAP에 complete 처리됨. UAT에서 버그 3개 발견 → fix(08) 커밋으로 수정 완료. 수정 후 재테스트 미완료.",
+      "blocking": false
+    }
+  ],
+  "decisions": [
+    {"decision": "골라골라 selectMode 시 자동 셔플 후 gollagolla-select로 직행", "rationale": "기리(셔플/기리) 단계가 골라골라에 불필요함 — 사용자가 직접 20장 중 선택", "phase": "08"},
+    {"decision": "인디언 모드 cutting→betting-1 전환 시 카드 확인 오버레이 스킵", "rationale": "인디언 모드는 첫 패가 본인에게 null로 마스킹됨 → CardFace(null) 크래시 방지", "phase": "08"},
+    {"decision": "GollaSelectModal socket.emit을 setState updater 밖으로 이동", "rationale": "React 18 StrictMode에서 updater 함수 2번 호출 → emit 중복 → ALREADY_ATTENDED 오류", "phase": "08"},
+    {"decision": "per-player emit 도입 (handleGameAction에 fetchSockets + getStateFor)", "rationale": "인디언 모드에서 플레이어마다 다른 카드 마스킹 상태를 전송하기 위해 필요", "phase": "08"}
+  ],
+  "uncommitted_files": [
+    ".claude/settings.local.json",
+    ".planning/phases/08-huhwi-indian-modes/08-02-SUMMARY.md"
+  ],
+  "next_action": "3개 버그 수정 재테스트 후 Phase 9 (특수 규칙: 땡값 + 94재경기) 플랜 작성 시작",
+  "context_notes": "Phase 8 (골라골라 + 인디언섯다 모드) 실행 완료 → verifier 19/19 passed → ROADMAP complete 처리됨. 이후 Human UAT에서 3개 버그 발견 및 수정. 다음 세션은 수정 확인 후 Phase 9로 진행."
+}
