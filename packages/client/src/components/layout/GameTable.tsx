@@ -6,9 +6,10 @@ interface GameTableProps {
   myPlayerId: string | null;
   currentPlayerIndex: number;
   pot: number;
+  visibleCardCounts?: Record<string, number>;
 }
 
-export function GameTable({ players, myPlayerId, currentPlayerIndex, pot }: GameTableProps) {
+export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibleCardCounts }: GameTableProps) {
   return (
     <>
       {/* 데스크톱: 원형 배치 */}
@@ -17,10 +18,10 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot }: Game
         style={{ width: '480px', height: '480px' }}
       >
         {/* 중앙 팟 표시 */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground">판돈</p>
-            <p className="text-[28px] font-semibold tabular-nums">{pot.toLocaleString()}원</p>
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="text-center bg-background/60 border border-border rounded-2xl px-5 py-3 shadow-inner">
+            <p className="text-xs text-muted-foreground tracking-widest uppercase">판돈</p>
+            <p className="text-[26px] font-bold tabular-nums">{pot.toLocaleString()}원</p>
           </div>
         </div>
 
@@ -33,6 +34,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot }: Game
             player={p}
             isMe={p.id === myPlayerId}
             isCurrentTurn={i === currentPlayerIndex}
+            visibleCardCount={visibleCardCounts?.[p.id]}
           />
         ))}
       </div>
@@ -41,8 +43,8 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot }: Game
       <div className="md:hidden space-y-2 p-4">
         {/* 팟 한줄 요약 */}
         <div className="text-center py-2">
-          <span className="text-sm text-muted-foreground">판돈 </span>
-          <span className="font-semibold tabular-nums">{pot.toLocaleString()}원</span>
+          <span className="text-xs text-muted-foreground tracking-widest uppercase">판돈 </span>
+          <span className="font-bold tabular-nums">{pot.toLocaleString()}원</span>
         </div>
         {/* 그리드 배치 */}
         <div className="grid grid-cols-2 gap-2">
@@ -54,6 +56,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot }: Game
               player={p}
               isMe={p.id === myPlayerId}
               isCurrentTurn={i === currentPlayerIndex}
+              visibleCardCount={visibleCardCounts?.[p.id]}
             />
           ))}
         </div>

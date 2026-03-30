@@ -13,9 +13,11 @@ import { Button } from '@/components/ui/button';
 interface AttendSchoolModalProps {
   open: boolean;
   roomId: string;
+  isDealer?: boolean;
+  canSkip?: boolean;  // false이면 잠시쉬기 비활성화 (비-absent 2인 이하)
 }
 
-export function AttendSchoolModal({ open, roomId }: AttendSchoolModalProps) {
+export function AttendSchoolModal({ open, roomId, isDealer = false, canSkip = true }: AttendSchoolModalProps) {
   const { socket } = useGameStore();
   const [submitted, setSubmitted] = useState(false);
 
@@ -43,13 +45,20 @@ export function AttendSchoolModal({ open, roomId }: AttendSchoolModalProps) {
           </DialogDescription>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">
-          잠시 쉬기를 선택하면 이번 판을 건너뜁니다.
+          {isDealer
+            ? '선 플레이어는 반드시 참여해야 합니다.'
+            : !canSkip
+            ? '현재 참여 인원이 2명이라 쉬기가 불가합니다.'
+            : '잠시 쉬기를 선택하면 이번 판을 건너뜁니다.'}
         </p>
         <DialogFooter>
           <Button
             variant="secondary"
+            disabled={submitted || isDealer || !canSkip}
             onClick={() => {
-              /* 의도적으로 이벤트 미전송 — 서버 타임아웃이 skip 처리 */
+              if (submitted || isDealer || !canSkip) return;
+              setSubmitted(true);
+              socket?.emit('skip-school', { roomId });
             }}
           >
             잠시 쉬기

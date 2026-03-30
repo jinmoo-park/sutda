@@ -22,7 +22,27 @@
       "Bash(echo \"exit: $?\")",
       "WebSearch",
       "WebFetch(domain:ui.shadcn.com)",
-      "Skill(gsd:ui-phase)"
+      "Skill(gsd:ui-phase)",
+      "Bash(pnpm install:*)",
+      "Bash(ngrok version:*)",
+      "Bash(winget install:*)",
+      "Bash(where ngrok:*)",
+      "Read(//c/Users/**)",
+      "Bash(curl -s http://localhost:4040/api/tunnels)",
+      "Bash(\"/c/Users/Jinmoo Park/AppData/Local/Microsoft/WinGet/Links/ngrok.exe\" update)",
+      "Bash(pnpm --filter @sutda/client tsc --noEmit)",
+      "Bash(npx tsc:*)",
+      "Bash(grep -v \"^$\")",
+      "Bash(pnpm --filter @sutda/server build)",
+      "Bash(pnpm --filter @sutda/client build)",
+      "Bash(pnpm --filter @sutda/shared build)",
+      "Skill(gsd:pause-work)",
+      "Skill(gsd:pause-work:*)",
+      "Bash(pnpm --filter client build)",
+      "Bash(pnpm --filter shared build)",
+      "Bash(pnpm --filter server build)",
+      "Bash(cd /c/Users/\"Jinmoo Park\"/Desktop/sutda)",
+      "Bash(pnpm --filter @sutda/client typecheck)"
     ]
   }
 }

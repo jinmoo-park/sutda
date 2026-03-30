@@ -11,7 +11,7 @@ interface BettingPanelProps {
   roomId: string;
   effectiveMaxBet?: number;
   currentPlayerNickname?: string;
-  isDealer: boolean;
+  isEffectiveSen: boolean;
 }
 
 export function BettingPanel({
@@ -20,7 +20,7 @@ export function BettingPanel({
   myCurrentBet,
   roomId,
   currentPlayerNickname,
-  isDealer,
+  isEffectiveSen,
 }: BettingPanelProps) {
   const [raiseAmount, setRaiseAmount] = useState(0);
 
@@ -33,10 +33,12 @@ export function BettingPanel({
 
   // 콜 금액 = 현재 베팅 기준액 - 내가 이미 낸 금액
   const callAmount = currentBetAmount - myCurrentBet;
-  // 선 플레이어의 최초 베팅 여부 (아직 아무도 베팅 안 한 상태)
-  const isFirstBet = currentBetAmount === 0 && isDealer;
   // 레이즈 시 실제 납부액 = 콜 금액 + 추가 레이즈 금액
   const totalRaisePayment = callAmount + raiseAmount;
+  // 버튼 활성화 조건
+  const canCheck = callAmount === 0 && isEffectiveSen;
+  const canCall = callAmount > 0 || (!isEffectiveSen);
+  const canDie = currentBetAmount > 0 || !isEffectiveSen;
 
   return (
     <div className="p-4 space-y-3">
@@ -106,19 +108,19 @@ export function BettingPanel({
 
       {/* 액션 버튼 */}
       <div className="flex gap-2 flex-wrap">
-        {/* 체크: 선 플레이어 최초 베팅에서만 */}
+        {/* 체크: 선 권한 보유자만 가능 */}
         <Button
           variant="ghost"
-          disabled={!isMyTurn || !isFirstBet}
+          disabled={!isMyTurn || !canCheck}
           onClick={() => emitAction({ type: 'check' })}
           className="min-h-11"
         >
           체크
         </Button>
 
-        {/* 콜: 선 플레이어 최초 베팅에서는 비활성 */}
+        {/* 콜: 선이 아닐 때 또는 낼 금액이 있을 때 */}
         <Button
-          disabled={!isMyTurn || isFirstBet || callAmount === 0}
+          disabled={!isMyTurn || !canCall}
           onClick={() => emitAction({ type: 'call' })}
           className="min-h-11"
         >
@@ -135,10 +137,10 @@ export function BettingPanel({
           레이즈 {raiseAmount > 0 ? `(+${raiseAmount.toLocaleString()})` : ''}
         </Button>
 
-        {/* 다이: 선 플레이어 최초 베팅에서는 비활성 */}
+        {/* 다이: 선 첫 행동 전에는 비활성 */}
         <Button
           variant="destructive"
-          disabled={!isMyTurn || isFirstBet}
+          disabled={!isMyTurn || !canDie}
           onClick={() => emitAction({ type: 'die' })}
           className="min-h-11"
         >

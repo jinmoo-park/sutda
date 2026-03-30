@@ -29,6 +29,7 @@ export interface ClientToServerEvents {
   'leave-room': (data: { roomId: string }) => void;
   'start-game': (data: { roomId: string }) => void;
   'attend-school': (data: { roomId: string }) => void;
+  'skip-school': (data: { roomId: string }) => void;
   'select-dealer-card': (data: { roomId: string; cardIndex: number }) => void;
   'select-mode': (data: { roomId: string; mode: GameMode }) => void;
   'shuffle': (data: { roomId: string }) => void;
@@ -36,9 +37,12 @@ export interface ClientToServerEvents {
   'declare-ttong': (data: { roomId: string }) => void;
   'bet-action': (data: { roomId: string; action: BetAction }) => void;
   'reveal-card': (data: { roomId: string }) => void;
+  'muck-hand': (data: { roomId: string }) => void;
   'next-round': (data: { roomId: string }) => void;
   'recharge-request': (data: { roomId: string; amount: number }) => void;
   'recharge-vote': (data: { roomId: string; approved: boolean }) => void;
+  'return-from-break': (data: { roomId: string }) => void;
+  'take-break': (data: { roomId: string }) => void;
 }
 
 /** 서버 -> 클라이언트 이벤트 */

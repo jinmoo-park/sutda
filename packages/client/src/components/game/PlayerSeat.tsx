@@ -11,6 +11,8 @@ interface PlayerSeatProps {
   player: PlayerState;
   isMe: boolean;
   isCurrentTurn: boolean;
+  /** 딜링 애니메이션용: 보여줄 카드 수 (undefined = 전부) */
+  visibleCardCount?: number;
 }
 
 export function PlayerSeat({
@@ -19,27 +21,37 @@ export function PlayerSeat({
   player,
   isMe,
   isCurrentTurn,
+  visibleCardCount,
 }: PlayerSeatProps) {
   const style = {
     '--angle': `calc(360deg / ${totalPlayers} * ${seatIndex})`,
   } as React.CSSProperties;
 
+  const showCount = visibleCardCount ?? 2;
+
   const content = (
     <Card
       className={cn(
-        'w-28 p-2 space-y-1',
-        isCurrentTurn && 'ring-2 ring-primary',
+        'w-28 p-2 space-y-1 transition-shadow duration-300',
+        isCurrentTurn && 'ring-2 ring-primary shadow-[0_0_14px_3px] shadow-primary/50',
         !player.isAlive && 'opacity-50'
       )}
     >
       <div className="flex items-center gap-1">
-        <p className="text-xs font-semibold truncate flex-1">{player.nickname}</p>
+        <p className={cn('text-xs font-semibold truncate flex-1', isCurrentTurn && 'text-primary')}>
+          {player.nickname}
+        </p>
         {player.isDealer && (
           <Badge variant="outline" className="text-xs px-1 py-0 shrink-0">
             선
           </Badge>
         )}
-        {!player.isAlive && (
+        {player.isAbsent && (
+          <Badge variant="secondary" className="text-xs px-1 py-0 shrink-0">
+            자리비움
+          </Badge>
+        )}
+        {!player.isAlive && !player.isAbsent && (
           <Badge variant="destructive" className="text-xs px-1 py-0 shrink-0">
             다이
           </Badge>
@@ -48,13 +60,25 @@ export function PlayerSeat({
 
       {player.cards.length > 0 && (
         <div className="flex gap-1">
-          {player.cards.map((card, idx) =>
-            isMe ? (
-              <CardFace key={idx} card={card} />
-            ) : (
-              <CardBack key={idx} />
-            )
-          )}
+          {[0, 1].map((idx) => {
+            const visible = idx < showCount;
+            const card = player.cards[idx];
+            return (
+              <div
+                key={idx}
+                className={cn(
+                  'transition-opacity duration-300',
+                  visible ? 'opacity-100' : 'opacity-0'
+                )}
+              >
+                {isMe && card ? (
+                  <CardFace card={card} className="w-10 h-14 text-sm" />
+                ) : (
+                  <CardBack className="w-10 h-14" />
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
