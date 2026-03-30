@@ -151,6 +151,18 @@ export function RoomPage() {
       }
     }
 
+    // 인디언 모드: betting-1 → betting-2 (dealing-extra는 서버 자동처리로 클라이언트에 안 보임)
+    // visibleCardCounts가 1로 묶여 있으므로 2번째 카드가 보이도록 2로 업데이트
+    if (prevPhaseRef.current === 'betting-1' && gameState?.phase === 'betting-2') {
+      if (gameState.mode === 'indian') {
+        const counts: Record<string, number> = {};
+        gameState.players.forEach(p => { counts[p.id] = 2; });
+        setVisibleCardCounts(counts);
+        prevPhaseRef.current = gameState.phase;
+        return;
+      }
+    }
+
     // 세장섯다: betting-1 → card-select 전환 시 3번째 카드 모달 표시 + visibleCardCounts 3장으로 업데이트
     if (prevPhaseRef.current === 'betting-1' && gameState?.phase === 'card-select') {
       setShowExtraCardConfirm(true);

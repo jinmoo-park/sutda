@@ -43,6 +43,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
             isMe={p.id === myPlayerId}
             isCurrentTurn={i === currentPlayerIndex}
             visibleCardCount={visibleCardCounts?.[p.id]}
+            mode={mode}
           />
         ))}
       </div>

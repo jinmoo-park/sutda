@@ -21,18 +21,12 @@ export function GollaSelectModal({ open, roomId }: GollaSelectModalProps) {
 
   const openDeck = gameState?.gollaOpenDeck ?? [];
 
-  // 타인이 이미 선택한 카드 인덱스 — 서버가 game-state를 갱신하면 players.cards로 파악 가능하지만
-  // 골라골라 선택 중에는 서버가 선택 완료된 플레이어 cards를 채워 줌.
-  // 단순화: 모든 플레이어 cards의 카드를 openDeck 인덱스로 역추적하여 takenIndices 구성.
+  // 타인이 이미 선택한 카드 인덱스 — 서버가 gollaPlayerIndices에 확정 인덱스를 기록하므로 정확히 추적
   const takenByOthers = new Set<number>();
-  if (gameState) {
-    for (const p of gameState.players) {
-      if (p.id === myPlayerId) continue;
-      for (const card of p.cards) {
-        const idx = openDeck.findIndex(
-          (c, i) => c.rank === card.rank && c.type === card.type && !takenByOthers.has(i)
-        );
-        if (idx >= 0) takenByOthers.add(idx);
+  if (gameState?.gollaPlayerIndices) {
+    for (const [pid, indices] of Object.entries(gameState.gollaPlayerIndices)) {
+      if (pid !== myPlayerId) {
+        indices.forEach(i => takenByOthers.add(i));
       }
     }
   }
@@ -69,6 +63,9 @@ export function GollaSelectModal({ open, roomId }: GollaSelectModalProps) {
   // phase가 gollagolla-select를 벗어나면(betting으로 전환) 상태 리셋
   // (open prop이 false가 되므로 별도 리셋 불필요)
 
+  // 확정된 내 선택 인덱스 — 서버 confirmed면 gollaPlayerIndices 사용, 아니면 로컬 pendingIndices
+  const myConfirmedIndices = gameState?.gollaPlayerIndices?.[myPlayerId ?? ''];
+
   const selectedCount = alreadyDone ? 2 : pendingIndices.length;
 
   return (
@@ -88,9 +85,9 @@ export function GollaSelectModal({ open, roomId }: GollaSelectModalProps) {
         <div className="grid grid-cols-5 gap-2 mt-2">
           {openDeck.map((card, idx) => {
             const isTakenByOther = takenByOthers.has(idx);
-            const isMyPick = pendingIndices.includes(idx) || (alreadyDone && myPlayer?.cards.some(
-              c => c.rank === card.rank && c.type === card.type
-            ));
+            const isMyPick = myConfirmedIndices
+              ? (myConfirmedIndices[0] === idx || myConfirmedIndices[1] === idx)
+              : pendingIndices.includes(idx);
             const disabled = isTakenByOther || alreadyDone || submitted;
 
             return (

@@ -486,6 +486,8 @@ export class GameEngine {
     // 선택 확정
     this._gollaSelectedIndices.set(playerId, cardIndices);
     player.cards = [openDeck[cardIndices[0]], openDeck[cardIndices[1]]];
+    if (!this.state.gollaPlayerIndices) this.state.gollaPlayerIndices = {};
+    this.state.gollaPlayerIndices[playerId] = cardIndices;
 
     // 모든 생존자 선택 완료 확인
     const alivePlayers = this.state.players.filter(p => p.isAlive);
@@ -840,6 +842,7 @@ export class GameEngine {
     this.state.players.forEach(p => { p.cards = []; });
     // 골라 선택 인덱스 초기화
     this._gollaSelectedIndices = new Map();
+    this.state.gollaPlayerIndices = {};
     this.state.phase = 'gollagolla-select';
   }
 

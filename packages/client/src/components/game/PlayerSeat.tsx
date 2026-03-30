@@ -1,4 +1,4 @@
-import type { PlayerState } from '@sutda/shared';
+import type { PlayerState, GameMode } from '@sutda/shared';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { CardFace } from './CardFace';
@@ -13,6 +13,7 @@ interface PlayerSeatProps {
   isCurrentTurn: boolean;
   /** 딜링 애니메이션용: 보여줄 카드 수 (undefined = 전부) */
   visibleCardCount?: number;
+  mode?: GameMode;
 }
 
 export function PlayerSeat({
@@ -22,6 +23,7 @@ export function PlayerSeat({
   isMe,
   isCurrentTurn,
   visibleCardCount,
+  mode,
 }: PlayerSeatProps) {
   const style = {
     '--angle': `calc(360deg / ${totalPlayers} * ${seatIndex})`,
@@ -72,7 +74,7 @@ export function PlayerSeat({
                   visible ? 'opacity-100' : 'opacity-0'
                 )}
               >
-                {isMe && card ? (
+                {card !== null && (isMe || mode === 'indian') ? (
                   <CardFace card={card} className="w-10 h-14 text-sm" />
                 ) : (
                   <CardBack className="w-10 h-14" />
