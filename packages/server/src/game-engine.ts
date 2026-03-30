@@ -1234,6 +1234,7 @@ export class GameEngine {
     // 생존자가 1명(상대 전원 다이) → 공개 선택 완료, 즉시 정산
     if (alivePlayers.length === 1) {
       this.settleChips();
+      this._settleTtaengValue();  // 오리지날 모드: 땡값 정산 (상대 전원 다이 후 공개)
       this.state.phase = 'result';
       return;
     }
