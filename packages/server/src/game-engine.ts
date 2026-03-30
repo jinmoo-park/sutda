@@ -505,6 +505,68 @@ export class GameEngine {
   }
 
   /**
+   * 골라골라 카드 한 장씩 예약 (선착순 per-card 방식)
+   * - reserve=true: 해당 인덱스를 임시 예약 (타인이 이미 예약/확정했으면 CARD_ALREADY_TAKEN)
+   * - reserve=false: 예약 취소
+   * - 내 예약이 2장이 되면 selectGollaCards 자동 호출하여 확정
+   */
+  reserveGollaCard(playerId: string, cardIndex: number, reserve: boolean): void {
+    this.assertPhase('gollagolla-select');
+
+    const player = this.state.players.find(p => p.id === playerId);
+    if (!player || !player.isAlive) throw new Error('INVALID_ACTION');
+    if (player.cards.length >= 2) throw new Error('ALREADY_ATTENDED');
+
+    const openDeck = this.state.gollaOpenDeck;
+    if (!openDeck || cardIndex < 0 || cardIndex >= openDeck.length) throw new Error('INVALID_ACTION');
+
+    const mySlots = this._gollaReservedSlots.get(playerId) ?? [];
+
+    if (!reserve) {
+      this._gollaReservedSlots.set(playerId, mySlots.filter(i => i !== cardIndex));
+      this._syncGollaReservedState();
+      return;
+    }
+
+    if (mySlots.includes(cardIndex)) return; // 이미 예약됨, 무시
+    if (mySlots.length >= 2) throw new Error('INVALID_ACTION');
+
+    // 타인의 예약 + 확정 인덱스 수집
+    const takenByOthers = new Set<number>();
+    if (this._gollaSelectedIndices) {
+      for (const [pid, indices] of this._gollaSelectedIndices.entries()) {
+        if (pid !== playerId) indices.forEach(i => takenByOthers.add(i));
+      }
+    }
+    for (const [pid, indices] of this._gollaReservedSlots.entries()) {
+      if (pid !== playerId) indices.forEach(i => takenByOthers.add(i));
+    }
+
+    if (takenByOthers.has(cardIndex)) throw new Error('CARD_ALREADY_TAKEN');
+
+    const newSlots = [...mySlots, cardIndex];
+    this._gollaReservedSlots.set(playerId, newSlots);
+
+    if (newSlots.length === 2) {
+      // 2장 예약 완료 → 자동 확정
+      this._gollaReservedSlots.delete(playerId);
+      this._syncGollaReservedState();
+      this.selectGollaCards(playerId, [newSlots[0], newSlots[1]] as [number, number]);
+      return;
+    }
+
+    this._syncGollaReservedState();
+  }
+
+  private _syncGollaReservedState(): void {
+    const reserved: Record<string, number[]> = {};
+    for (const [pid, indices] of this._gollaReservedSlots.entries()) {
+      if (indices.length > 0) reserved[pid] = [...indices];
+    }
+    this.state.gollaReservedIndices = reserved;
+  }
+
+  /**
    * 인디언섯다 2번째 카드 배분 — 서버 자동 처리 (betting-1 종료 시)
    * dealing-extra phase로 전환된 후 소켓 핸들러에서 호출
    */
@@ -842,7 +904,9 @@ export class GameEngine {
     this.state.players.forEach(p => { p.cards = []; });
     // 골라 선택 인덱스 초기화
     this._gollaSelectedIndices = new Map();
+    this._gollaReservedSlots = new Map();
     this.state.gollaPlayerIndices = {};
+    this.state.gollaReservedIndices = {};
     this.state.phase = 'gollagolla-select';
   }
 
@@ -949,6 +1013,7 @@ export class GameEngine {
    * 골라골라 모드: 각 플레이어가 선택한 gollaOpenDeck 인덱스 추적
    */
   private _gollaSelectedIndices: Map<string, [number, number]> | null = null;
+  private _gollaReservedSlots: Map<string, number[]> = new Map();
 
   /**
    * 베팅 액션 처리 (콜/레이즈/다이/체크)

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import {
   Dialog,
@@ -16,57 +16,66 @@ interface GollaSelectModalProps {
 
 export function GollaSelectModal({ open, roomId }: GollaSelectModalProps) {
   const { socket, gameState, myPlayerId } = useGameStore();
-  const [pendingIndices, setPendingIndices] = useState<number[]>([]);
-  const [submitted, setSubmitted] = useState(false);
+  // 낙관적 로컬 선택 상태 (서버 응답 전 즉각적인 UI 피드백용)
+  const [myPicks, setMyPicks] = useState<number[]>([]);
 
   const openDeck = gameState?.gollaOpenDeck ?? [];
 
-  // 타인이 이미 선택한 카드 인덱스 — 서버가 gollaPlayerIndices에 확정 인덱스를 기록하므로 정확히 추적
+  const myConfirmedIndices = gameState?.gollaPlayerIndices?.[myPlayerId ?? ''];
+  const alreadyDone = !!myConfirmedIndices;
+
+  // 모달이 열릴 때 로컬 선택 초기화
+  useEffect(() => {
+    if (open) setMyPicks([]);
+  }, [open]);
+
+  // 에러 수신 시 로컬 선택 롤백 (서버 예약 상태로 복원)
+  useEffect(() => {
+    if (!socket) return;
+    const handleError = ({ code }: { code: string }) => {
+      if (code === 'CARD_ALREADY_TAKEN') {
+        const serverReserved = gameState?.gollaReservedIndices?.[myPlayerId ?? ''] ?? [];
+        setMyPicks(serverReserved);
+      }
+    };
+    socket.on('game-error', handleError);
+    return () => { socket.off('game-error', handleError); };
+  }, [socket, gameState, myPlayerId]);
+
+  // 타인이 예약/확정한 인덱스 집합 (서버 상태 기준)
   const takenByOthers = new Set<number>();
   if (gameState?.gollaPlayerIndices) {
     for (const [pid, indices] of Object.entries(gameState.gollaPlayerIndices)) {
-      if (pid !== myPlayerId) {
-        indices.forEach(i => takenByOthers.add(i));
-      }
+      if (pid !== myPlayerId) indices.forEach(i => takenByOthers.add(i));
+    }
+  }
+  if (gameState?.gollaReservedIndices) {
+    for (const [pid, indices] of Object.entries(gameState.gollaReservedIndices)) {
+      if (pid !== myPlayerId) indices.forEach(i => takenByOthers.add(i));
     }
   }
 
-  // 내가 이미 서버에 확정 제출했는지 (myPlayer.cards.length >= 2)
-  const myPlayer = gameState?.players.find(p => p.id === myPlayerId);
-  const alreadyDone = (myPlayer?.cards.length ?? 0) >= 2;
-
   const handleCardClick = (idx: number) => {
-    if (alreadyDone || submitted) return;
+    if (alreadyDone) return;
     if (takenByOthers.has(idx)) return;
 
-    // 새 선택 목록 계산 (state updater 밖에서 — StrictMode 이중 호출로 인한 emit 중복 방지)
-    let newIndices: number[];
-    if (pendingIndices.includes(idx)) {
-      newIndices = pendingIndices.filter(i => i !== idx);
-    } else if (pendingIndices.length >= 2) {
-      return;
-    } else {
-      newIndices = [...pendingIndices, idx];
-    }
-
-    setPendingIndices(newIndices);
-
-    if (newIndices.length === 2) {
-      setSubmitted(true);
-      socket?.emit('select-gollagolla-cards', {
-        roomId,
-        cardIndices: [newIndices[0], newIndices[1]] as [number, number],
-      });
+    if (myPicks.includes(idx)) {
+      // 예약 취소
+      setMyPicks(prev => prev.filter(i => i !== idx));
+      socket?.emit('reserve-gollagolla-card', { roomId, cardIndex: idx, reserve: false });
+    } else if (myPicks.length < 2) {
+      // 예약 추가 (낙관적)
+      setMyPicks(prev => [...prev, idx]);
+      socket?.emit('reserve-gollagolla-card', { roomId, cardIndex: idx, reserve: true });
     }
   };
 
-  // phase가 gollagolla-select를 벗어나면(betting으로 전환) 상태 리셋
-  // (open prop이 false가 되므로 별도 리셋 불필요)
+  // 표시용 선택 상태: 확정됐으면 서버 기준, 아니면 로컬 낙관적 상태
+  const displayPicks = alreadyDone
+    ? [myConfirmedIndices[0], myConfirmedIndices[1]]
+    : myPicks;
 
-  // 확정된 내 선택 인덱스 — 서버 confirmed면 gollaPlayerIndices 사용, 아니면 로컬 pendingIndices
-  const myConfirmedIndices = gameState?.gollaPlayerIndices?.[myPlayerId ?? ''];
-
-  const selectedCount = alreadyDone ? 2 : pendingIndices.length;
+  const selectedCount = displayPicks.length;
 
   return (
     <Dialog open={open}>
@@ -80,15 +89,13 @@ export function GollaSelectModal({ open, roomId }: GollaSelectModalProps) {
         <p className="text-sm text-muted-foreground text-center">
           {alreadyDone
             ? '선택 완료! 다른 플레이어를 기다리는 중…'
-            : `2장을 선택하세요 (${selectedCount}/2)`}
+            : `2장을 선택하세요 (${selectedCount}/2) — 클릭하면 즉시 예약, 다시 클릭하면 취소`}
         </p>
         <div className="grid grid-cols-5 gap-2 mt-2">
-          {openDeck.map((card, idx) => {
+          {openDeck.map((_card, idx) => {
             const isTakenByOther = takenByOthers.has(idx);
-            const isMyPick = myConfirmedIndices
-              ? (myConfirmedIndices[0] === idx || myConfirmedIndices[1] === idx)
-              : pendingIndices.includes(idx);
-            const disabled = isTakenByOther || alreadyDone || submitted;
+            const isMyPick = displayPicks.includes(idx);
+            const disabled = isTakenByOther || alreadyDone;
 
             return (
               <button
@@ -96,13 +103,13 @@ export function GollaSelectModal({ open, roomId }: GollaSelectModalProps) {
                 onClick={() => handleCardClick(idx)}
                 disabled={disabled}
                 className={cn(
-                  'rounded-md transition-opacity',
+                  'rounded-md transition-all',
                   isTakenByOther
                     ? 'opacity-30 cursor-not-allowed'
-                    : disabled
+                    : alreadyDone
                     ? 'cursor-not-allowed opacity-40'
                     : 'cursor-pointer hover:ring-2 hover:ring-primary',
-                  isMyPick && !isTakenByOther && 'ring-2 ring-primary opacity-100'
+                  isMyPick && !isTakenByOther && 'ring-2 ring-primary scale-105'
                 )}
               >
                 <CardBack />

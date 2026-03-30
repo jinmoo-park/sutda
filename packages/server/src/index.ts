@@ -325,6 +325,14 @@ io.on('connection', (socket) => {
     });
   });
 
+  // reserve-gollagolla-card 핸들러 — 한 장씩 선착순 예약/취소 (2장 예약 시 자동 확정)
+  socket.on('reserve-gollagolla-card', ({ roomId, cardIndex, reserve }) => {
+    const playerId = socket.data.playerId;
+    handleGameAction(socket, roomId, () => {
+      getEngine(roomId).reserveGollaCard(playerId, cardIndex, reserve);
+    });
+  });
+
   // select-gollagolla-cards 핸들러 — 골라골라 선착순 카드 선택 (per D-02)
   socket.on('select-gollagolla-cards', ({ roomId, cardIndices }) => {
     const playerId = socket.data.playerId;

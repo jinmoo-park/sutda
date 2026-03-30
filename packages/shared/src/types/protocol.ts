@@ -48,6 +48,7 @@ export interface ClientToServerEvents {
   'select-cards': (data: { roomId: string; cardIndices: number[] }) => void;
   'set-shared-card': (data: { roomId: string; cardIndex: number }) => void;
   'select-gollagolla-cards': (data: { roomId: string; cardIndices: [number, number] }) => void;
+  'reserve-gollagolla-card': (data: { roomId: string; cardIndex: number; reserve: boolean }) => void;
   'start-rematch': (data: { roomId: string }) => void;
 }
 

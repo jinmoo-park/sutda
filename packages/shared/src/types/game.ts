@@ -89,5 +89,6 @@ export interface GameState {
   openingBettorSeatIndex?: number | null;  // 선 권한 보유자 seatIndex (null = 이미 행사됨)
   sharedCard?: Card;              // 한장공유: 공유 카드 (per D-05)
   gollaOpenDeck?: Card[];         // 골라골라: 공개된 20장 덱 (gollagolla-select phase에서 설정)
-  gollaPlayerIndices?: Record<string, [number, number]>;  // 골라골라: 각 플레이어가 선택한 openDeck 인덱스 (클라이언트 UI용)
+  gollaPlayerIndices?: Record<string, [number, number]>;  // 골라골라: 각 플레이어가 확정 선택한 openDeck 인덱스
+  gollaReservedIndices?: Record<string, number[]>;         // 골라골라: 각 플레이어가 임시 예약 중인 인덱스 (0~1개)
 }
