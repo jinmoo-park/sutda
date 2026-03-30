@@ -1623,3 +1623,435 @@ describe('땡값 정산 (_settleTtaengValue)', () => {
     expect(state.ttaengPayments).toBeUndefined();
   });
 });
+
+// ============================================================
+// 구사 재경기 (gusa-pending) FSM — Phase 09-01 Task 2
+// ============================================================
+
+describe('구사 재경기 (gusa-pending)', () => {
+  let players3: RoomPlayer[];
+
+  beforeEach(() => {
+    players3 = Array.from({ length: 3 }, (_, i) => ({
+      id: `player-${i}`,
+      nickname: `Player${i}`,
+      chips: 100000,
+      seatIndex: i,
+      isConnected: true,
+    }));
+  });
+
+  /** 쇼다운 직전까지 진행하는 헬퍼 (3인, 카드 세팅은 이 함수 호출 후 직접) */
+  function setupShowdownFor3(engine: GameEngine): void {
+    // 직접 showdown phase로 강제 설정 (betting 순서 복잡성 우회)
+    const state = engine.getState() as GameState;
+    state.phase = 'showdown';
+    state.players.forEach(p => { p.isAlive = true; p.isRevealed = false; p.cards = []; });
+  }
+
+  it('일반 구사 + 생존자 최고패 알리 이하 → phase=gusa-pending (RULE-01)', () => {
+    const players4gusa = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`, nickname: `Player${i}`, chips: 100000, seatIndex: i, isConnected: true,
+    }));
+    const engine = new GameEngine('room1', players4gusa, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'showdown';
+    // player-0: 4(일반)+9(일반) = 일반 구사, isGusa=true
+    state.players[0].cards = [{ rank: 4, attribute: 'normal' }, { rank: 9, attribute: 'normal' }];
+    state.players[0].isAlive = true;
+    state.players[1].cards = [{ rank: 1, attribute: 'gwang' }, { rank: 9, attribute: 'normal' }];  // 구삥 score=40 (알리=60 이하)
+    state.players[1].isAlive = true;
+    state.players[2].cards = [{ rank: 2, attribute: 'normal' }, { rank: 3, attribute: 'normal' }];  // 5끗
+    state.players[2].isAlive = true;
+    state.players[3].cards = [{ rank: 4, attribute: 'normal' }, { rank: 5, attribute: 'normal' }];
+    state.players[3].isAlive = false;  // 다이한 플레이어 → gusa-pending 필요
+    state.players.forEach(p => { p.isRevealed = false; });
+    engine.revealCard('player-0');
+    engine.revealCard('player-1');
+    engine.revealCard('player-2');
+    expect(state.phase).toBe('gusa-pending');
+  });
+
+  it('멍텅구리구사 + 생존자 최고패 팔땡 이하 → phase=gusa-pending (RULE-02)', () => {
+    const players4gusa = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`, nickname: `Player${i}`, chips: 100000, seatIndex: i, isConnected: true,
+    }));
+    const engine = new GameEngine('room1', players4gusa, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'showdown';
+    // player-0: 4(yeolkkeut)+9(yeolkkeut) = 멍텅구리구사, isMeongtteongguriGusa=true
+    state.players[0].cards = [{ rank: 4, attribute: 'yeolkkeut' }, { rank: 9, attribute: 'yeolkkeut' }];
+    state.players[0].isAlive = true;
+    state.players[1].cards = [{ rank: 5, attribute: 'normal' }, { rank: 5, attribute: 'normal' }];  // 오땡 score=1005 (팔땡=1008 이하)
+    state.players[1].isAlive = true;
+    state.players[2].cards = [{ rank: 2, attribute: 'normal' }, { rank: 3, attribute: 'normal' }];
+    state.players[2].isAlive = true;
+    state.players[3].cards = [{ rank: 4, attribute: 'normal' }, { rank: 5, attribute: 'normal' }];
+    state.players[3].isAlive = false;  // 다이한 플레이어
+    state.players.forEach(p => { p.isRevealed = false; });
+    engine.revealCard('player-0');
+    engine.revealCard('player-1');
+    engine.revealCard('player-2');
+    expect(state.phase).toBe('gusa-pending');
+  });
+
+  it('구사 트리거 시 gusaPendingDecisions에 다이한 플레이어만 포함 (null=미결정)', () => {
+    const players4 = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`,
+      nickname: `Player${i}`,
+      chips: 100000,
+      seatIndex: i,
+      isConnected: true,
+    }));
+    const engine = new GameEngine('room1', players4, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'showdown';
+    // player-0: 일반 구사(alive), player-1: 죽은 플레이어, player-2: 구삥(alive), player-3: 죽은 플레이어
+    state.players[0].cards = [{ rank: 4, attribute: 'normal' }, { rank: 9, attribute: 'normal' }];
+    state.players[0].isAlive = true;
+    state.players[1].cards = [{ rank: 2, attribute: 'normal' }, { rank: 3, attribute: 'normal' }];
+    state.players[1].isAlive = false;  // 다이한 플레이어
+    state.players[2].cards = [{ rank: 1, attribute: 'gwang' }, { rank: 9, attribute: 'normal' }];  // 구삥 (alive, score=40, 알리=60 이하)
+    state.players[2].isAlive = true;
+    state.players[3].cards = [{ rank: 4, attribute: 'normal' }, { rank: 5, attribute: 'normal' }];
+    state.players[3].isAlive = false;  // 다이한 플레이어
+    state.players.forEach(p => { p.isRevealed = false; });
+    engine.revealCard('player-0');
+    engine.revealCard('player-2');
+
+    expect(state.phase).toBe('gusa-pending');
+    expect(state.gusaPendingDecisions).toBeDefined();
+    // player-1, player-3(다이)만 포함
+    expect('player-1' in state.gusaPendingDecisions!).toBe(true);
+    expect('player-3' in state.gusaPendingDecisions!).toBe(true);
+    expect(state.gusaPendingDecisions!['player-1']).toBeNull();
+    expect(state.gusaPendingDecisions!['player-3']).toBeNull();
+    // 살아있는 player-2는 포함되지 않음
+    expect('player-2' in state.gusaPendingDecisions!).toBe(false);
+  });
+
+  it('다이 플레이어 0명 시 → 즉시 shuffling (gusa-pending 거치지 않고)', () => {
+    const engine = new GameEngine('room1', players3, 'original', 2);
+    setupShowdownFor3(engine);
+    const state = engine.getState() as GameState;
+    // 모두 alive인 상태에서 구사 트리거
+    state.players[0].cards = [{ rank: 4, attribute: 'normal' }, { rank: 9, attribute: 'normal' }];
+    state.players[1].cards = [{ rank: 1, attribute: 'gwang' }, { rank: 9, attribute: 'normal' }];  // 구삥
+    state.players[2].cards = [{ rank: 2, attribute: 'normal' }, { rank: 3, attribute: 'normal' }];
+    // 모두 alive (다이 없음)
+    state.players.forEach(p => { p.isAlive = true; });
+    engine.revealCard('player-0');
+    engine.revealCard('player-1');
+    engine.revealCard('player-2');
+    // 다이 플레이어 없으면 즉시 shuffling
+    expect(state.phase).toBe('shuffling');
+  });
+
+  it('recordGusaRejoinDecision(playerId, true) → gusaPendingDecisions[playerId]=true', () => {
+    const engine = new GameEngine('room1', players3, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'gusa-pending';
+    state.gusaPendingDecisions = { 'player-1': null, 'player-2': null };
+
+    engine.recordGusaRejoinDecision('player-1', true);
+
+    expect(state.gusaPendingDecisions['player-1']).toBe(true);
+  });
+
+  it('recordGusaRejoinDecision(playerId, true) → player.chips -= pot/2, pot += pot/2, player.isAlive=true', () => {
+    const engine = new GameEngine('room1', players3, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'gusa-pending';
+    state.pot = 10000;
+    state.players[1].isAlive = false;
+    state.players[1].chips = 50000;
+    // player-2도 미결정 상태로 (모두 결정 완료 방지)
+    state.gusaPendingDecisions = { 'player-1': null, 'player-2': null };
+
+    engine.recordGusaRejoinDecision('player-1', true);
+
+    expect(state.players[1].chips).toBe(50000 - 5000);  // 5000 차감
+    expect(state.pot).toBe(10000 + 5000);                // 15000
+    expect(state.players[1].isAlive).toBe(true);
+  });
+
+  it('recordGusaRejoinDecision(playerId, false) → gusaPendingDecisions[playerId]=false, isAlive 변경 없음', () => {
+    const engine = new GameEngine('room1', players3, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'gusa-pending';
+    state.pot = 10000;
+    state.players[1].isAlive = false;
+    state.players[1].chips = 50000;
+    state.gusaPendingDecisions = { 'player-1': null, 'player-2': null };
+
+    engine.recordGusaRejoinDecision('player-1', false);
+
+    expect(state.gusaPendingDecisions['player-1']).toBe(false);
+    expect(state.players[1].isAlive).toBe(false);   // 변경 없음
+    expect(state.players[1].chips).toBe(50000);     // chips 변화 없음
+  });
+
+  it('잔액 부족 플레이어가 join=true → 자동 거절 처리 (false로 기록)', () => {
+    const engine = new GameEngine('room1', players3, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'gusa-pending';
+    state.pot = 20000;  // 절반 = 10000
+    state.players[1].isAlive = false;
+    state.players[1].chips = 3000;  // 10000 미만
+    state.gusaPendingDecisions = { 'player-1': null, 'player-2': null };
+
+    engine.recordGusaRejoinDecision('player-1', true);
+
+    expect(state.gusaPendingDecisions['player-1']).toBe(false);  // 자동 거절
+    expect(state.players[1].isAlive).toBe(false);
+    expect(state.players[1].chips).toBe(3000);  // 변화 없음
+  });
+
+  it('모든 결정 수집 완료 → startGusaRematch() 자동 호출 → phase=shuffling', () => {
+    const engine = new GameEngine('room1', players3, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'gusa-pending';
+    state.pot = 10000;
+    state.players[0].isAlive = true;  // 생존자
+    state.players[0].isDealer = true;
+    state.players[1].isAlive = false;
+    state.players[1].chips = 50000;
+    state.players[2].isAlive = false;
+    state.players[2].chips = 50000;
+    state.rematchDealerId = 'player-0';
+    state.gusaPendingDecisions = { 'player-1': null, 'player-2': null };
+
+    // player-2 먼저 결정
+    engine.recordGusaRejoinDecision('player-2', false);
+    expect(state.phase).toBe('gusa-pending');  // 아직 미완료
+
+    // player-1 결정 → 모두 완료 → shuffling
+    engine.recordGusaRejoinDecision('player-1', false);
+    expect(state.phase).toBe('shuffling');
+  });
+
+  it('startGusaRematch(): 기존 모드(mode) 유지됨', () => {
+    const engine = new GameEngine('room1', players3, 'three-card', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'gusa-pending';
+    state.mode = 'three-card';
+    state.pot = 10000;
+    state.players[0].isAlive = true;
+    state.players[0].isDealer = true;
+    state.players[1].isAlive = false;
+    state.players[1].chips = 50000;
+    state.rematchDealerId = 'player-0';
+    state.gusaPendingDecisions = { 'player-1': null };
+
+    engine.recordGusaRejoinDecision('player-1', false);
+
+    expect(state.phase).toBe('shuffling');
+    expect(state.mode).toBe('three-card');  // mode 유지
+  });
+
+  it('startGusaRematch(): rematchDealerId(구사 보유자)가 dealer로 설정됨', () => {
+    const engine = new GameEngine('room1', players3, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'gusa-pending';
+    state.pot = 10000;
+    state.players[0].isAlive = true;
+    state.players[1].isAlive = false;
+    state.players[1].chips = 50000;
+    state.players[2].isAlive = true;
+    state.rematchDealerId = 'player-2';  // 구사 보유자
+    state.gusaPendingDecisions = { 'player-1': null };
+
+    engine.recordGusaRejoinDecision('player-1', false);
+
+    const dealer = state.players.find(p => p.isDealer);
+    expect(dealer).toBeDefined();
+    expect(dealer!.id).toBe('player-2');
+  });
+
+  it('startGusaRematch(): gusaPendingDecisions가 undefined로 초기화됨', () => {
+    const engine = new GameEngine('room1', players3, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'gusa-pending';
+    state.pot = 10000;
+    state.players[0].isAlive = true;
+    state.players[0].isDealer = true;
+    state.players[1].isAlive = false;
+    state.players[1].chips = 50000;
+    state.rematchDealerId = 'player-0';
+    state.gusaPendingDecisions = { 'player-1': null };
+
+    engine.recordGusaRejoinDecision('player-1', false);
+
+    expect(state.gusaPendingDecisions).toBeUndefined();
+  });
+
+  it('startGusaRematch(): 재참여 플레이어 isAlive=true, 거절 플레이어 isAlive=false', () => {
+    const players4 = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`,
+      nickname: `Player${i}`,
+      chips: 100000,
+      seatIndex: i,
+      isConnected: true,
+    }));
+    const engine = new GameEngine('room1', players4, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'gusa-pending';
+    state.pot = 10000;
+    state.players[0].isAlive = true;
+    state.players[0].isDealer = true;
+    state.players[1].isAlive = false;
+    state.players[1].chips = 50000;
+    state.players[2].isAlive = false;
+    state.players[2].chips = 50000;
+    state.players[3].isAlive = true;
+    state.rematchDealerId = 'player-0';
+    state.gusaPendingDecisions = { 'player-1': null, 'player-2': null };
+
+    engine.recordGusaRejoinDecision('player-1', true);  // 재참여
+    engine.recordGusaRejoinDecision('player-2', false); // 거절
+
+    expect(state.players[1].isAlive).toBe(true);   // 재참여 → alive
+    expect(state.players[2].isAlive).toBe(false);  // 거절 → dead
+  });
+
+  it('recordGusaRejoinDecision: gusa-pending이 아닌 phase → INVALID_PHASE 에러', () => {
+    const engine = new GameEngine('room1', players3, 'original', 2);
+    expect(() => engine.recordGusaRejoinDecision('player-0', true)).toThrow('INVALID_PHASE');
+  });
+
+  it('recordGusaRejoinDecision: gusaPendingDecisions에 없는 playerId → INVALID_ACTION 에러', () => {
+    const engine = new GameEngine('room1', players3, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'gusa-pending';
+    state.gusaPendingDecisions = { 'player-1': null };
+    expect(() => engine.recordGusaRejoinDecision('player-0', true)).toThrow('INVALID_ACTION');
+  });
+});
+
+describe('D-07 우선순위 (땡잡이/암행어사 vs 구사)', () => {
+  let players3: RoomPlayer[];
+
+  beforeEach(() => {
+    players3 = Array.from({ length: 3 }, (_, i) => ({
+      id: `player-${i}`,
+      nickname: `Player${i}`,
+      chips: 100000,
+      seatIndex: i,
+      isConnected: true,
+    }));
+  });
+
+  function setupShowdownFor3(engine: GameEngine): void {
+    const state = engine.getState() as GameState;
+    state.phase = 'showdown';
+    state.players.forEach(p => { p.isAlive = true; p.isRevealed = false; p.cards = []; });
+  }
+
+  it('D-07: 땡잡이 승리 + 일반 구사 보유자 → gusa-pending 없음 (구땡 이하를 이기므로 조건 불충족)', () => {
+    // 땡잡이가 승리하려면 상대방이 일땡~구땡이어야 함 (땡잡이는 구땡 이하에게 이김)
+    // 일반 구사 보유자도 있어야 하므로 4인 게임 필요
+    const players4d = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`, nickname: `Player${i}`, chips: 100000, seatIndex: i, isConnected: true,
+    }));
+    const engine = new GameEngine('room1', players4d, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'showdown';
+    // player-0: 땡잡이 (3일반+7일반, score=0, isSpecialBeater=true) → 일땡(1001)에게 이김
+    // player-1: 일반 구사 (4일반+9일반, isGusa=true, score=3끗) → alive
+    // player-2: 일땡 (1+1, score=1001) → alive: maxScore=1001, 알리=60 이상이므로 shouldRedeal=false!
+    // 사실 일반 구사 + maxScore=1001이면 shouldRedeal=false (알리 이하가 아님)
+    // 그러므로 일반 구사가 트리거되지 않아서 gusa-pending 없음
+    // 구사 트리거 조건: maxScore <= 60 (알리). player-2가 일땡(1001)이면 조건 불충족!
+    state.players[0].cards = [{ rank: 3, attribute: 'normal' }, { rank: 7, attribute: 'normal' }];
+    state.players[0].isAlive = true;
+    state.players[1].cards = [{ rank: 4, attribute: 'normal' }, { rank: 9, attribute: 'normal' }];
+    state.players[1].isAlive = true;
+    state.players[2].cards = [{ rank: 1, attribute: 'gwang' }, { rank: 1, attribute: 'normal' }];  // 일땡 score=1001
+    state.players[2].isAlive = true;
+    state.players[3].cards = [{ rank: 2, attribute: 'normal' }, { rank: 3, attribute: 'normal' }];
+    state.players[3].isAlive = false;  // 다이
+    state.players.forEach(p => { p.isRevealed = false; });
+    engine.revealCard('player-0');
+    engine.revealCard('player-1');
+    engine.revealCard('player-2');
+    // maxScore=1001 (일땡) > 60 (알리) → shouldRedeal=false → 구사 무시 → gusa-pending 없음
+    // 땡잡이가 일땡에게 이기므로 winner=player-0
+    expect(state.phase).not.toBe('gusa-pending');
+    expect(['result', 'rematch-pending', 'shuffling']).toContain(state.phase);
+  });
+
+  it('D-07: 땡잡이 승리 + 멍텅구리구사 → gusa-pending 트리거됨', () => {
+    // 땡잡이 + 멍텅구리구사 + 다이한 플레이어 있어야 gusa-pending 상태
+    const players4d = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`, nickname: `Player${i}`, chips: 100000, seatIndex: i, isConnected: true,
+    }));
+    const engine = new GameEngine('room1', players4d, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'showdown';
+    // player-0: 땡잡이 (3일반+7일반)
+    // player-1: 멍텅구리구사 (4yeolkkeut+9yeolkkeut)
+    // player-2: 오땡 (5+5, score=1005, 팔땡=1008 이하) → shouldRedeal=true
+    // player-3: 다이한 플레이어
+    state.players[0].cards = [{ rank: 3, attribute: 'normal' }, { rank: 7, attribute: 'normal' }];
+    state.players[0].isAlive = true;
+    state.players[1].cards = [{ rank: 4, attribute: 'yeolkkeut' }, { rank: 9, attribute: 'yeolkkeut' }];
+    state.players[1].isAlive = true;
+    state.players[2].cards = [{ rank: 5, attribute: 'normal' }, { rank: 5, attribute: 'normal' }];
+    state.players[2].isAlive = true;
+    state.players[3].cards = [{ rank: 2, attribute: 'normal' }, { rank: 5, attribute: 'normal' }];
+    state.players[3].isAlive = false;  // 다이한 플레이어 → gusa-pending 필요
+    state.players.forEach(p => { p.isRevealed = false; });
+    engine.revealCard('player-0');
+    engine.revealCard('player-1');
+    engine.revealCard('player-2');
+    // 땡잡이 + 멍텅구리구사 + 다이 있음 → gusa-pending 트리거됨
+    expect(state.phase).toBe('gusa-pending');
+  });
+
+  it('D-07: 암행어사 승리 + 구사/멍텅구리구사 → gusa-pending 없음', () => {
+    const engine = new GameEngine('room1', players3, 'original', 2);
+    setupShowdownFor3(engine);
+    const state = engine.getState() as GameState;
+    // player-0: 암행어사 (4yeolkkeut+7yeolkkeut, score=1, isSpecialBeater=true)
+    // player-1: 멍텅구리구사 (4yeolkkeut+9yeolkkeut)
+    // player-2: 오땡 (5+5)
+    state.players[0].cards = [{ rank: 4, attribute: 'yeolkkeut' }, { rank: 7, attribute: 'yeolkkeut' }];
+    state.players[1].cards = [{ rank: 4, attribute: 'yeolkkeut' }, { rank: 9, attribute: 'yeolkkeut' }];
+    state.players[2].cards = [{ rank: 5, attribute: 'normal' }, { rank: 5, attribute: 'normal' }];
+    engine.revealCard('player-0');
+    engine.revealCard('player-1');
+    engine.revealCard('player-2');
+    // 암행어사 → 모든 구사 무시
+    expect(state.phase).not.toBe('gusa-pending');
+  });
+
+  it('_resolveShowdownSejang에서도 gusa-pending으로 전환됨', () => {
+    const players4s = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`, nickname: `Player${i}`, chips: 100000, seatIndex: i, isConnected: true,
+    }));
+    const engine = new GameEngine('room1', players4s, 'three-card', 2);
+    const state = engine.getState() as GameState;
+    state.mode = 'three-card';
+    state.phase = 'showdown';
+    // player-0: 일반 구사 (alive)
+    state.players[0].cards = [{ rank: 4, attribute: 'normal' }, { rank: 9, attribute: 'normal' }];
+    state.players[0].isAlive = true;
+    state.players[0].selectedCards = [state.players[0].cards[0]!, state.players[0].cards[1]!];
+    // player-1: 구삥 (alive, score=40, 알리 이하)
+    state.players[1].cards = [{ rank: 1, attribute: 'gwang' }, { rank: 9, attribute: 'normal' }];
+    state.players[1].isAlive = true;
+    state.players[1].selectedCards = [state.players[1].cards[0]!, state.players[1].cards[1]!];
+    // player-2: 5끗 (alive)
+    state.players[2].cards = [{ rank: 2, attribute: 'normal' }, { rank: 3, attribute: 'normal' }];
+    state.players[2].isAlive = true;
+    state.players[2].selectedCards = [state.players[2].cards[0]!, state.players[2].cards[1]!];
+    // player-3: 다이한 플레이어
+    state.players[3].cards = [{ rank: 4, attribute: 'normal' }, { rank: 5, attribute: 'normal' }];
+    state.players[3].isAlive = false;
+    state.players.forEach(p => { p.isRevealed = false; });
+    engine.revealCard('player-0');
+    engine.revealCard('player-1');
+    engine.revealCard('player-2');
+    expect(state.phase).toBe('gusa-pending');
+  });
+});

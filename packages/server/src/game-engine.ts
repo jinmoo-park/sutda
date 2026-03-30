@@ -1289,30 +1289,39 @@ export class GameEngine {
 
     const allHands = hands.map(h => h.hand);
 
-    // 구사 재경기 체크 (구사 보유자가 선)
+    // 최강 패 먼저 계산 (D-07 구사 면제 판단용)
+    let best = hands[0];
+    let tiedPlayers = [hands[0]];
+    for (const h of hands.slice(1)) {
+      const result = compareHands(best.hand, h.hand);
+      if (result === 'b') { best = h; tiedPlayers = [h]; }
+      else if (result === 'tie') { tiedPlayers.push(h); }
+    }
+    const winnerHand = best.hand;
+
+    // 구사 재경기 체크 (구사 보유자가 선) — D-07 특수패 면제 포함
     for (const { player, hand } of hands) {
       if (hand.isGusa || hand.isMeongtteongguriGusa) {
         const { shouldRedeal } = checkGusaTrigger(hand, allHands);
         if (shouldRedeal) {
-          this.state.phase = 'rematch-pending';
-          this.state.tiedPlayerIds = alivePlayers.map(p => p.id);
+          // D-07: 특수패(땡잡이/암행어사) 승리 시 면제 체크
+          if (winnerHand.isSpecialBeater) {
+            if (winnerHand.score === 1) continue;  // 암행어사 → 모든 구사 무시
+            if (winnerHand.score === 0 && !hand.isMeongtteongguriGusa) continue;  // 땡잡이 + 일반구사 → 무시
+            // 땡잡이 + 멍텅구리구사 → 트리거됨 (아래로 진행)
+          }
           this.state.rematchDealerId = player.id;  // 구사 보유자가 재경기 선
+          const diedPlayers = this.state.players.filter(p => !p.isAlive);
+          if (diedPlayers.length === 0) {
+            this._startGusaRematchImmediate();
+          } else {
+            this.state.phase = 'gusa-pending';
+            this.state.gusaPendingDecisions = Object.fromEntries(
+              diedPlayers.map(p => [p.id, null])
+            );
+          }
           return;
         }
-      }
-    }
-
-    // 최강 패 찾기
-    let best = hands[0];
-    let tiedPlayers = [hands[0]];
-
-    for (const h of hands.slice(1)) {
-      const result = compareHands(best.hand, h.hand);
-      if (result === 'b') {
-        best = h;
-        tiedPlayers = [h];
-      } else if (result === 'tie') {
-        tiedPlayers.push(h);
       }
     }
 
@@ -1349,29 +1358,37 @@ export class GameEngine {
 
     const allHands = hands.map(h => h.hand);
 
-    // 구사 재경기 체크
+    // 최강 패 먼저 계산 (D-07 구사 면제 판단용)
+    let best = hands[0];
+    let tiedPlayers = [hands[0]];
+    for (const h of hands.slice(1)) {
+      const result = compareHands(best.hand, h.hand);
+      if (result === 'b') { best = h; tiedPlayers = [h]; }
+      else if (result === 'tie') { tiedPlayers.push(h); }
+    }
+    const winnerHand = best.hand;
+
+    // 구사 재경기 체크 — D-07 특수패 면제 포함
     for (const { player, hand } of hands) {
       if (hand.isGusa || hand.isMeongtteongguriGusa) {
         const { shouldRedeal } = checkGusaTrigger(hand, allHands);
         if (shouldRedeal) {
-          this.state.phase = 'rematch-pending';
-          this.state.tiedPlayerIds = alivePlayers.map(p => p.id);
+          if (winnerHand.isSpecialBeater) {
+            if (winnerHand.score === 1) continue;
+            if (winnerHand.score === 0 && !hand.isMeongtteongguriGusa) continue;
+          }
           this.state.rematchDealerId = player.id;
+          const diedPlayers = this.state.players.filter(p => !p.isAlive);
+          if (diedPlayers.length === 0) {
+            this._startGusaRematchImmediate();
+          } else {
+            this.state.phase = 'gusa-pending';
+            this.state.gusaPendingDecisions = Object.fromEntries(
+              diedPlayers.map(p => [p.id, null])
+            );
+          }
           return;
         }
-      }
-    }
-
-    let best = hands[0];
-    let tiedPlayers = [hands[0]];
-
-    for (const h of hands.slice(1)) {
-      const result = compareHands(best.hand, h.hand);
-      if (result === 'b') {
-        best = h;
-        tiedPlayers = [h];
-      } else if (result === 'tie') {
-        tiedPlayers.push(h);
       }
     }
 
@@ -1400,29 +1417,37 @@ export class GameEngine {
 
     const allHands = hands.map(h => h.hand);
 
-    // 구사 재경기 체크
+    // 최강 패 먼저 계산 (D-07 구사 면제 판단용)
+    let best = hands[0];
+    let tiedPlayers = [hands[0]];
+    for (const h of hands.slice(1)) {
+      const result = compareHands(best.hand, h.hand);
+      if (result === 'b') { best = h; tiedPlayers = [h]; }
+      else if (result === 'tie') { tiedPlayers.push(h); }
+    }
+    const winnerHand = best.hand;
+
+    // 구사 재경기 체크 — D-07 특수패 면제 포함
     for (const { player, hand } of hands) {
       if (hand.isGusa || hand.isMeongtteongguriGusa) {
         const { shouldRedeal } = checkGusaTrigger(hand, allHands);
         if (shouldRedeal) {
-          this.state.phase = 'rematch-pending';
-          this.state.tiedPlayerIds = alivePlayers.map(p => p.id);
+          if (winnerHand.isSpecialBeater) {
+            if (winnerHand.score === 1) continue;
+            if (winnerHand.score === 0 && !hand.isMeongtteongguriGusa) continue;
+          }
           this.state.rematchDealerId = player.id;
+          const diedPlayers = this.state.players.filter(p => !p.isAlive);
+          if (diedPlayers.length === 0) {
+            this._startGusaRematchImmediate();
+          } else {
+            this.state.phase = 'gusa-pending';
+            this.state.gusaPendingDecisions = Object.fromEntries(
+              diedPlayers.map(p => [p.id, null])
+            );
+          }
           return;
         }
-      }
-    }
-
-    let best = hands[0];
-    let tiedPlayers = [hands[0]];
-
-    for (const h of hands.slice(1)) {
-      const result = compareHands(best.hand, h.hand);
-      if (result === 'b') {
-        best = h;
-        tiedPlayers = [h];
-      } else if (result === 'tie') {
-        tiedPlayers.push(h);
       }
     }
 
@@ -1493,6 +1518,99 @@ export class GameEngine {
     (this.state as any).sharedCard = undefined;  // 한장공유: 이전 공유카드 초기화
     this.state.mode = 'original';
     this.state.phase = 'shuffling';
+  }
+
+  /**
+   * 구사 재경기 대기 중 플레이어의 재참여 결정 처리 (gusa-pending phase에서만 가능)
+   * - join=true이고 chips >= pot/2 → 재참여 승인: chips 차감, isAlive=true, pot 증가
+   * - join=true이고 chips < pot/2 → 자동 거절 처리
+   * - 모든 결정 수집 완료 시 → _startGusaRematch() 자동 호출
+   */
+  recordGusaRejoinDecision(playerId: string, join: boolean): void {
+    if (this.state.phase !== 'gusa-pending') {
+      throw new Error('INVALID_PHASE');
+    }
+
+    const decisions = this.state.gusaPendingDecisions;
+    if (!decisions || !(playerId in decisions)) {
+      throw new Error('INVALID_ACTION');
+    }
+
+    const player = this.state.players.find(p => p.id === playerId);
+    if (!player) throw new Error('INVALID_ACTION');
+
+    const halfPot = Math.floor(this.state.pot / 2);
+
+    // 잔액 부족 시 자동 거절
+    if (join && player.chips < halfPot) {
+      join = false;
+    }
+
+    if (join) {
+      player.chips -= halfPot;
+      this.state.pot += halfPot;
+      player.isAlive = true;
+    }
+
+    decisions[playerId] = join;
+
+    // 모든 결정 수집 완료 여부 확인
+    const allDecided = Object.values(decisions).every(v => v !== null);
+    if (allDecided) {
+      this._startGusaRematch();
+    }
+  }
+
+  /**
+   * 구사 재경기 시작 — gusaPendingDecisions 결과에 따라 참여자 확정 후 shuffling 전환
+   * startRematch()와 달리 mode를 변경하지 않음
+   */
+  private _startGusaRematch(): void {
+    // 결정 정리: gusaPendingDecisions에서 false인 플레이어는 isAlive=false 유지
+    // (true인 플레이어는 recordGusaRejoinDecision에서 이미 isAlive=true로 설정됨)
+    this.state.gusaPendingDecisions = undefined;
+
+    // 카드/베팅 상태 초기화
+    this.state.players.forEach(p => {
+      p.cards = [];
+      p.isRevealed = false;
+      p.currentBet = 0;
+      p.lastBetAction = undefined;
+      (p as any).selectedCards = undefined;
+    });
+
+    // 새 덱 생성
+    this.state.deck = createDeck();
+
+    // 베팅 상태 초기화
+    this.state.currentBetAmount = 0;
+    this._bettingActed = new Set();
+
+    // dealer: 구사 보유자(rematchDealerId)를 dealer로 설정
+    const dealerId = this.state.rematchDealerId;
+    this.state.players.forEach(p => { p.isDealer = false; });
+    if (dealerId) {
+      const dealer = this.state.players.find(p => p.id === dealerId);
+      if (dealer) {
+        dealer.isDealer = true;
+        this.state.currentPlayerIndex = dealer.seatIndex;
+      }
+    }
+
+    this.state.rematchDealerId = undefined;
+
+    // 공유 카드 초기화
+    (this.state as any).sharedCard = undefined;
+
+    // mode 유지 (startRematch와의 핵심 차이)
+    this.state.phase = 'shuffling';
+  }
+
+  /**
+   * 다이 플레이어 0명 시 즉시 구사 재경기 시작 (gusaPendingDecisions 없이)
+   */
+  private _startGusaRematchImmediate(): void {
+    this._startGusaRematch();
   }
 
   /**
