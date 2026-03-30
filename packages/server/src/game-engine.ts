@@ -1,5 +1,18 @@
 import { createDeck, evaluateHand, compareHands, checkGusaTrigger } from '@sutda/shared';
 import type { Card, GameState, GameMode, PlayerState, RoomPlayer, BetAction, ChipBreakdown } from '@sutda/shared';
+import type { HandResult } from '@sutda/shared';
+
+/**
+ * 승자 땡 등급에 따른 땡값 금액 계산
+ * - score >= 1010 (장땡/광땡) → 1000원
+ * - score >= 1001 (일땡~구땡) → 500원
+ * - 그 외 → 0원 (땡값 없음)
+ */
+function getTtaengValueAmount(hand: HandResult): number {
+  if (hand.score >= 1010) return 1000;
+  if (hand.score >= 1001) return 500;
+  return 0;
+}
 
 // =====================================================================
 // GameModeStrategy 패턴 (per D-01, D-02)
@@ -196,6 +209,43 @@ export class GameEngine {
     if (winner) {
       winner.chips += this.state.pot;
     }
+    this._updateChipBreakdowns();
+  }
+
+  /**
+   * 오리지날 모드 전용: 승자가 땡으로 이겼을 때 다이한 플레이어가 땡값을 납부 (RULE-03, D-01~D-04)
+   * - mode !== 'original' → 무시 (D-01)
+   * - 승자가 isSpecialBeater(땡잡이/암행어사) → 면제 (RULE-04, D-03)
+   * - 승자 패가 땡 미만(score < 1001) → 땡값 없음
+   * - 다이한 플레이어(!isAlive)만 납부 대상 (D-04)
+   */
+  private _settleTtaengValue(): void {
+    if (this.state.mode !== 'original') return;
+    if (!this.state.winnerId) return;
+
+    const winner = this.state.players.find(p => p.id === this.state.winnerId);
+    if (!winner) return;
+
+    const winnerHand = evaluateHand(winner.cards[0]!, winner.cards[1]!);
+
+    // 땡잡이/암행어사 승리 → 땡값 면제
+    if (winnerHand.isSpecialBeater) return;
+
+    const perPlayerAmount = getTtaengValueAmount(winnerHand);
+    if (perPlayerAmount === 0) return;  // 땡 미만이면 땡값 없음
+
+    // 다이한 플레이어만 납부 대상
+    const diedPlayers = this.state.players.filter(p => !p.isAlive);
+    if (diedPlayers.length === 0) return;
+
+    const ttaengPayments: { playerId: string; amount: number }[] = [];
+    for (const player of diedPlayers) {
+      player.chips -= perPlayerAmount;
+      ttaengPayments.push({ playerId: player.id, amount: perPlayerAmount });
+    }
+
+    winner.chips += perPlayerAmount * diedPlayers.length;
+    this.state.ttaengPayments = ttaengPayments;
     this._updateChipBreakdowns();
   }
 
@@ -1276,6 +1326,7 @@ export class GameEngine {
     // 승자 결정
     this.state.winnerId = best.player.id;
     this.settleChips();  // pot을 승자에게 합산 (per D-01)
+    this._settleTtaengValue();  // 오리지날 모드: 땡값 정산 (Phase 09-01)
     this.state.phase = 'result';
   }
 
@@ -1463,6 +1514,7 @@ export class GameEngine {
     this.state.currentBetAmount = 0;
     this.state.winnerId = undefined;
     this.state.tiedPlayerIds = undefined;
+    this.state.ttaengPayments = undefined;
     this.state.isTtong = false;
     this.state.attendedPlayerIds = [];
     this.state.dealerSelectCards = [];

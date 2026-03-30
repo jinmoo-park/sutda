@@ -27,6 +27,7 @@ export type GamePhase =
   | 'showdown'         // 족보 비교 / 승패 결정
   | 'result'           // 결과 표시
   | 'rematch-pending'  // 동점 재경기 대기
+  | 'gusa-pending'    // 구사 재경기 대기 (다이 플레이어 재참여 결정 수집 중)
   | 'finished';        // 게임 종료
 
 /** 게임 모드 */
@@ -91,4 +92,6 @@ export interface GameState {
   gollaOpenDeck?: Card[];         // 골라골라: 공개된 20장 덱 (gollagolla-select phase에서 설정)
   gollaPlayerIndices?: Record<string, [number, number]>;  // 골라골라: 각 플레이어가 확정 선택한 openDeck 인덱스
   gollaReservedIndices?: Record<string, number[]>;         // 골라골라: 각 플레이어가 임시 예약 중인 인덱스 (0~1개)
+  gusaPendingDecisions?: Record<string, boolean | null>;  // 구사 재경기 대기 중 플레이어 재참여 결정 (null=미결정)
+  ttaengPayments?: { playerId: string; amount: number }[];  // 땡값 납부 내역 (오리지날 모드 전용)
 }

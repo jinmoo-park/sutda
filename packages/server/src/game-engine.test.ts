@@ -1338,3 +1338,288 @@ describe('applyRechargeToPlayer', () => {
     expect(() => engine.applyRechargeToPlayer('non-existent', 100000)).toThrow('PLAYER_NOT_FOUND');
   });
 });
+
+// ============================================================
+// 땡값 정산 (_settleTtaengValue) — Phase 09-01 Task 1
+// ============================================================
+
+describe('땡값 정산 (_settleTtaengValue)', () => {
+  let players3: RoomPlayer[];
+
+  beforeEach(() => {
+    players3 = Array.from({ length: 3 }, (_, i) => ({
+      id: `player-${i}`,
+      nickname: `Player${i}`,
+      chips: 100000,
+      seatIndex: i,
+      isConnected: true,
+    }));
+  });
+
+  /** 쇼다운 직전 상태로 engine을 셋업하는 헬퍼 (3인용) */
+  function setupForTtaeng(
+    engine: GameEngine,
+    winnerCards: [import('@sutda/shared').Card, import('@sutda/shared').Card],
+    diedPlayerCards: [import('@sutda/shared').Card, import('@sutda/shared').Card][],
+    aliveLoserCards?: [import('@sutda/shared').Card, import('@sutda/shared').Card][],
+  ): void {
+    const state = engine.getState() as GameState;
+    // player-0 = 승자 (alive), player-1..N = 다이 플레이어
+    state.players[0].cards = winnerCards;
+    state.players[0].isAlive = true;
+    for (let i = 0; i < diedPlayerCards.length; i++) {
+      state.players[i + 1].cards = diedPlayerCards[i];
+      state.players[i + 1].isAlive = false;  // 다이한 상태
+    }
+    if (aliveLoserCards) {
+      for (let i = 0; i < aliveLoserCards.length; i++) {
+        const idx = i + 1 + diedPlayerCards.length;
+        if (state.players[idx]) {
+          state.players[idx].cards = aliveLoserCards[i];
+          state.players[idx].isAlive = true;
+        }
+      }
+    }
+    state.winnerId = 'player-0';
+  }
+
+  it('오리지날 모드, 승자 일땡 + 다이 1명 → 다이 -500, 승자 +500', () => {
+    const engine = new GameEngine('room1', players3, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'showdown';
+    state.mode = 'original';
+    setupForTtaeng(
+      engine,
+      [{ rank: 1, attribute: 'gwang' }, { rank: 1, attribute: 'normal' }],  // 일땡 score=1001
+      [[{ rank: 2, attribute: 'normal' }, { rank: 3, attribute: 'normal' }]],
+    );
+    const diedChipsBefore = state.players[1].chips;
+    const winnerChipsBefore = state.players[0].chips;
+
+    engine['_settleTtaengValue']();
+
+    expect(state.players[1].chips).toBe(diedChipsBefore - 500);
+    expect(state.players[0].chips).toBe(winnerChipsBefore + 500);
+  });
+
+  it('오리지날 모드, 승자 장땡 + 다이 1명 → 다이 -1000, 승자 +1000', () => {
+    const engine = new GameEngine('room1', players3, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'showdown';
+    state.mode = 'original';
+    setupForTtaeng(
+      engine,
+      [{ rank: 10, attribute: 'normal' }, { rank: 10, attribute: 'yeolkkeut' }],  // 장땡 score=1010
+      [[{ rank: 2, attribute: 'normal' }, { rank: 3, attribute: 'normal' }]],
+    );
+    const diedChipsBefore = state.players[1].chips;
+    const winnerChipsBefore = state.players[0].chips;
+
+    engine['_settleTtaengValue']();
+
+    expect(state.players[1].chips).toBe(diedChipsBefore - 1000);
+    expect(state.players[0].chips).toBe(winnerChipsBefore + 1000);
+  });
+
+  it('오리지날 모드, 승자 삼팔광땡 + 다이 1명 → 다이 -1000, 승자 +1000', () => {
+    const engine = new GameEngine('room1', players3, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'showdown';
+    state.mode = 'original';
+    setupForTtaeng(
+      engine,
+      [{ rank: 3, attribute: 'gwang' }, { rank: 8, attribute: 'gwang' }],  // 삼팔광땡 score=1300
+      [[{ rank: 2, attribute: 'normal' }, { rank: 3, attribute: 'normal' }]],
+    );
+    const diedChipsBefore = state.players[1].chips;
+    const winnerChipsBefore = state.players[0].chips;
+
+    engine['_settleTtaengValue']();
+
+    expect(state.players[1].chips).toBe(diedChipsBefore - 1000);
+    expect(state.players[0].chips).toBe(winnerChipsBefore + 1000);
+  });
+
+  it('오리지날 모드, 승자 일땡 + 다이 2명 → 각자 -500, 승자 +1000', () => {
+    const players4 = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`,
+      nickname: `Player${i}`,
+      chips: 100000,
+      seatIndex: i,
+      isConnected: true,
+    }));
+    const engine = new GameEngine('room1', players4, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'showdown';
+    state.mode = 'original';
+    // player-0 승자(alive), player-1 다이, player-2 다이, player-3 alive 패배
+    state.players[0].cards = [{ rank: 1, attribute: 'gwang' }, { rank: 1, attribute: 'normal' }]; // 일땡
+    state.players[0].isAlive = true;
+    state.players[1].cards = [{ rank: 2, attribute: 'normal' }, { rank: 3, attribute: 'normal' }];
+    state.players[1].isAlive = false;
+    state.players[2].cards = [{ rank: 4, attribute: 'normal' }, { rank: 5, attribute: 'normal' }];
+    state.players[2].isAlive = false;
+    state.players[3].cards = [{ rank: 6, attribute: 'normal' }, { rank: 7, attribute: 'normal' }];
+    state.players[3].isAlive = true;  // 생존 패배자 (땡값 대상 아님)
+    state.winnerId = 'player-0';
+
+    const winnerChipsBefore = state.players[0].chips;
+
+    engine['_settleTtaengValue']();
+
+    expect(state.players[1].chips).toBe(100000 - 500);
+    expect(state.players[2].chips).toBe(100000 - 500);
+    expect(state.players[3].chips).toBe(100000);  // 생존 패배자는 땡값 없음
+    expect(state.players[0].chips).toBe(winnerChipsBefore + 1000);  // 두 명분 합산
+  });
+
+  it('승자가 이패(score < 1001) → 땡값 없음', () => {
+    const engine = new GameEngine('room1', players3, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'showdown';
+    state.mode = 'original';
+    setupForTtaeng(
+      engine,
+      [{ rank: 1, attribute: 'gwang' }, { rank: 2, attribute: 'normal' }],  // 알리 score=60
+      [[{ rank: 2, attribute: 'normal' }, { rank: 3, attribute: 'normal' }]],
+    );
+    const diedChipsBefore = state.players[1].chips;
+    const winnerChipsBefore = state.players[0].chips;
+
+    engine['_settleTtaengValue']();
+
+    expect(state.players[1].chips).toBe(diedChipsBefore);  // 변화 없음
+    expect(state.players[0].chips).toBe(winnerChipsBefore);
+  });
+
+  it('승자가 땡잡이(score=0, isSpecialBeater=true) → 땡값 없음 (RULE-04)', () => {
+    const engine = new GameEngine('room1', players3, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'showdown';
+    state.mode = 'original';
+    // 땡잡이: 3(normal)+7(normal) → score=0, isSpecialBeater=true
+    state.players[0].cards = [{ rank: 3, attribute: 'normal' }, { rank: 7, attribute: 'normal' }];
+    state.players[0].isAlive = true;
+    state.players[1].cards = [{ rank: 1, attribute: 'gwang' }, { rank: 1, attribute: 'normal' }];  // 일땡 (다이)
+    state.players[1].isAlive = false;
+    state.players[2].cards = [{ rank: 2, attribute: 'normal' }, { rank: 5, attribute: 'normal' }];
+    state.players[2].isAlive = true;
+    state.winnerId = 'player-0';
+
+    const diedChipsBefore = state.players[1].chips;
+    const winnerChipsBefore = state.players[0].chips;
+
+    engine['_settleTtaengValue']();
+
+    expect(state.players[1].chips).toBe(diedChipsBefore);  // 땡값 없음
+    expect(state.players[0].chips).toBe(winnerChipsBefore);
+  });
+
+  it('승자가 암행어사(score=1, isSpecialBeater=true) → 땡값 없음 (RULE-04)', () => {
+    const engine = new GameEngine('room1', players3, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'showdown';
+    state.mode = 'original';
+    // 암행어사: 4(yeolkkeut)+7(yeolkkeut) → score=1, isSpecialBeater=true
+    state.players[0].cards = [{ rank: 4, attribute: 'yeolkkeut' }, { rank: 7, attribute: 'yeolkkeut' }];
+    state.players[0].isAlive = true;
+    state.players[1].cards = [{ rank: 9, attribute: 'yeolkkeut' }, { rank: 9, attribute: 'yeolkkeut' }];  // 구땡 (다이)
+    state.players[1].isAlive = false;
+    state.players[2].cards = [{ rank: 2, attribute: 'normal' }, { rank: 5, attribute: 'normal' }];
+    state.players[2].isAlive = true;
+    state.winnerId = 'player-0';
+
+    const diedChipsBefore = state.players[1].chips;
+    engine['_settleTtaengValue']();
+    expect(state.players[1].chips).toBe(diedChipsBefore);  // 땡값 없음
+  });
+
+  it('생존 패배자(isAlive=true)는 땡값 대상 아님 (D-04)', () => {
+    const players4 = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`,
+      nickname: `Player${i}`,
+      chips: 100000,
+      seatIndex: i,
+      isConnected: true,
+    }));
+    const engine = new GameEngine('room1', players4, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'showdown';
+    state.mode = 'original';
+    state.players[0].cards = [{ rank: 3, attribute: 'gwang' }, { rank: 8, attribute: 'gwang' }];  // 삼팔광땡
+    state.players[0].isAlive = true;
+    state.players[1].cards = [{ rank: 1, attribute: 'gwang' }, { rank: 8, attribute: 'gwang' }];  // 일팔광땡 (alive 패배)
+    state.players[1].isAlive = true;
+    state.players[2].cards = [{ rank: 2, attribute: 'normal' }, { rank: 3, attribute: 'normal' }];
+    state.players[2].isAlive = false;  // 다이 → 땡값 대상
+    state.players[3].cards = [{ rank: 4, attribute: 'normal' }, { rank: 5, attribute: 'normal' }];
+    state.players[3].isAlive = true;   // alive 패배 → 땡값 아님
+    state.winnerId = 'player-0';
+
+    engine['_settleTtaengValue']();
+
+    expect(state.players[1].chips).toBe(100000);  // alive 패배자 → 땡값 없음
+    expect(state.players[2].chips).toBe(100000 - 1000);  // 다이 → 땡값
+    expect(state.players[3].chips).toBe(100000);  // alive 패배자 → 땡값 없음
+  });
+
+  it('세장섯다 모드 → 땡값 없음 (D-01)', () => {
+    const engine = new GameEngine('room1', players3, 'three-card', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'showdown';
+    state.mode = 'three-card';
+    setupForTtaeng(
+      engine,
+      [{ rank: 3, attribute: 'gwang' }, { rank: 8, attribute: 'gwang' }],
+      [[{ rank: 2, attribute: 'normal' }, { rank: 3, attribute: 'normal' }]],
+    );
+    const diedChipsBefore = state.players[1].chips;
+    engine['_settleTtaengValue']();
+    expect(state.players[1].chips).toBe(diedChipsBefore);
+  });
+
+  it('인디언 모드 → 땡값 없음 (D-01)', () => {
+    const engine = new GameEngine('room1', players3, 'indian', 2);
+    const state = engine.getState() as GameState;
+    state.mode = 'indian';
+    setupForTtaeng(
+      engine,
+      [{ rank: 3, attribute: 'gwang' }, { rank: 8, attribute: 'gwang' }],
+      [[{ rank: 2, attribute: 'normal' }, { rank: 3, attribute: 'normal' }]],
+    );
+    const diedChipsBefore = state.players[1].chips;
+    engine['_settleTtaengValue']();
+    expect(state.players[1].chips).toBe(diedChipsBefore);
+  });
+
+  it('ttaengPayments에 다이한 플레이어 playerId + 납부금액 기록됨', () => {
+    const engine = new GameEngine('room1', players3, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'showdown';
+    state.mode = 'original';
+    setupForTtaeng(
+      engine,
+      [{ rank: 3, attribute: 'gwang' }, { rank: 8, attribute: 'gwang' }],  // 삼팔광땡
+      [[{ rank: 2, attribute: 'normal' }, { rank: 3, attribute: 'normal' }]],
+    );
+
+    engine['_settleTtaengValue']();
+
+    expect(state.ttaengPayments).toBeDefined();
+    expect(state.ttaengPayments).toHaveLength(1);
+    expect(state.ttaengPayments![0]).toEqual({ playerId: 'player-1', amount: 1000 });
+  });
+
+  it('nextRound() 호출 시 ttaengPayments가 undefined로 초기화됨', () => {
+    const engine = new GameEngine('room1', players3, 'original', 2);
+    const state = engine.getState() as GameState;
+    // 직접 result phase로 설정하여 nextRound 동작 확인
+    state.phase = 'result';
+    state.winnerId = 'player-0';
+    state.ttaengPayments = [{ playerId: 'player-1', amount: 1000 }];
+
+    engine.nextRound();
+
+    expect(state.ttaengPayments).toBeUndefined();
+  });
+});
