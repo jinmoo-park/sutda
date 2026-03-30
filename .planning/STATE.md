@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 08-01-PLAN.md
-last_updated: "2026-03-30T14:25:45.483Z"
+stopped_at: Completed 08-03-PLAN.md
+last_updated: "2026-03-30T14:26:22.086Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 10
   completed_phases: 7
   total_plans: 19
-  completed_plans: 17
+  completed_plans: 18
   percent: 44
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 ## Current Position
 
 Phase: 08 (huhwi-indian-modes) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-03-30
 
@@ -71,6 +71,7 @@ Progress: [████░░░░░░] 44%
 | Phase 07-sejang-hanjang-modes P01 | 833 | 1 tasks | 6 files |
 | Phase 07-sejang-hanjang-modes P02 | 0 | 2 tasks | 6 files |
 | Phase 08 P01 | 20 | 2 tasks | 2 files |
+| Phase 08-huhwi-indian-modes P03 | 20 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -125,6 +126,9 @@ Recent decisions affecting current work:
 - [Phase 07-sejang-hanjang-modes]: HandPanel card-select 모드: selectedIndices state로 토글 관리, phase prop 외부 주입 방식 채택
 - [Phase 08-01]: _gollaSelectedIndices: Map으로 선착순 골라골라 선택 인덱스 추적
 - [Phase 08-01]: 인디언 betting-1 완료시 phase='dealing-extra' → 소켓 핸들러(08-02)가 dealExtraCardIndian() 자동 호출
+- [Phase 08-huhwi-indian-modes]: PlayerState.cards를 (Card | null)[]로 확장 — 인디언 모드 getStateFor() 마스킹 지원
+- [Phase 08-huhwi-indian-modes]: GollaSelectModal: 2장 선택 즉시 자동 emit — 확인 버튼 없는 UX
+- [Phase 08-huhwi-indian-modes]: 골라골라 cutting→betting 딜링 애니메이션 스킵 — 직접 선택 모드이므로 showCardConfirm 불필요
 
 ### Pending Todos
 
@@ -138,6 +142,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T14:25:45.477Z
-Stopped at: Completed 08-01-PLAN.md
+Last session: 2026-03-30T14:26:22.081Z
+Stopped at: Completed 08-03-PLAN.md
 Resume file: None
