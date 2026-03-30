@@ -23,6 +23,7 @@ export type GamePhase =
   | 'card-select'      // 세장섯다: 3장 중 2장 선택
   | 'betting-2'        // 세장섯다: 2차 베팅
   | 'shared-card-select' // 한장공유: 딜러가 공유 카드 선택
+  | 'gollagolla-select' // 골라골라: 20장 오픈 그리드, 동시 선착순 선택
   | 'showdown'         // 족보 비교 / 승패 결정
   | 'result'           // 결과 표시
   | 'rematch-pending'  // 동점 재경기 대기
@@ -33,8 +34,8 @@ export type GameMode =
   | 'original'      // 오리지날
   | 'three-card'    // 세장섯다
   | 'shared-card'   // 한장공유
-  | 'regret'        // 후회의섯다
-  | 'indian';       // 인디언섯다
+  | 'gollagolla'    // 골라골라: 20장 오픈 동시 선착순 선택
+  | 'indian';       // 인디언섯다: 첫 카드 가시성 반전
 
 /** 베팅 액션 */
 export type BetAction =
@@ -87,4 +88,5 @@ export interface GameState {
   effectiveMaxBet?: number;       // 현재 턴 플레이어의 유효 스택 상한 (per D-11)
   openingBettorSeatIndex?: number | null;  // 선 권한 보유자 seatIndex (null = 이미 행사됨)
   sharedCard?: Card;              // 한장공유: 공유 카드 (per D-05)
+  gollaOpenDeck?: Card[];         // 골라골라: 공개된 20장 덱 (gollagolla-select phase에서 설정)
 }
