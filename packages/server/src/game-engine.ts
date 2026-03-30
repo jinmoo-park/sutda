@@ -38,6 +38,24 @@ class HanjangModeStrategy implements GameModeStrategy {
   }
 }
 
+class GollagollaModeStrategy implements GameModeStrategy {
+  deal(engine: GameEngine, _state: GameState): void {
+    engine['_dealCardsGollagolla']();
+  }
+  showdown(engine: GameEngine, _state: GameState): void {
+    engine['_resolveShowdownOriginal']();  // 족보 비교는 오리지날과 동일
+  }
+}
+
+class IndianModeStrategy implements GameModeStrategy {
+  deal(engine: GameEngine, _state: GameState): void {
+    engine['_dealCardsIndian']();
+  }
+  showdown(engine: GameEngine, _state: GameState): void {
+    engine['_resolveShowdownOriginal']();  // 족보 비교는 오리지날과 동일 (D-09)
+  }
+}
+
 /**
  * GameEngine 클래스 — 오리지날/세장섯다/한장공유 모드 게임 플로우 FSM
  *
@@ -57,6 +75,8 @@ export class GameEngine {
     switch (this.state.mode) {
       case 'three-card': return new SejangModeStrategy();
       case 'shared-card': return new HanjangModeStrategy();
+      case 'gollagolla': return new GollagollaModeStrategy();
+      case 'indian': return new IndianModeStrategy();
       default: return new OriginalModeStrategy();
     }
   }
@@ -425,6 +445,125 @@ export class GameEngine {
   }
 
   /**
+   * 골라골라 카드 선택 (per D-02, D-03)
+   * - phase가 'gollagolla-select'인지 검증
+   * - cardIndices: [number, number] — gollaOpenDeck에서의 인덱스 2개
+   * - 선착순: 이미 다른 플레이어가 선택한 카드이면 'CARD_ALREADY_TAKEN' 에러
+   * - 2장 선택 완료 → player.cards에 추가
+   * - 모든 생존자 2장 선택 완료 시 → phase='betting' 전환
+   */
+  selectGollaCards(playerId: string, cardIndices: [number, number]): void {
+    this.assertPhase('gollagolla-select');
+    if (cardIndices[0] === cardIndices[1]) throw new Error('INVALID_ACTION');
+
+    const player = this.state.players.find(p => p.id === playerId);
+    if (!player || !player.isAlive) throw new Error('INVALID_ACTION');
+    if (player.cards.length >= 2) throw new Error('ALREADY_ATTENDED');
+
+    const openDeck = this.state.gollaOpenDeck;
+    if (!openDeck) throw new Error('INVALID_ACTION');
+
+    if (!this._gollaSelectedIndices) {
+      this._gollaSelectedIndices = new Map();
+    }
+
+    // 타인이 이미 선택한 인덱스 수집
+    const takenByOthers = new Set<number>();
+    for (const [pid, indices] of this._gollaSelectedIndices.entries()) {
+      if (pid !== playerId) {
+        indices.forEach(i => takenByOthers.add(i));
+      }
+    }
+
+    if (takenByOthers.has(cardIndices[0]) || takenByOthers.has(cardIndices[1])) {
+      throw new Error('CARD_ALREADY_TAKEN');
+    }
+    if (cardIndices[0] < 0 || cardIndices[0] >= openDeck.length ||
+        cardIndices[1] < 0 || cardIndices[1] >= openDeck.length) {
+      throw new Error('INVALID_ACTION');
+    }
+
+    // 선택 확정
+    this._gollaSelectedIndices.set(playerId, cardIndices);
+    player.cards = [openDeck[cardIndices[0]], openDeck[cardIndices[1]]];
+
+    // 모든 생존자 선택 완료 확인
+    const alivePlayers = this.state.players.filter(p => p.isAlive);
+    const allDone = alivePlayers.every(p => p.cards.length >= 2);
+    if (allDone) {
+      const dealerSeatIndex = this.getDealerSeatIndex();
+      this.state.phase = 'betting';
+      this.state.currentPlayerIndex = dealerSeatIndex;
+      this.state.openingBettorSeatIndex = dealerSeatIndex;
+      this.state.currentBetAmount = 0;
+      this._bettingActed = new Set();
+      alivePlayers.forEach(p => { p.currentBet = 0; });
+      this._updateEffectiveMaxBet();
+    }
+  }
+
+  /**
+   * 인디언섯다 2번째 카드 배분 — 서버 자동 처리 (betting-1 종료 시)
+   * dealing-extra phase로 전환된 후 소켓 핸들러에서 호출
+   */
+  dealExtraCardIndian(): void {
+    if (this.state.mode !== 'indian') throw new Error('INVALID_ACTION');
+    if (this.state.phase !== 'dealing-extra') throw new Error('INVALID_PHASE');
+    this._dealExtraCardIndian();
+  }
+
+  /**
+   * 플레이어별 필터링된 게임 상태 반환 (인디언 모드 카드 마스킹)
+   * - 인디언 모드 + dealing/betting-1 phase:
+   *   본인의 cards[0]을 null로 마스킹 (자신의 패는 볼 수 없음)
+   *   타인 cards[0]는 정상 공개
+   * - 인디언 모드 + dealing-extra/betting-2 phase:
+   *   본인 cards[0] = 여전히 null (숨김)
+   *   타인 cards[1] = null (2번째 카드는 본인에게만 공개)
+   * - result phase: 모든 카드 공개
+   * - 다른 모드: 기존 getState()와 동일 (마스킹 없음)
+   */
+  getStateFor(playerId: string): GameState {
+    const state = this.state;
+
+    if (state.mode !== 'indian') {
+      return state as GameState;
+    }
+
+    const phase = state.phase;
+    const isResultPhase = phase === 'result' || phase === 'showdown';
+
+    if (isResultPhase) {
+      return state as GameState;
+    }
+
+    // 인디언 모드 마스킹 적용
+    const maskedPlayers = state.players.map(p => {
+      const cards = [...p.cards];
+
+      if (phase === 'dealing' || phase === 'betting-1') {
+        // 1차: cards[0]가 있는 경우 — 본인에게는 숨김, 타인에게는 공개
+        if (p.id === playerId && cards.length > 0) {
+          cards[0] = null as any;  // 클라이언트는 null을 CardBack으로 렌더링
+        }
+      } else if (phase === 'dealing-extra' || phase === 'betting-2') {
+        // 2차: cards[0] = 반전 (타인 공개, 본인 숨김) 유지
+        // cards[1] = 본인에게만 공개, 타인에게는 숨김
+        if (p.id === playerId && cards.length > 0) {
+          cards[0] = null as any;  // 여전히 본인에게 숨김
+        }
+        if (p.id !== playerId && cards.length > 1) {
+          cards[1] = null as any;  // 타인의 2번째 카드는 숨김
+        }
+      }
+
+      return { ...p, cards };
+    });
+
+    return { ...state, players: maskedPlayers } as GameState;
+  }
+
+  /**
    * 게임 모드 선택
    * - dealer만 가능
    * - phase가 'mode-select'인지 검증
@@ -679,6 +818,76 @@ export class GameEngine {
   }
 
   /**
+   * 골라골라 모드 패 배분 (GollagollaModeStrategy에서 호출)
+   * - 덱 20장 전체를 공개 배열로 state.gollaOpenDeck에 설정
+   * - 모든 플레이어 cards는 빈 배열 유지 (선택 완료 시 채워짐)
+   * - phase = 'gollagolla-select' 전환
+   * - 참고: cut() 호출 이후이므로 deck은 이미 셔플+기리 완료 상태
+   */
+  private _dealCardsGollagolla(): void {
+    // 셔플된 덱 20장 전체를 오픈 배열로 복사
+    this.state.gollaOpenDeck = [...this.state.deck];
+    // 선택 전까지 플레이어 cards는 비움
+    this.state.players.forEach(p => { p.cards = []; });
+    // 골라 선택 인덱스 초기화
+    this._gollaSelectedIndices = new Map();
+    this.state.phase = 'gollagolla-select';
+  }
+
+  /**
+   * 인디언섯다 모드 패 배분 (IndianModeStrategy에서 호출)
+   * - 각 플레이어에게 1장씩 배분 (반시계 방향)
+   * - phase = 'betting-1' 전환 (BETTING_PHASES에 포함됨)
+   * - getStateFor()에서 dealing/betting-1 phase에 cards[0]를 마스킹하여 per-player emit
+   */
+  private _dealCardsIndian(): void {
+    const alivePlayers = this.state.players.filter(p => p.isAlive);
+    const dealerSeatIndex = this.getDealerSeatIndex();
+    const ordered = this._getAlivePlayersInCounterClockwiseOrder(dealerSeatIndex, alivePlayers);
+
+    // 1장씩 배분
+    for (const player of ordered) {
+      const card = this.state.deck.shift();
+      if (card) player.cards.push(card);
+    }
+
+    // 베팅 1차 시작
+    this.state.phase = 'betting-1';
+    this.state.currentPlayerIndex = dealerSeatIndex;
+    this.state.openingBettorSeatIndex = dealerSeatIndex;
+    this.state.currentBetAmount = 0;
+    this._bettingActed = new Set();
+    alivePlayers.forEach(p => { p.currentBet = 0; });
+    this._updateEffectiveMaxBet();
+  }
+
+  /**
+   * 인디언섯다: 2번째 카드 배분 (dealing-extra phase)
+   * - 각 플레이어에게 1장씩 추가 배분 (반시계 방향)
+   * - 본인에게만 공개 (getStateFor에서 타인에게는 cards[1]을 마스킹)
+   * - phase = 'betting-2' 전환
+   */
+  private _dealExtraCardIndian(): void {
+    const alivePlayers = this.state.players.filter(p => p.isAlive);
+    const dealerSeatIndex = this.getDealerSeatIndex();
+    const ordered = this._getAlivePlayersInCounterClockwiseOrder(dealerSeatIndex, alivePlayers);
+
+    for (const player of ordered) {
+      const card = this.state.deck.shift();
+      if (card) player.cards.push(card);
+    }
+
+    // 2차 베팅 시작
+    this.state.phase = 'betting-2';
+    this.state.currentPlayerIndex = dealerSeatIndex;
+    this.state.openingBettorSeatIndex = dealerSeatIndex;
+    this.state.currentBetAmount = 0;
+    this._bettingActed = new Set();
+    alivePlayers.forEach(p => { p.currentBet = 0; });
+    this._updateEffectiveMaxBet();
+  }
+
+  /**
    * fromSeat 기준 반시계 방향으로 다음 alive 플레이어의 seatIndex 반환
    */
   private _findNextAliveSeat(fromSeat: number): number | null {
@@ -723,6 +932,11 @@ export class GameEngine {
    * 레이즈 발생 시 레이즈한 플레이어 외 나머지는 초기화됨
    */
   private _bettingActed: Set<string> = new Set();
+
+  /**
+   * 골라골라 모드: 각 플레이어가 선택한 gollaOpenDeck 인덱스 추적
+   */
+  private _gollaSelectedIndices: Map<string, [number, number]> | null = null;
 
   /**
    * 베팅 액션 처리 (콜/레이즈/다이/체크)
@@ -820,6 +1034,12 @@ export class GameEngine {
     // 베팅 종료 조건 확인
     if (this._isBettingComplete()) {
       if (this.state.phase === 'betting-1') {
+        if (this.state.mode === 'indian') {
+          // 인디언섯다: 2번째 카드 배분을 위해 dealing-extra phase로 전환
+          // 소켓 핸들러에서 dealExtraCardIndian()을 자동 호출해야 함
+          this.state.phase = 'dealing-extra';
+          return;
+        }
         // 세장섯다: 3번째 카드 배분 -> card-select
         this._dealExtraCardForSejang();
         return;
@@ -937,7 +1157,7 @@ export class GameEngine {
 
     const hands = alivePlayers.map(p => ({
       player: p,
-      hand: evaluateHand(p.cards[0], p.cards[1]),
+      hand: evaluateHand(p.cards[0]!, p.cards[1]!),
     }));
 
     const allHands = hands.map(h => h.hand);
@@ -991,8 +1211,8 @@ export class GameEngine {
 
     const hands = alivePlayers.map(p => {
       const selected = (p as any).selectedCards as Card[] | undefined;
-      const card1 = selected?.[0] ?? p.cards[0];
-      const card2 = selected?.[1] ?? p.cards[1];
+      const card1 = selected?.[0] ?? p.cards[0]!;
+      const card2 = selected?.[1] ?? p.cards[1]!;
       return {
         player: p,
         hand: evaluateHand(card1, card2),
@@ -1047,7 +1267,7 @@ export class GameEngine {
 
     const hands = alivePlayers.map(p => ({
       player: p,
-      hand: evaluateHand(p.cards[0], sharedCard ?? p.cards[0]),
+      hand: evaluateHand(p.cards[0]!, sharedCard ?? p.cards[0]!),
     }));
 
     const allHands = hands.map(h => h.hand);
