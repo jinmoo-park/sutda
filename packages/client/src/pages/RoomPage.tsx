@@ -117,9 +117,17 @@ export function RoomPage() {
       }
     }
 
-    // 세장섯다: betting-1 → card-select 전환 시 3번째 카드 모달 표시
+    // 세장섯다: betting-1 → card-select 전환 시 3번째 카드 모달 표시 + visibleCardCounts 3장으로 업데이트
     if (prevPhaseRef.current === 'betting-1' && gameState?.phase === 'card-select') {
       setShowExtraCardConfirm(true);
+      // visibleCardCounts를 3으로 업데이트 — 딜링 애니메이션은 2장까지만 설정하므로 수동 업데이트 필요
+      setVisibleCardCounts((prev) => {
+        const updated = { ...prev };
+        gameState.players.filter(p => p.isAlive).forEach(p => {
+          updated[p.id] = 3;
+        });
+        return updated;
+      });
     }
   }, [gameState?.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -359,6 +367,7 @@ export function RoomPage() {
             }}
             sharedCard={gameState.mode === 'shared-card' ? gameState.sharedCard : undefined}
             visibleCardCount={Object.keys(visibleCardCounts).length > 0 ? (visibleCardCounts[myPlayerId ?? ''] ?? 0) : undefined}
+            nickname={myPlayer?.nickname}
           />
           <InfoPanel
             myChips={myPlayer?.chips ?? 0}

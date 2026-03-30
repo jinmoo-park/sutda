@@ -1141,7 +1141,9 @@ export class GameEngine {
     this.state.rematchDealerId = undefined;
     this.state.currentPlayerIndex = newDealer?.seatIndex ?? 0;
 
-    // attend-school 건너뜀 (앤티 없음)
+    // attend-school/mode-select 건너뜀 (앤티 없음), 오리지날 2장 섯다로 자동 실행
+    (this.state as any).sharedCard = undefined;  // 한장공유: 이전 공유카드 초기화
+    this.state.mode = 'original';
     this.state.phase = 'shuffling';
   }
 

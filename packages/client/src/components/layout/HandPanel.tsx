@@ -13,6 +13,7 @@ interface HandPanelProps {
   onSelectCards?: (indices: number[]) => void;
   sharedCard?: Card;
   visibleCardCount?: number;
+  nickname?: string;
 }
 
 const HAND_TYPE_KOREAN: Record<string, string> = {
@@ -38,7 +39,7 @@ const HAND_TYPE_KOREAN: Record<string, string> = {
   kkut: '끗',
 };
 
-export function HandPanel({ myPlayer, phase, onSelectCards, sharedCard, visibleCardCount }: HandPanelProps) {
+export function HandPanel({ myPlayer, phase, onSelectCards, sharedCard, visibleCardCount, nickname }: HandPanelProps) {
   const [showReference, setShowReference] = useState(false);
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -100,7 +101,7 @@ export function HandPanel({ myPlayer, phase, onSelectCards, sharedCard, visibleC
 
   return (
     <div className="space-y-2 p-4">
-      <p className="text-sm font-semibold">내 패</p>
+      <p className="text-sm font-semibold">{nickname ? `${nickname}의 패` : '내 패'}</p>
 
       {cards.length === 0 ? (
         <p className="text-sm text-muted-foreground">카드가 아직 없어요</p>
