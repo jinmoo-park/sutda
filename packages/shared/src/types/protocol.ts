@@ -53,6 +53,7 @@ export interface ServerToClientEvents {
   'recharge-requested': (data: { requesterId: string; requesterNickname: string; amount: number }) => void;
   'recharge-vote-update': (data: { votedCount: number; totalNeeded: number; approved: boolean }) => void;
   'recharge-result': (data: { requesterId: string; approved: boolean; newChips?: number }) => void;
+  'set-player-id': (data: { playerId: string }) => void;
 }
 
 /** Socket.IO 서버 간 이벤트 (사용하지 않지만 타입 완전성) */

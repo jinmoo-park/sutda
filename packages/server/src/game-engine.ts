@@ -332,6 +332,8 @@ export class GameEngine {
     const cutterSeatIndex = (dealerSeatIndex + 1) % totalPlayers;
     const cutter = this.state.players.find(p => p.seatIndex === cutterSeatIndex);
     this.cutterPlayerId = cutter ? cutter.id : null;
+    // currentPlayerIndex를 기리자로 업데이트 → 클라이언트 isMyTurn이 올바른 플레이어에게 표시
+    this.state.currentPlayerIndex = cutterSeatIndex;
   }
 
   /**
@@ -576,7 +578,9 @@ export class GameEngine {
 
     // 베팅 종료 조건 확인
     if (this._isBettingComplete()) {
-      this.state.phase = 'showdown';
+      // 자동 쇼다운: 모든 생존자 카드 공개 후 즉시 족보 비교
+      this.state.players.filter(p => p.isAlive).forEach(p => { p.isRevealed = true; });
+      this._resolveShowdown();
       return;
     }
 

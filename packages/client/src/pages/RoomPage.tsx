@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useParams, useLocation } from 'react-router-dom';
 import { toast, Toaster } from 'sonner';
 import { useGameStore } from '@/store/gameStore';
 import { WaitingRoom } from '@/components/layout/WaitingRoom';
@@ -11,33 +11,132 @@ import { ChatPanel } from '@/components/layout/ChatPanel';
 import { ResultScreen } from '@/components/layout/ResultScreen';
 import { DealerSelectModal } from '@/components/modals/DealerSelectModal';
 import { AttendSchoolModal } from '@/components/modals/AttendSchoolModal';
+import { ModeSelectModal } from '@/components/modals/ModeSelectModal';
 import { ShuffleModal } from '@/components/modals/ShuffleModal';
 import { CutModal } from '@/components/modals/CutModal';
 import { RechargeVoteModal } from '@/components/modals/RechargeVoteModal';
 import { LeaveRoomDialog } from '@/components/modals/LeaveRoomDialog';
+import { DealerResultOverlay } from '@/components/modals/DealerResultOverlay';
+import type { DealerSelectResult } from '@/components/modals/DealerResultOverlay';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
+// sessionStorage 키 헬퍼 (roomId별로 입장 정보 저장)
+function getRoomSessionKey(roomId: string) { return `sutda_room_${roomId}`; }
+interface RoomSession { nickname: string; initialChips: number; isHost: boolean }
+
 export function RoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
+  const location = useLocation();
+  const locationState = location.state as { nickname?: string; initialChips?: number; isHost?: boolean } | null;
   const { socket, connect, gameState, roomState, myPlayerId, error, clearError } = useGameStore();
   const serverUrl = import.meta.env.VITE_SERVER_URL || '';
 
-  // 닉네임 + 입장 상태
-  const [nickname, setNickname] = useState('');
-  const [initialChips, setInitialChips] = useState(100000);
-  const [hasJoined, setHasJoined] = useState(false);
+  // location.state → sessionStorage 순서로 입장 정보 복원 (새로고침 대응)
+  const cachedSession: RoomSession | null = (() => {
+    try { return JSON.parse(sessionStorage.getItem(getRoomSessionKey(roomId!)) ?? 'null'); } catch { return null; }
+  })();
+  const initNickname = locationState?.nickname ?? cachedSession?.nickname ?? '';
+  const initChips = locationState?.initialChips ?? cachedSession?.initialChips ?? 100000;
+  const initIsHost = locationState?.isHost === true || cachedSession?.isHost === true;
+
+  const [nickname, setNickname] = useState(initNickname);
+  const [initialChips, setInitialChips] = useState(initChips);
+  const [hasJoined, setHasJoined] = useState(initIsHost);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [showCardConfirm, setShowCardConfirm] = useState(false);
+
+  // 입장 정보를 sessionStorage에 저장 (새로고침 시 복원용)
+  useEffect(() => {
+    if (locationState?.nickname && roomId) {
+      const session: RoomSession = {
+        nickname: locationState.nickname,
+        initialChips: locationState.initialChips ?? 100000,
+        isHost: locationState.isHost === true,
+      };
+      sessionStorage.setItem(getRoomSessionKey(roomId), JSON.stringify(session));
+    }
+  }, []);
+
+  // 밤일낮장 결과 오버레이
+  const [dealerResults, setDealerResults] = useState<DealerSelectResult[]>([]);
+  const [dealerWinnerId, setDealerWinnerId] = useState<string | null>(null);
+  const [showDealerResult, setShowDealerResult] = useState(false);
+  const prevPhaseRef = useRef<string | null>(null);
 
   // 소켓 연결
   useEffect(() => {
     if (!socket) connect(serverUrl);
   }, [socket, connect, serverUrl]);
 
+  // cutting → betting 전환 감지 → 카드 확인 오버레이 표시
+  useEffect(() => {
+    if (prevPhaseRef.current === 'cutting' && gameState?.phase === 'betting') {
+      setShowCardConfirm(true);
+    }
+  }, [gameState?.phase]);
+
+  // dealer-select → attend-school 전환 감지 → 결과 오버레이 3초 표시
+  useEffect(() => {
+    const currentPhase = gameState?.phase ?? null;
+    if (
+      prevPhaseRef.current === 'dealer-select' &&
+      currentPhase === 'attend-school' &&
+      gameState?.dealerSelectCards &&
+      gameState.dealerSelectCards.length > 0
+    ) {
+      const results: DealerSelectResult[] = gameState.dealerSelectCards
+        .map((sc) => ({
+          playerId: sc.playerId,
+          cardIndex: sc.cardIndex,
+          card: gameState.deck[sc.cardIndex],
+        }))
+        .filter((r) => r.card != null);
+      const winner = gameState.players.find((p) => p.isDealer);
+      setDealerResults(results);
+      setDealerWinnerId(winner?.id ?? null);
+      setShowDealerResult(true);
+      const timer = setTimeout(() => setShowDealerResult(false), 3000);
+      return () => clearTimeout(timer);
+    }
+    prevPhaseRef.current = currentPhase;
+  }, [gameState?.phase]);
+
+  // 자동 join-room emit:
+  // 1) MainPage 링크로 참여 (locationState.nickname, !isHost)
+  // 2) 새로고침 재접속 (locationState 없고 sessionStorage에 캐시된 경우)
+  useEffect(() => {
+    if (!socket) return;
+    // case 1: 첫 방문 joiner (MainPage 링크로 참여)
+    if (locationState?.nickname && !locationState.isHost) {
+      socket.emit('join-room', {
+        roomId: roomId!,
+        nickname: locationState.nickname,
+        initialChips: locationState.initialChips ?? 100000,
+      });
+      setHasJoined(true);
+      return;
+    }
+    // case 2: 새로고침 재접속 (host/joiner 모두 re-emit)
+    if (!locationState && cachedSession?.nickname) {
+      socket.emit('join-room', {
+        roomId: roomId!,
+        nickname: cachedSession.nickname,
+        initialChips: cachedSession.initialChips,
+      });
+      setHasJoined(true);
+    }
+  }, [socket]);
+
   // 에러 발생 시 Sonner toast
+  // ROOM_NOT_FOUND: 방이 삭제됨(혼자 새로고침) → sessionStorage 삭제 후 입장 폼으로 복귀
   useEffect(() => {
     if (error) {
       toast.error(error);
+      if (error.includes('존재하지 않는 방') && roomId) {
+        sessionStorage.removeItem(getRoomSessionKey(roomId));
+        setHasJoined(false);
+      }
       clearError();
     }
   }, [error, clearError]);
@@ -168,14 +267,16 @@ export function RoomPage() {
           />
         </div>
 
-        {phase === 'betting' && (
+        {phase === 'betting' && !showCardConfirm && (
           <BettingPanel
             isMyTurn={isMyTurn}
             currentBetAmount={gameState.currentBetAmount}
+            myCurrentBet={myPlayer?.currentBet ?? 0}
             myChips={myPlayer?.chips ?? 0}
             roomId={roomId!}
             effectiveMaxBet={gameState.effectiveMaxBet}
             currentPlayerNickname={currentPlayerNickname}
+            isDealer={isDealer}
           />
         )}
 
@@ -184,7 +285,22 @@ export function RoomPage() {
 
       {/* 특수 액션 모달 — phase에 따라 조건부 표시 */}
       <DealerSelectModal open={phase === 'dealer-select'} roomId={roomId!} />
-      <AttendSchoolModal open={phase === 'attend-school' && isMyTurn} roomId={roomId!} />
+      <DealerResultOverlay
+        open={showDealerResult}
+        results={dealerResults}
+        players={gameState.players}
+        winnerId={dealerWinnerId}
+      />
+      <AttendSchoolModal
+        open={
+          phase === 'attend-school' &&
+          !showDealerResult &&
+          myPlayerId !== null &&
+          !gameState?.attendedPlayerIds.includes(myPlayerId)
+        }
+        roomId={roomId!}
+      />
+      <ModeSelectModal open={phase === 'mode-select'} isDealer={isDealer} roomId={roomId!} />
       <ShuffleModal open={phase === 'shuffling' && isDealer} roomId={roomId!} />
       <CutModal open={phase === 'cutting' && isMyTurn} roomId={roomId!} />
 
@@ -197,6 +313,55 @@ export function RoomPage() {
         onOpenChange={setShowLeaveDialog}
         roomId={roomId!}
       />
+
+      {/* 카드 확인 오버레이 — cutting → betting 전환 시 */}
+      {showCardConfirm && myPlayer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="bg-card rounded-xl p-6 space-y-4 text-center shadow-xl min-w-[280px]">
+            <h3 className="text-lg font-semibold">패가 나왔어요!</h3>
+            <p className="text-sm text-muted-foreground">
+              {gameState?.isTtong
+                ? '퉁 — 두 장을 한꺼번에 받았어요'
+                : '한 장씩 두 번 받았어요'}
+            </p>
+            {gameState?.isTtong ? (
+              /* 퉁: 두 장이 겹쳐진 모습으로 표시 */
+              <div className="relative flex justify-center h-28">
+                {myPlayer.cards.map((card, i) => (
+                  <div
+                    key={i}
+                    className="absolute w-16 h-24 rounded-lg bg-background border-2 border-primary flex flex-col items-center justify-center gap-1"
+                    style={{ left: `calc(50% - 32px + ${i * 10}px)`, top: `${i * 6}px` }}
+                  >
+                    <span className="text-2xl font-bold">{card.rank}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {card.attribute === 'gwang' ? '광' : card.attribute === 'yeolkkeut' ? '열끗' : ''}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              /* 기리: 한 장씩 순서 표시 */
+              <div className="flex justify-center gap-6">
+                {myPlayer.cards.map((card, i) => (
+                  <div key={i} className="flex flex-col items-center gap-1">
+                    <span className="text-xs text-muted-foreground">{i + 1}번째</span>
+                    <div className="w-16 h-24 rounded-lg bg-background border-2 border-primary flex flex-col items-center justify-center gap-1">
+                      <span className="text-2xl font-bold">{card.rank}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {card.attribute === 'gwang' ? '광' : card.attribute === 'yeolkkeut' ? '열끗' : ''}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <Button className="w-full" onClick={() => setShowCardConfirm(false)}>
+              확인
+            </Button>
+          </div>
+        </div>
+      )}
 
       <Toaster />
     </div>

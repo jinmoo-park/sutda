@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import {
   Dialog,
@@ -16,8 +17,16 @@ interface AttendSchoolModalProps {
 
 export function AttendSchoolModal({ open, roomId }: AttendSchoolModalProps) {
   const { socket } = useGameStore();
+  const [submitted, setSubmitted] = useState(false);
+
+  // 모달이 닫히면 submitted 초기화 (다음 라운드에서 재사용)
+  useEffect(() => {
+    if (!open) setSubmitted(false);
+  }, [open]);
 
   const handleAttend = () => {
+    if (submitted) return;
+    setSubmitted(true);
     socket?.emit('attend-school', { roomId });
   };
 
@@ -45,7 +54,7 @@ export function AttendSchoolModal({ open, roomId }: AttendSchoolModalProps) {
           >
             잠시 쉬기
           </Button>
-          <Button onClick={handleAttend}>학교 간다</Button>
+          <Button onClick={handleAttend} disabled={submitted}>학교 간다</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

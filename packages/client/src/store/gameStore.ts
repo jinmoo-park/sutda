@@ -43,6 +43,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ myPlayerId: socket.id ?? null });
     });
 
+    socket.on('set-player-id', ({ playerId }) => {
+      set({ myPlayerId: playerId });
+    });
+
     socket.on('game-state', (state: GameState) => {
       set({ gameState: state });
     });

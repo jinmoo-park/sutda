@@ -57,9 +57,12 @@ export class RoomManager {
       }
       throw new Error('GAME_IN_PROGRESS');
     }
-    // waiting 상태에서 닉네임 중복 체크 (per D-06)
-    if (room.players.some(p => p.nickname === nickname)) {
-      throw new Error('NICKNAME_TAKEN');
+    // waiting 상태에서도 동일 닉네임 → 재접속 처리 (소켓 재연결, 방장 권한 유지)
+    const existingWaiting = room.players.find(p => p.nickname === nickname);
+    if (existingWaiting) {
+      existingWaiting.id = playerId;
+      existingWaiting.isConnected = true;
+      return { room, player: existingWaiting };
     }
     if (room.players.length >= room.maxPlayers) {
       throw new Error('ROOM_FULL');

@@ -32,7 +32,8 @@ export function MainPage() {
     }
     s.emit('create-room', { nickname: nickname.trim(), initialChips });
     s.once('room-created', ({ roomId }) => {
-      navigate(`/room/${roomId}`);
+      // isHost: true → RoomPage에서 join-room 폼 건너뜀 (이미 create-room으로 입장됨)
+      navigate(`/room/${roomId}`, { state: { nickname: nickname.trim(), initialChips, isHost: true } });
     });
   };
 
@@ -45,7 +46,8 @@ export function MainPage() {
       toast.error('방 코드를 입력해 주세요.');
       return;
     }
-    navigate(`/room/${roomId.trim()}`);
+    // nickname/initialChips를 state로 전달 → RoomPage에서 자동 join-room emit
+    navigate(`/room/${roomId.trim()}`, { state: { nickname: nickname.trim(), initialChips } });
   };
 
   return (

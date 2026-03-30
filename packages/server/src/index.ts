@@ -94,6 +94,7 @@ io.on('connection', (socket) => {
     socket.data.nickname = nickname;
     socket.data.roomId = room.roomId;
     socket.join(room.roomId);
+    socket.emit('set-player-id', { playerId: socket.id });
     socket.emit('room-created', { roomId: room.roomId, roomState: room });
   });
 
@@ -108,6 +109,7 @@ io.on('connection', (socket) => {
       socket.data.nickname = nickname;
       socket.data.roomId = roomId;
       socket.join(roomId);
+      socket.emit('set-player-id', { playerId: socket.id });
       // 방 전체에 갱신된 상태 브로드캐스트 (방장 포함 모든 클라이언트 갱신)
       io.to(roomId).emit('room-state', room);
     } catch (err: any) {
