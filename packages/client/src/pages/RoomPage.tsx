@@ -10,6 +10,7 @@ import { InfoPanel } from '@/components/layout/InfoPanel';
 import { ChatPanel } from '@/components/layout/ChatPanel';
 import { ResultScreen } from '@/components/layout/ResultScreen';
 import { DealerSelectModal } from '@/components/modals/DealerSelectModal';
+import { GollaSelectModal } from '@/components/modals/GollaSelectModal';
 import { ModeSelectModal } from '@/components/modals/ModeSelectModal';
 import { SharedCardSelectModal } from '@/components/modals/SharedCardSelectModal';
 import { ShuffleModal } from '@/components/modals/ShuffleModal';
@@ -74,18 +75,42 @@ export function RoomPage() {
     if (!socket) connect(serverUrl);
   }, [socket, connect, serverUrl]);
 
+  // game-error 이벤트 핸들러 — 골라골라 카드 선착순 에러 등 코드별 토스트 표시
+  useEffect(() => {
+    if (!socket) return;
+    const handleGameError = ({ code, message }: { code: string; message: string }) => {
+      if (code === 'CARD_ALREADY_TAKEN') {
+        toast.error('이미 선택된 카드입니다. 다른 카드를 선택하세요.');
+      } else {
+        toast.error(message || '오류가 발생했습니다. 다시 시도해 주세요.');
+      }
+    };
+    socket.on('game-error', handleGameError);
+    return () => { socket.off('game-error', handleGameError); };
+  }, [socket]);
+
   // cutting → betting 전환 감지 → 딜링 애니메이션 후 카드 확인 오버레이 표시
   useEffect(() => {
     if (prevPhaseRef.current === 'cutting' && (gameState?.phase === 'betting' || gameState?.phase === 'betting-1')) {
       const players = gameState.players;
       const isTtong = gameState.isTtong;
-      // 한장공유는 1장씩 1라운드, 나머지는 1장씩 2라운드
-      const cardRounds = gameState.mode === 'shared-card' ? 1 : 2;
 
       if (dealingIntervalRef.current) {
         clearInterval(dealingIntervalRef.current);
         dealingIntervalRef.current = null;
       }
+
+      // 골라골라: 직접 선택이므로 딜링 애니메이션 없음 — visibleCardCounts 즉시 최종값으로 설정
+      if (gameState.mode === 'gollagolla') {
+        const counts: Record<string, number> = {};
+        players.forEach(p => { counts[p.id] = 2; });
+        setVisibleCardCounts(counts);
+        prevPhaseRef.current = gameState.phase;
+        return;
+      }
+
+      // 한장공유는 1장씩 1라운드, 나머지는 1장씩 2라운드
+      const cardRounds = gameState.mode === 'shared-card' ? 1 : 2;
 
       if (isTtong) {
         const counts: Record<string, number> = {};
@@ -417,6 +442,7 @@ export function RoomPage() {
         onOpenChange={setShowDealerResult}
       />
       {/* AttendSchoolModal 제거: 결과화면 "학교 가기" 클릭 시 자동 앤티 처리 */}
+      <GollaSelectModal open={phase === 'gollagolla-select'} roomId={roomId!} />
       <ModeSelectModal open={phase === 'mode-select'} isDealer={isDealer} roomId={roomId!} />
       <SharedCardSelectModal open={phase === 'shared-card-select'} roomId={roomId!} />
       <ShuffleModal open={phase === 'shuffling' && isDealer} roomId={roomId!} />

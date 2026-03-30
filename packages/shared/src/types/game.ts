@@ -55,7 +55,7 @@ export interface PlayerState {
   id: string;
   nickname: string;
   chips: number;
-  cards: Card[];
+  cards: (Card | null)[];  // 인디언 모드에서 null = 마스킹된 카드
   isAlive: boolean;       // 다이하지 않았는지
   isAbsent: boolean;      // 잠시 쉬기 중 (복귀 전까지 게임 미참여)
   isRevealed: boolean;    // showdown에서 패를 공개했는지 (모두 true가 되면 승패 판정)

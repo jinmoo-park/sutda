@@ -4,6 +4,7 @@ import { evaluateHand } from '@sutda/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CardFace } from '@/components/game/CardFace';
+import { CardBack } from '@/components/game/CardBack';
 import { HandReferenceDialog } from './HandReferenceDialog';
 import { cn } from '@/lib/utils';
 
@@ -89,8 +90,8 @@ export function HandPanel({ myPlayer, phase, onSelectCards, sharedCard, visibleC
       const result = evaluateHand(cards[0], sharedCard);
       const baseName = HAND_TYPE_KOREAN[result.handType] ?? result.handType;
       handLabel = result.handType === 'kkut' ? `${result.score}끗` : baseName;
-    } else if (cards.length >= 2 && phase !== 'card-select') {
-      // 오리지날: 기본 2장으로 족보 계산 (card-select phase에서는 표시 안 함)
+    } else if (cards.length >= 2 && cards[0] !== null && cards[1] !== null && phase !== 'card-select') {
+      // 오리지날: 기본 2장으로 족보 계산 (card-select phase에서는 표시 안 함, 인디언 null 카드 제외)
       const result = evaluateHand(cards[0], cards[1]);
       const baseName = HAND_TYPE_KOREAN[result.handType] ?? result.handType;
       handLabel = result.handType === 'kkut' ? `${result.score}끗` : baseName;
@@ -121,7 +122,11 @@ export function HandPanel({ myPlayer, phase, onSelectCards, sharedCard, visibleC
                   : 'cursor-default'
               )}
             >
-              <CardFace card={card} />
+              {card === null ? (
+                <CardBack />
+              ) : (
+                <CardFace card={card} />
+              )}
             </button>
           ))}
           {handLabel && (

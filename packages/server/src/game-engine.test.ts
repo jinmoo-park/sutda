@@ -236,7 +236,7 @@ describe('GameEngine', () => {
 
     // 카드 집합 동일성 확인
     const beforeRanks = beforeDeck.map(c => `${c.rank}-${c.attribute}`).sort();
-    const afterRanks = totalCards.map(c => `${c.rank}-${c.attribute}`).sort();
+    const afterRanks = totalCards.filter((c): c is NonNullable<typeof c> => c !== null).map(c => `${c.rank}-${c.attribute}`).sort();
     expect(afterRanks).toEqual(beforeRanks);
   });
 
