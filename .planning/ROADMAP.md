@@ -134,7 +134,7 @@ Plans:
 
 Plans:
 - [x] 07-01-PLAN.md — 공유 타입 확장 + GameEngine 세장섯다/한장공유 로직 + Socket.IO 핸들러 + 단위 테스트
-- [ ] 07-02-PLAN.md — 클라이언트 UI (ModeSelectModal 확장, SharedCardSelectModal, HandPanel 카드 선택, GameTable 공유카드, RoomPage 통합)
+- [x] 07-02-PLAN.md — 클라이언트 UI (ModeSelectModal 확장, SharedCardSelectModal, HandPanel 카드 선택, GameTable 공유카드, RoomPage 통합)
 
 ### Phase 8: 후회의섯다 + 인디언섯다 모드
 **Goal**: 5가지 게임 모드 전체가 플레이 가능하다

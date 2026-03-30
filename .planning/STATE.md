@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 07-01-PLAN.md
-last_updated: "2026-03-30T11:17:53.482Z"
+status: verifying
+stopped_at: "Completed 07-02-PLAN.md (checkpoint:human-verify)"
+last_updated: "2026-03-30T11:27:24.049Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 10
   completed_phases: 6
   total_plans: 16
-  completed_plans: 15
+  completed_plans: 14
   percent: 44
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 
 Phase: 07 (sejang-hanjang-modes) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-30
 
 Progress: [████░░░░░░] 44%
@@ -69,6 +69,7 @@ Progress: [████░░░░░░] 44%
 | Phase 06-ui P01 | 7 | 2 tasks | 29 files |
 | Phase 06-ui P02 | 8 | 3 tasks | 13 files |
 | Phase 07-sejang-hanjang-modes P01 | 833 | 1 tasks | 6 files |
+| Phase 07-sejang-hanjang-modes P02 | 0 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -119,6 +120,8 @@ Recent decisions affecting current work:
 - [Phase 07-sejang-hanjang-modes]: GameModeStrategy 인터페이스 + 3개 Strategy 클래스를 game-engine.ts 내부 구현 (per D-01, D-02)
 - [Phase 07-sejang-hanjang-modes]: Strategy 위임 범위: deal()+showdown()만 — 베팅/정산은 GameEngine에 유지 (per D-02)
 - [Phase 07-sejang-hanjang-modes]: BETTING_PHASES 상수로 betting/betting-1/betting-2 phase 통합 처리
+- [Phase 07-sejang-hanjang-modes]: sharedCard는 store에서 직접 읽지 않고 RoomPage에서 prop으로 전달 — 데이터 흐름 명확화
+- [Phase 07-sejang-hanjang-modes]: HandPanel card-select 모드: selectedIndices state로 토글 관리, phase prop 외부 주입 방식 채택
 
 ### Pending Todos
 
@@ -132,6 +135,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T11:17:53.475Z
-Stopped at: Completed 07-01-PLAN.md
+Last session: 2026-03-30T11:27:24.043Z
+Stopped at: Completed 07-02-PLAN.md (checkpoint:human-verify)
 Resume file: None
