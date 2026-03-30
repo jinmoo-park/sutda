@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 08-02 — 소켓 핸들러 + per-player emit
-last_updated: "2026-03-30T14:43:16.435Z"
+status: executing
+stopped_at: Completed 09-94-01-PLAN.md
+last_updated: "2026-03-30T16:51:14.344Z"
 last_activity: 2026-03-30
 progress:
-  total_phases: 10
+  total_phases: 11
   completed_phases: 8
-  total_plans: 19
-  completed_plans: 19
+  total_plans: 21
+  completed_plans: 20
   percent: 44
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** 아무 설치 없이 링크 하나로 친구들과 실시간으로 섯다를 즐길 수 있어야 한다.
-**Current focus:** Phase 08 — huhwi-indian-modes
+**Current focus:** Phase 09 — 94
 
 ## Current Position
 
-Phase: 9
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 09 (94) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-03-30
 
 Progress: [████░░░░░░] 44%
@@ -73,6 +73,7 @@ Progress: [████░░░░░░] 44%
 | Phase 08 P01 | 20 | 2 tasks | 2 files |
 | Phase 08-huhwi-indian-modes P03 | 20 | 2 tasks | 8 files |
 | Phase 08-huhwi-indian-modes P02 | 5 | 2 tasks | 1 files |
+| Phase 09-94 P01 | 1420 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -132,10 +133,16 @@ Recent decisions affecting current work:
 - [Phase 08-huhwi-indian-modes]: 골라골라 cutting→betting 딜링 애니메이션 스킵 — 직접 선택 모드이므로 showCardConfirm 불필요
 - [Phase 08-huhwi-indian-modes]: handleGameAction 항상 per-player emit으로 단순화 — getStateFor가 인디언 모드에서만 마스킹 적용, 다른 모드 성능 동등
 - [Phase 08-huhwi-indian-modes]: 인디언 bet-action 내부에서 dealing-extra 자동 처리 — fire-and-forget 패턴 유지
+- [Phase 09-94]: gusa-pending과 rematch-pending을 별도 phase로 분리 — 구사 재경기는 다이 플레이어 재참여 결정 필요
+- [Phase 09-94]: _startGusaRematch()는 mode를 변경하지 않음 — startRematch()와 핵심 차이
 
 ### Pending Todos
 
 None yet.
+
+### Roadmap Evolution
+
+- Phase 10 (구 09.1) inserted after Phase 9: 향상된 UX 및 이미지 적용 통합 페이즈 — 배포 전 필수 UX 완성 작업 (카드 이미지, 뒤집기, 채팅, 베팅 강조, 올인 POT, 이력). 기존 Phase 10(통합 테스트+배포)은 Phase 11로 번호 변경.
 
 ### Blockers/Concerns
 
@@ -145,6 +152,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T14:26:59.097Z
-Stopped at: Completed 08-02 — 소켓 핸들러 + per-player emit
+Last session: 2026-03-30T16:51:14.339Z
+Stopped at: Completed 09-94-01-PLAN.md
 Resume file: None
