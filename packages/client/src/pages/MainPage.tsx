@@ -13,7 +13,7 @@ export function MainPage() {
   const navigate = useNavigate();
   const { connect } = useGameStore();
 
-  const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+  const serverUrl = import.meta.env.VITE_SERVER_URL || '';
 
   // 마운트 시 미리 연결 — 클릭 시 lazy-connect는 race condition 유발
   useEffect(() => {
