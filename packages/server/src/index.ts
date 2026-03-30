@@ -52,6 +52,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   RECHARGE_IN_PROGRESS: '이미 재충전 요청이 진행 중입니다.',
   RECHARGE_NOT_FOUND: '재충전 요청을 찾을 수 없습니다.',
   INSUFFICIENT_CHIPS: '칩이 부족합니다.',
+  CARD_ALREADY_TAKEN: '이미 선택된 카드입니다. 다른 카드를 선택하세요.',
 };
 
 type ErrorCode = ErrorPayload['code'];
@@ -71,15 +72,22 @@ function getEngine(roomId: string): GameEngine {
   return engine;
 }
 
-function handleGameAction(
+async function handleGameAction(
   socket: TypedSocket,
   roomId: string,
   action: () => void
-): void {
+): Promise<void> {
   try {
     action();
     const engine = getEngine(roomId);
-    io.to(roomId).emit('game-state', engine.getState() as GameState);
+
+    // 항상 per-player emit — getStateFor가 인디언 모드에서만 마스킹 적용
+    // 다른 모드에서는 getState()와 동일한 상태 반환 (성능 동등)
+    const sockets = await io.in(roomId).fetchSockets();
+    for (const s of sockets) {
+      const pid = s.data?.playerId;
+      s.emit('game-state', engine.getStateFor(pid) as GameState);
+    }
   } catch (err: any) {
     socket.emit('game-error', {
       code: err.message || 'UNKNOWN_ERROR',
@@ -284,6 +292,12 @@ io.on('connection', (socket) => {
         }
       }
       engine.processBetAction(socket.data.playerId, action);
+
+      // 인디언 모드: betting-1 종료 후 dealing-extra 자동 처리
+      const stateAfter = engine.getState();
+      if (stateAfter.mode === 'indian' && stateAfter.phase === 'dealing-extra') {
+        engine.dealExtraCardIndian();
+      }
     });
   });
 
@@ -308,6 +322,15 @@ io.on('connection', (socket) => {
   socket.on('set-shared-card', ({ roomId, cardIndex }) => {
     handleGameAction(socket, roomId, () => {
       getEngine(roomId).setSharedCard(socket.data.playerId, cardIndex);
+    });
+  });
+
+  // select-gollagolla-cards 핸들러 — 골라골라 선착순 카드 선택 (per D-02)
+  socket.on('select-gollagolla-cards', ({ roomId, cardIndices }) => {
+    const playerId = socket.data.playerId;
+    handleGameAction(socket, roomId, () => {
+      const engine = getEngine(roomId);
+      engine.selectGollaCards(playerId, cardIndices);
     });
   });
 
