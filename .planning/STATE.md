@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 09-94-01-PLAN.md
-last_updated: "2026-03-30T16:51:14.344Z"
+stopped_at: "Checkpoint: Task 2 수동 검증 대기 (09-02)"
+last_updated: "2026-03-30T16:55:06.189Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 11
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 21
-  completed_plans: 20
+  completed_plans: 21
   percent: 44
 ---
 
@@ -74,6 +74,7 @@ Progress: [████░░░░░░] 44%
 | Phase 08-huhwi-indian-modes P03 | 20 | 2 tasks | 8 files |
 | Phase 08-huhwi-indian-modes P02 | 5 | 2 tasks | 1 files |
 | Phase 09-94 P01 | 1420 | 2 tasks | 4 files |
+| Phase 09-94 P02 | 420 | 1 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -135,6 +136,8 @@ Recent decisions affecting current work:
 - [Phase 08-huhwi-indian-modes]: 인디언 bet-action 내부에서 dealing-extra 자동 처리 — fire-and-forget 패턴 유지
 - [Phase 09-94]: gusa-pending과 rematch-pending을 별도 phase로 분리 — 구사 재경기는 다이 플레이어 재참여 결정 필요
 - [Phase 09-94]: _startGusaRematch()는 mode를 변경하지 않음 — startRematch()와 핵심 차이
+- [Phase 09-94]: GusaRejoinModal: decided 상태로 중복 emit 방지 — 결정 완료 후 텍스트로 대체
+- [Phase 09-94]: gusa-pending RoomPage: needsDecision(amDied && decision===null) 조건으로 모달 vs 대기 메시지 분기
 
 ### Pending Todos
 
@@ -152,6 +155,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T16:51:14.339Z
-Stopped at: Completed 09-94-01-PLAN.md
+Last session: 2026-03-30T16:54:57.425Z
+Stopped at: Checkpoint: Task 2 수동 검증 대기 (09-02)
 Resume file: None

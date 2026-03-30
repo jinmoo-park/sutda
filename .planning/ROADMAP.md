@@ -18,7 +18,7 @@
 - [x] **Phase 6: 클라이언트 UI 와이어프레임** - 로비, 게임 테이블, 카드/칩 표시, 베팅 액션 UI (completed 2026-03-30)
 - [ ] **Phase 7: 세장섯다 + 한장공유 모드** - 세장섯다/한장공유 Strategy 구현 및 UI 확장
 - [x] **Phase 8: 골라골라 + 인디언섯다 모드** - 골라골라 카드 선택 UI, 인디언 카드 가시성 반전 로직 (completed 2026-03-30)
-- [ ] **Phase 9: 특수 규칙 (땡값 + 94재경기)** - 땡값 자동 정산, 구사/멍텅구리구사 재경기 상태 머신
+- [x] **Phase 9: 특수 규칙 (땡값 + 94재경기)** - 땡값 자동 정산, 구사/멍텅구리구사 재경기 상태 머신 (completed 2026-03-30)
 - [ ] **Phase 10: 향상된 UX 및 이미지 적용** - 카드 이미지, 뒤집기 인터랙션, 채팅, 베팅 강조, 올인 POT, 게임 이력
 - [ ] **Phase 11: 통합 테스트 + 배포** - E2E 검증, Railway/Render 배포, 모바일 브라우저 대응
 
@@ -168,7 +168,7 @@ Plans:
 
 Plans:
 - [x] 09-01-PLAN.md — 공유 타입 확장 + 땡값 정산 TDD + 구사 재경기 FSM TDD (MODE-OG-03, RULE-01~04)
-- [ ] 09-02-PLAN.md — 소켓 핸들러 + GusaRejoinModal + ResultScreen 땡값 UI + RoomPage 통합 (RULE-03, MODE-OG-03)
+- [x] 09-02-PLAN.md — 소켓 핸들러 + GusaRejoinModal + ResultScreen 땡값 UI + RoomPage 통합 (RULE-03, MODE-OG-03)
 
 ### Phase 10: 향상된 UX 및 이미지 적용 통합 페이즈
 
@@ -227,6 +227,6 @@ Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11
 | 6. 클라이언트 UI 와이어프레임 | 3/3 | Complete   | 2026-03-30 |
 | 7. 세장섯다 + 한장공유 모드 | 2/2 | Complete | 2026-03-30 |
 | 8. 골라골라 + 인디언섯다 모드 | 3/3 | Complete   | 2026-03-30 |
-| 9. 특수 규칙 (땡값 + 94재경기) | 1/2 | In Progress|  |
+| 9. 특수 규칙 (땡값 + 94재경기) | 2/2 | Complete   | 2026-03-30 |
 | 10. 향상된 UX 및 이미지 적용 | 0/TBD | Not started | - |
 | 11. 통합 테스트 + 배포 | 0/TBD | Not started | - |
