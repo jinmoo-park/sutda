@@ -2,6 +2,7 @@
 
 **Gathered:** 2026-03-30
 **Status:** Ready for planning
+**Revised:** 2026-03-30 (D-01/D-02/D-03 checker 피드백 반영 — RESEARCH.md 권장 방향으로 정렬)
 
 <domain>
 ## Phase Boundary
@@ -17,9 +18,9 @@
 ## Implementation Decisions
 
 ### Strategy 패턴 구조
-- **D-01:** `OriginalMode`, `SejangMode`, `HanjangMode` 클래스를 별도로 분리. `GameEngine`은 현재 구조를 최대한 유지하면서 모드 객체에게 위임.
-- **D-02:** Strategy가 담당하는 메서드 범위: **deal()** + **showdown()** 만. 베팅/정산 로직은 오리지날과 동일하므로 `GameEngine`에 유지.
-- **D-03:** `GameMode` 타입에 `'sejang' | 'hanjang'` 추가 (`packages/shared/src/types/game.ts`).
+- **D-01:** `GameModeStrategy` 인터페이스를 정의하고, `OriginalModeStrategy`, `SejangModeStrategy`, `HanjangModeStrategy` 클래스를 `game-engine.ts` 내부에 구현. `GameEngine`은 `getModeStrategy()` 디스패치로 위임. 별도 파일 분리는 불필요 — FSM 결합도가 높아 같은 파일 내부에 배치한다. (RESEARCH.md Pattern 1 반영: 전면 클래스 분리보다 inline dispatch가 안전)
+- **D-02:** Strategy가 담당하는 메서드 범위: **deal()** + **showdown()** 만. 베팅/정산 로직은 오리지날과 동일하므로 `GameEngine`에 유지. Strategy 메서드 시그니처: `deal(engine: GameEngine, state: GameState): void`, `showdown(engine: GameEngine, state: GameState): void`.
+- **D-03:** `GameMode` 타입은 기존 `'three-card' | 'shared-card'` 유지 (이미 코드베이스에 정의됨). `'sejang'/'hanjang'`으로 리네임하지 않음 — 기존 코드와의 호환성 우선. (RESEARCH.md에서 기존 타입명 유지 권장)
 - **D-04:** `PlayerState`에 `selectedCards?: Card[]` 필드 추가 — 세장섯다에서 3장 중 2장 선택 결과를 저장. 쇼다운 시 이 값으로 족보 판정.
 - **D-05:** `GameState`에 `sharedCard?: Card` 필드 추가 — 한장공유 모드에서 공유 카드를 저장. 한장공유 모드에서만 사용.
 
@@ -87,15 +88,15 @@
 - `GameTable` — 중앙 공유카드 표시 영역 추가 필요 (한장공유 모드에서만)
 
 ### 변경 필요한 구조
-- `GameMode` 타입: `'original'` → `'original' | 'sejang' | 'hanjang'`
-- `GamePhase` 타입: `'betting-1' | 'dealing-extra' | 'card-select' | 'betting-2'` 추가
+- `GameMode` 타입: 기존 `'three-card' | 'shared-card'` 유지 (D-03)
+- `GamePhase` 타입: `'betting-1' | 'dealing-extra' | 'card-select' | 'betting-2' | 'shared-card-select'` 추가
 - `PlayerState`: `selectedCards?: Card[]` 추가
 - `GameState`: `sharedCard?: Card` 추가
-- `game-engine.ts`의 `_dealCards()`를 Strategy 인터페이스로 추출
-- `_resolveShowdown()`도 Strategy로 분리 (세장섯다/한장공유의 카드 판정 로직 다름)
+- `game-engine.ts`의 `_dealCards()`를 `GameModeStrategy.deal()` 위임으로 변경 (D-01)
+- `_resolveShowdown()`도 `GameModeStrategy.showdown()` 위임으로 변경 (D-01)
 
 ### Integration Points
-- `select-mode` 이벤트: 기존 이벤트 그대로, mode에 'sejang'/'hanjang' 값 추가
+- `select-mode` 이벤트: 기존 이벤트 그대로, mode에 'three-card'/'shared-card' 값 사용
 - `select-cards` 이벤트: 신규 — `{ roomId: string, cardIndices: number[] }` (세장섯다 card-select phase)
 - `set-shared-card` 이벤트: 신규 — `{ roomId: string, cardIndex: number }` (한장공유 딜러 지정)
 
@@ -121,3 +122,4 @@ None — 논의가 Phase 7 범위 내에서 진행됨.
 
 *Phase: 07-sejang-hanjang-modes*
 *Context gathered: 2026-03-30*
+*Revised: 2026-03-30 (D-01/D-02/D-03 정정)*
