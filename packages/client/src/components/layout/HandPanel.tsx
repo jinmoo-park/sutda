@@ -1,13 +1,17 @@
-import { useState } from 'react';
-import type { PlayerState } from '@sutda/shared';
+import { useState, useEffect } from 'react';
+import type { PlayerState, GamePhase, Card } from '@sutda/shared';
 import { evaluateHand } from '@sutda/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CardFace } from '@/components/game/CardFace';
 import { HandReferenceDialog } from './HandReferenceDialog';
+import { cn } from '@/lib/utils';
 
 interface HandPanelProps {
   myPlayer: PlayerState | null;
+  phase?: GamePhase;
+  onSelectCards?: (indices: number[]) => void;
+  sharedCard?: Card;
 }
 
 const HAND_TYPE_KOREAN: Record<string, string> = {
@@ -33,21 +37,63 @@ const HAND_TYPE_KOREAN: Record<string, string> = {
   kkut: '끗',
 };
 
-export function HandPanel({ myPlayer }: HandPanelProps) {
+export function HandPanel({ myPlayer, phase, onSelectCards, sharedCard }: HandPanelProps) {
   const [showReference, setShowReference] = useState(false);
+  const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
   const cards = myPlayer?.cards ?? [];
+  const alreadySelected = (myPlayer?.selectedCards?.length ?? 0) >= 2;
 
+  const isCardSelectMode =
+    phase === 'card-select' && (myPlayer?.isAlive ?? false) && !alreadySelected;
+
+  // card-select phase가 아니면 선택 상태 리셋
+  useEffect(() => {
+    if (phase !== 'card-select') {
+      setSelectedIndices([]);
+      setSubmitting(false);
+    }
+  }, [phase]);
+
+  const toggleCard = (idx: number) => {
+    if (!isCardSelectMode) return;
+    setSelectedIndices((prev) =>
+      prev.includes(idx)
+        ? prev.filter((i) => i !== idx)
+        : prev.length < 2
+        ? [...prev, idx]
+        : prev
+    );
+  };
+
+  const handleSelectCards = () => {
+    if (selectedIndices.length !== 2 || !onSelectCards) return;
+    setSubmitting(true);
+    onSelectCards(selectedIndices);
+  };
+
+  // 족보 계산
   let handLabel: string | null = null;
-  if (cards.length >= 2) {
-    try {
+  try {
+    if (alreadySelected && myPlayer?.selectedCards && myPlayer.selectedCards.length >= 2) {
+      // 세장섯다: 선택 완료된 카드로 족보 계산
+      const result = evaluateHand(myPlayer.selectedCards[0], myPlayer.selectedCards[1]);
+      const baseName = HAND_TYPE_KOREAN[result.handType] ?? result.handType;
+      handLabel = result.handType === 'kkut' ? `${result.score}끗` : baseName;
+    } else if (cards.length === 1 && sharedCard) {
+      // 한장공유: 내 1장 + 공유카드로 족보 계산
+      const result = evaluateHand(cards[0], sharedCard);
+      const baseName = HAND_TYPE_KOREAN[result.handType] ?? result.handType;
+      handLabel = result.handType === 'kkut' ? `${result.score}끗` : baseName;
+    } else if (cards.length >= 2 && phase !== 'card-select') {
+      // 오리지날: 기본 2장으로 족보 계산 (card-select phase에서는 표시 안 함)
       const result = evaluateHand(cards[0], cards[1]);
       const baseName = HAND_TYPE_KOREAN[result.handType] ?? result.handType;
-      handLabel =
-        result.handType === 'kkut' ? `${result.score}끗` : baseName;
-    } catch {
-      // 카드가 2장 미만이거나 평가 불가한 경우 무시
+      handLabel = result.handType === 'kkut' ? `${result.score}끗` : baseName;
     }
+  } catch {
+    // 카드가 2장 미만이거나 평가 불가한 경우 무시
   }
 
   return (
@@ -57,14 +103,53 @@ export function HandPanel({ myPlayer }: HandPanelProps) {
       {cards.length === 0 ? (
         <p className="text-sm text-muted-foreground">카드가 아직 없어요</p>
       ) : (
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center flex-wrap">
           {cards.map((card, idx) => (
-            <CardFace key={idx} card={card} />
+            <button
+              key={idx}
+              onClick={() => toggleCard(idx)}
+              disabled={!isCardSelectMode}
+              className={cn(
+                'rounded-md transition-all',
+                isCardSelectMode
+                  ? selectedIndices.includes(idx)
+                    ? 'ring-2 ring-primary scale-105 opacity-100 cursor-pointer'
+                    : 'opacity-70 hover:opacity-100 hover:ring-1 hover:ring-primary/50 cursor-pointer'
+                  : 'cursor-default'
+              )}
+            >
+              <CardFace card={card} />
+            </button>
           ))}
           {handLabel && (
             <Badge variant="secondary" className="ml-2">
               {handLabel}
             </Badge>
+          )}
+        </div>
+      )}
+
+      {/* card-select phase UI */}
+      {phase === 'card-select' && myPlayer?.isAlive && (
+        <div className="space-y-1">
+          {alreadySelected ? (
+            <p className="text-sm text-muted-foreground">
+              선택 완료! 다른 플레이어를 기다리는 중...
+            </p>
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground">
+                2장을 선택하세요 ({selectedIndices.length}/2)
+              </p>
+              <Button
+                variant="default"
+                size="sm"
+                disabled={selectedIndices.length !== 2 || submitting}
+                onClick={handleSelectCards}
+              >
+                {submitting ? '처리 중...' : '선택 완료'}
+              </Button>
+            </>
           )}
         </div>
       )}

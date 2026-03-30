@@ -17,10 +17,6 @@ interface ModeSelectModalProps {
 export function ModeSelectModal({ open, roomId, isDealer }: ModeSelectModalProps) {
   const { socket } = useGameStore();
 
-  const handleSelect = () => {
-    socket?.emit('select-mode', { roomId, mode: 'original' });
-  };
-
   return (
     <Dialog open={open}>
       <DialogContent
@@ -35,14 +31,30 @@ export function ModeSelectModal({ open, roomId, isDealer }: ModeSelectModalProps
               : '선 플레이어가 모드를 선택 중입니다...'}
           </DialogDescription>
         </DialogHeader>
-        <div className="py-2">
+        <div className="flex flex-col gap-2 py-2">
           <Button
             className="w-full"
             variant="outline"
-            onClick={handleSelect}
+            onClick={() => socket?.emit('select-mode', { roomId, mode: 'original' })}
             disabled={!isDealer}
           >
             오리지날 섯다
+          </Button>
+          <Button
+            className="w-full"
+            variant="outline"
+            onClick={() => socket?.emit('select-mode', { roomId, mode: 'three-card' })}
+            disabled={!isDealer}
+          >
+            세장섯다
+          </Button>
+          <Button
+            className="w-full"
+            variant="outline"
+            onClick={() => socket?.emit('select-mode', { roomId, mode: 'shared-card' })}
+            disabled={!isDealer}
+          >
+            한장공유
           </Button>
         </div>
       </DialogContent>
