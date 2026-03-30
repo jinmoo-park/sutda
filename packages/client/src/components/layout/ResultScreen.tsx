@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { GameState } from '@sutda/shared';
 import { evaluateHand } from '@sutda/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CardFace } from '@/components/game/CardFace';
+import { CardBack } from '@/components/game/CardBack';
 import { LeaveRoomDialog } from '@/components/modals/LeaveRoomDialog';
 import { useGameStore } from '@/store/gameStore';
 
@@ -36,30 +37,72 @@ interface ResultScreenProps {
   roomId: string;
 }
 
-export function ResultScreen({ gameState, myPlayerId: _myPlayerId, roomId }: ResultScreenProps) {
+const AUTO_NEXT_SECONDS = 5;
+
+export function ResultScreen({ gameState, myPlayerId, roomId }: ResultScreenProps) {
   const { socket } = useGameStore();
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [hasVotedNextRound, setHasVotedNextRound] = useState(false);
+  const [hasReturnedFromBreak, setHasReturnedFromBreak] = useState(false);
+  const [hasTakenBreak, setHasTakenBreak] = useState(false);
+  const [countdown, setCountdown] = useState(AUTO_NEXT_SECONDS);
+
+  const myPlayer = gameState.players.find((p) => p.id === myPlayerId);
+  const amAbsent = myPlayer?.isAbsent === true;
+  const nonAbsentCount = gameState.players.filter((p) => !p.isAbsent).length;
+  const canSkip = nonAbsentCount > 2;
 
   const winner = gameState.players.find((p) => p.id === gameState.winnerId);
   const winnerNickname = winner?.nickname ?? '알 수 없음';
 
-  const survivingPlayers = gameState.players.filter((p) => p.isAlive);
-  const survivorCount = survivingPlayers.length;
-
   const handleNextRound = () => {
+    if (hasVotedNextRound) return;
+    setHasVotedNextRound(true);
     socket?.emit('next-round', { roomId });
   };
+
+  const handleReturnFromBreak = () => {
+    if (hasReturnedFromBreak) return;
+    setHasReturnedFromBreak(true);
+    socket?.emit('return-from-break', { roomId });
+  };
+
+  const handleTakeBreak = () => {
+    if (hasTakenBreak) return;
+    setHasTakenBreak(true);
+    socket?.emit('take-break', { roomId });
+  };
+
+  // 자리비움 상태: 카운트다운 후 자동으로 next-round 투표
+  useEffect(() => {
+    if (!amAbsent || hasVotedNextRound) return;
+    if (countdown <= 0) {
+      handleNextRound();
+      return;
+    }
+    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [amAbsent, countdown, hasVotedNextRound]);
+
+  // amAbsent가 변경될 때 카운트다운 초기화
+  useEffect(() => {
+    if (amAbsent) setCountdown(AUTO_NEXT_SECONDS);
+  }, [amAbsent]);
+
+  const allPlayers = gameState.players.filter((p) => !p.isAbsent);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground gap-6 p-6">
       <h2 className="text-xl font-semibold">{winnerNickname} 승리!</h2>
 
       <div className="flex flex-wrap gap-6 justify-center">
-        {survivingPlayers.map((player) => {
+        {allPlayers.map((player) => {
+          const isDied = !player.isAlive;
+
           let handLabel: string | null = null;
-          if (player.cards.length >= 2) {
+          if (!isDied && player.cards.length >= 2) {
             try {
-              const result = evaluateHand(player.cards);
+              const result = evaluateHand(player.cards[0], player.cards[1]);
               const baseName = HAND_TYPE_KOREAN[result.handType] ?? result.handType;
               handLabel = result.handType === 'kkut' ? `${result.score}끗` : baseName;
             } catch {
@@ -73,45 +116,73 @@ export function ResultScreen({ gameState, myPlayerId: _myPlayerId, roomId }: Res
             ? gameState.pot - player.currentBet
             : -player.currentBet;
 
-          // survivorCount가 0이면 fallback
-          const displayDelta =
-            survivorCount > 0 ? chipDelta : 0;
-
           return (
             <div
               key={player.id}
-              className="flex flex-col items-center gap-2 p-4 rounded-lg border border-border bg-card"
+              className={`flex flex-col items-center gap-2 p-4 rounded-lg border bg-card ${isDied ? 'border-border opacity-70' : 'border-border'}`}
             >
               <p className="text-sm font-semibold">{player.nickname}</p>
               <div className="flex gap-2">
-                {player.cards.map((card, idx) => (
-                  <CardFace key={idx} card={card} />
-                ))}
+                {isDied
+                  ? player.cards.map((_, idx) => <CardBack key={idx} />)
+                  : player.cards.map((card, idx) =>
+                      player.isRevealed ? (
+                        <CardFace key={idx} card={card} />
+                      ) : (
+                        <CardBack key={idx} />
+                      )
+                    )}
               </div>
-              {handLabel && (
-                <Badge variant="secondary">{handLabel}</Badge>
+              {isDied ? (
+                <Badge variant="destructive">다이</Badge>
+              ) : (
+                player.isRevealed && handLabel && (
+                  <Badge variant="secondary">{handLabel}</Badge>
+                )
               )}
               <Badge
                 className={
-                  displayDelta > 0
+                  chipDelta > 0
                     ? 'bg-green-600 text-white'
-                    : displayDelta < 0
+                    : chipDelta < 0
                     ? 'bg-red-600 text-white'
                     : ''
                 }
               >
-                {displayDelta > 0 ? '+' : ''}
-                {displayDelta.toLocaleString()}원
+                {chipDelta > 0 ? '+' : ''}
+                {chipDelta.toLocaleString()}원
               </Badge>
             </div>
           );
         })}
       </div>
 
-      <div className="flex gap-2">
-        <Button variant="secondary" onClick={handleNextRound}>
-          다음 판
-        </Button>
+      <div className="flex flex-col items-center gap-2">
+        {amAbsent ? (
+          hasReturnedFromBreak ? (
+            <p className="text-sm text-muted-foreground">복귀 완료 — 다음 판부터 참여합니다</p>
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground">
+                자리비움 중 — {countdown}초 후 자동으로 넘어갑니다
+              </p>
+              <Button onClick={handleReturnFromBreak}>복귀하기</Button>
+            </>
+          )
+        ) : hasVotedNextRound ? (
+          <p className="text-sm text-muted-foreground">다른 플레이어를 기다리는 중...</p>
+        ) : (
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={handleNextRound}>
+              학교 가기
+            </Button>
+            {canSkip && (
+              <Button variant="ghost" disabled={hasTakenBreak} onClick={handleTakeBreak}>
+                다음판 쉬기
+              </Button>
+            )}
+          </div>
+        )}
         <Button variant="ghost" onClick={() => setShowLeaveDialog(true)}>
           방 나가기
         </Button>

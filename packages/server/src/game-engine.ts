@@ -1,4 +1,4 @@
-import { createDeck, evaluateHand, compareHands } from '@sutda/shared';
+import { createDeck, evaluateHand, compareHands, checkGusaTrigger } from '@sutda/shared';
 import type { Card, GameState, GameMode, PlayerState, RoomPlayer, BetAction, ChipBreakdown } from '@sutda/shared';
 
 /**
@@ -22,6 +22,7 @@ export class GameEngine {
       chips: p.chips,
       cards: [],
       isAlive: true,
+      isAbsent: false,
       isRevealed: false,
       currentBet: 0,
       isDealer: false,
@@ -172,10 +173,17 @@ export class GameEngine {
    * 밤일낮장 카드 선택
    * - phase가 'dealer-select'인지 검증
    * - 이미 선택한 플레이어 재선택 불가
-   * - 모든 플레이어 선택 완료 시 선 결정 후 attend-school로 전환
+   * - dealerSelectEligibleIds가 설정된 경우 해당 플레이어만 선택 가능
+   * - 모든 대상 플레이어 선택 완료 시 선 결정 (동률이면 동률자만 재추첨)
    */
   selectDealerCard(playerId: string, cardIndex: number): void {
     this.assertPhase('dealer-select');
+
+    // 선택 자격 확인 (동률 재추첨 중이면 동률자만 가능)
+    const eligibleIds = this.state.dealerSelectEligibleIds;
+    if (eligibleIds && !eligibleIds.includes(playerId)) {
+      throw new Error('INVALID_ACTION');
+    }
 
     const alreadySelected = this.state.dealerSelectCards!.find(sc => sc.playerId === playerId);
     if (alreadySelected) {
@@ -188,51 +196,51 @@ export class GameEngine {
 
     this.state.dealerSelectCards!.push({ playerId, cardIndex });
 
-    // 모든 플레이어가 선택 완료했는지 확인
-    if (this.state.dealerSelectCards!.length === this.state.players.length) {
+    // 현재 라운드 대상 인원 모두 선택 완료 시 선 결정
+    const targetCount = eligibleIds?.length ?? this.state.players.length;
+    if (this.state.dealerSelectCards!.length === targetCount) {
       this._resolveDealer();
-      this.state.phase = 'attend-school';
+      // _resolveDealer가 동률 감지 시 phase를 dealer-select 유지하며 상태 초기화
+      // 승자 결정 시 phase를 attend-school로 전환
     }
   }
 
-  /** 밤일낮장 선 결정 로직 */
+  /**
+   * 밤일낮장 선 결정 로직
+   * - 동률이면 동률자만 재추첨 (dealerSelectEligibleIds 갱신, phase 유지)
+   * - 승자 결정 시 phase = attend-school
+   */
   private _resolveDealer(): void {
     const kstHour = (new Date().getUTCHours() + 9) % 24;
     const isNight = kstHour >= 18 || kstHour < 6;
 
-    const selections = this.state.dealerSelectCards!;
-    let winnerPlayerId: string;
+    // 현재 라운드 선택 항목만 평가
+    const eligibleIds = this.state.dealerSelectEligibleIds ?? this.state.players.map(p => p.id);
+    const selections = this.state.dealerSelectCards!.filter(sc => eligibleIds.includes(sc.playerId));
 
-    if (isNight) {
-      // 밤: 가장 낮은 rank가 선
-      let minRank = Infinity;
-      let minPlayerId = selections[0].playerId;
-      for (const sc of selections) {
-        const rank = this.state.deck[sc.cardIndex].rank;
-        if (rank < minRank) {
-          minRank = rank;
-          minPlayerId = sc.playerId;
-        }
-      }
-      winnerPlayerId = minPlayerId;
-    } else {
-      // 낮: 가장 높은 rank가 선
-      let maxRank = -Infinity;
-      let maxPlayerId = selections[0].playerId;
-      for (const sc of selections) {
-        const rank = this.state.deck[sc.cardIndex].rank;
-        if (rank > maxRank) {
-          maxRank = rank;
-          maxPlayerId = sc.playerId;
-        }
-      }
-      winnerPlayerId = maxPlayerId;
+    // 최강 rank 찾기
+    let bestRank = isNight ? Infinity : -Infinity;
+    for (const sc of selections) {
+      const rank = this.state.deck[sc.cardIndex].rank;
+      if (isNight ? rank < bestRank : rank > bestRank) bestRank = rank;
     }
 
-    const dealerPlayer = this.state.players.find(p => p.id === winnerPlayerId);
-    if (dealerPlayer) {
-      dealerPlayer.isDealer = true;
+    // 동률 플레이어 목록
+    const tiedSelections = selections.filter(sc => this.state.deck[sc.cardIndex].rank === bestRank);
+
+    if (tiedSelections.length > 1) {
+      // 동률: 동률자만 재추첨 (선택 기록 초기화, phase 유지)
+      this.state.dealerSelectCards = [];
+      this.state.dealerSelectEligibleIds = tiedSelections.map(sc => sc.playerId);
+      return;
     }
+
+    // 승자 결정
+    const winnerId = tiedSelections[0].playerId;
+    const dealerPlayer = this.state.players.find(p => p.id === winnerId);
+    if (dealerPlayer) dealerPlayer.isDealer = true;
+    this.state.dealerSelectEligibleIds = undefined;
+    this.state.phase = 'attend-school';
   }
 
   /**
@@ -282,10 +290,39 @@ export class GameEngine {
   completeAttendSchool(): void {
     this.state.players.forEach(p => {
       if (!this.state.attendedPlayerIds.includes(p.id)) {
+        p.isAbsent = true;
         p.isAlive = false;
       }
     });
     this.state.phase = 'mode-select';
+  }
+
+  /**
+   * 결과 화면에서 다음 판 쉬기
+   * - result phase에서만 가능
+   */
+  takeBreak(playerId: string): void {
+    this.assertPhase('result');
+    const player = this.state.players.find(p => p.id === playerId);
+    if (!player) throw new Error('PLAYER_NOT_FOUND');
+    player.isAbsent = true;
+    player.isAlive = false;
+  }
+
+  /**
+   * 잠시 쉬기에서 복귀
+   * - attend-school phase: isAbsent=false + isAlive=true (이번 판 참여 가능)
+   * - 그 외 phase: isAbsent=false만 (다음 판부터 참여, isAlive는 nextRound에서 복원)
+   */
+  returnFromBreak(playerId: string): void {
+    const player = this.state.players.find(p => p.id === playerId);
+    if (!player) throw new Error('PLAYER_NOT_FOUND');
+    if (!player.isAbsent) return; // 이미 활성 상태
+    player.isAbsent = false;
+    if (this.state.phase === 'attend-school') {
+      player.isAlive = true;
+    }
+    // 다른 phase에서는 isAlive=false 유지 → nextRound()에서 isAbsent=false이므로 isAlive=true로 복원
   }
 
   /**
@@ -326,10 +363,15 @@ export class GameEngine {
     this.state.deck = shuffled;
     this.state.phase = 'cutting';
 
-    // cutter = dealer의 왼쪽 플레이어 (seatIndex + 1)
+    // cutter = dealer의 왼쪽 첫 번째 비-absent 플레이어
     const dealerSeatIndex = this.getDealerSeatIndex();
     const totalPlayers = this.state.players.length;
-    const cutterSeatIndex = (dealerSeatIndex + 1) % totalPlayers;
+    let cutterSeatIndex = (dealerSeatIndex + 1) % totalPlayers;
+    for (let i = 0; i < totalPlayers; i++) {
+      const candidate = this.state.players.find(p => p.seatIndex === cutterSeatIndex);
+      if (candidate && !candidate.isAbsent) break;
+      cutterSeatIndex = (cutterSeatIndex + 1) % totalPlayers;
+    }
     const cutter = this.state.players.find(p => p.seatIndex === cutterSeatIndex);
     this.cutterPlayerId = cutter ? cutter.id : null;
     // currentPlayerIndex를 기리자로 업데이트 → 클라이언트 isMyTurn이 올바른 플레이어에게 표시
@@ -462,8 +504,22 @@ export class GameEngine {
     this.state.phase = 'betting';
     // dealer가 첫 베팅
     this.state.currentPlayerIndex = dealerSeatIndex;
+    this.state.openingBettorSeatIndex = dealerSeatIndex;
     this._updateChipBreakdowns();
     this._updateEffectiveMaxBet();
+  }
+
+  /**
+   * fromSeat 기준 반시계 방향으로 다음 alive 플레이어의 seatIndex 반환
+   */
+  private _findNextAliveSeat(fromSeat: number): number | null {
+    const totalPlayers = this.state.players.length;
+    for (let i = 1; i <= totalPlayers; i++) {
+      const nextSeat = (fromSeat - i + totalPlayers) % totalPlayers;
+      const next = this.state.players.find(p => p.seatIndex === nextSeat && p.isAlive);
+      if (next) return nextSeat;
+    }
+    return null;
   }
 
   /**
@@ -535,7 +591,8 @@ export class GameEngine {
         this.state.pot += callAmount + action.amount;
         this.state.currentBetAmount = player.currentBet;
 
-        // 레이즈 발생 시 다른 플레이어의 액션 완료 플래그 초기화
+        // 레이즈 발생 시 선 권한 소멸 + 다른 플레이어 액션 플래그 초기화
+        this.state.openingBettorSeatIndex = null;
         const allActed = new Set<string>();
         allActed.add(playerId);
         this._bettingActed = allActed;
@@ -551,9 +608,18 @@ export class GameEngine {
         if (this.state.currentBetAmount > 0) {
           throw new Error('INVALID_ACTION: cannot check when currentBetAmount > 0');
         }
-        // 체크: 아무 금액 변화 없음
+        if (this.state.openingBettorSeatIndex !== player.seatIndex) {
+          throw new Error('INVALID_ACTION: only the opening bettor can check');
+        }
+        // 체크: 선 권한 소멸
+        this.state.openingBettorSeatIndex = null;
         break;
       }
+    }
+
+    // 다이한 플레이어가 선 권한 보유자였으면 다음 생존자에게 권한 이전
+    if (action.type === 'die' && this.state.openingBettorSeatIndex === player.seatIndex) {
+      this.state.openingBettorSeatIndex = this._findNextAliveSeat(player.seatIndex);
     }
 
     this._bettingActed.add(playerId);
@@ -566,13 +632,15 @@ export class GameEngine {
   private _advanceBettingTurn(): void {
     const alivePlayers = this.state.players.filter(p => p.isAlive);
 
-    // 생존자 1명 이하 -> result (생존자에게 pot 합산)
+    // 생존자 1명 이하 -> showdown (승자가 패 공개 여부 선택 후 result)
     if (alivePlayers.length <= 1) {
       if (alivePlayers.length === 1) {
         this.state.winnerId = alivePlayers[0].id;
-        this.settleChips();  // 마지막 생존자에게 pot 합산
+        this.state.currentPlayerIndex = alivePlayers[0].seatIndex;
+        this.state.phase = 'showdown';  // 승자가 공개/숨기기 선택
+      } else {
+        this.state.phase = 'result';
       }
-      this.state.phase = 'result';
       return;
     }
 
@@ -636,6 +704,14 @@ export class GameEngine {
     player.isRevealed = true;
 
     const alivePlayers = this.state.players.filter(p => p.isAlive);
+
+    // 생존자가 1명(상대 전원 다이) → 공개 선택 완료, 즉시 정산
+    if (alivePlayers.length === 1) {
+      this.settleChips();
+      this.state.phase = 'result';
+      return;
+    }
+
     const allRevealed = alivePlayers.every(p => p.isRevealed);
     if (allRevealed) {
       this._resolveShowdown();
@@ -643,7 +719,31 @@ export class GameEngine {
   }
 
   /**
+   * 패 숨기기 (showdown phase, 상대 전원 다이 상황에서만)
+   * - 카드를 공개하지 않고 pot만 수령
+   */
+  muckHand(playerId: string): void {
+    if (this.state.phase !== 'showdown') {
+      throw new Error('INVALID_PHASE');
+    }
+
+    const alivePlayers = this.state.players.filter(p => p.isAlive);
+    if (alivePlayers.length !== 1) {
+      throw new Error('INVALID_ACTION');  // 상대가 남아있으면 숨기기 불가
+    }
+
+    if (this.state.winnerId !== playerId) {
+      throw new Error('INVALID_ACTION');
+    }
+
+    // 공개 없이 정산
+    this.settleChips();
+    this.state.phase = 'result';
+  }
+
+  /**
    * 쇼다운 해결: evaluateHand + compareHands로 승자/동점 판정
+   * 구사 재경기 조건도 확인하며, 해당 시 구사 보유자가 재경기 선이 됨
    */
   private _resolveShowdown(): void {
     const alivePlayers = this.state.players.filter(p => p.isAlive);
@@ -652,6 +752,21 @@ export class GameEngine {
       player: p,
       hand: evaluateHand(p.cards[0], p.cards[1]),
     }));
+
+    const allHands = hands.map(h => h.hand);
+
+    // 구사 재경기 체크 (구사 보유자가 선)
+    for (const { player, hand } of hands) {
+      if (hand.isGusa || hand.isMeongtteongguriGusa) {
+        const { shouldRedeal } = checkGusaTrigger(hand, allHands);
+        if (shouldRedeal) {
+          this.state.phase = 'rematch-pending';
+          this.state.tiedPlayerIds = alivePlayers.map(p => p.id);
+          this.state.rematchDealerId = player.id;  // 구사 보유자가 재경기 선
+          return;
+        }
+      }
+    }
 
     // 최강 패 찾기
     let best = hands[0];
@@ -668,7 +783,7 @@ export class GameEngine {
     }
 
     if (tiedPlayers.length > 1) {
-      // 동점 -> 재경기 대기
+      // 동점 -> 재경기 대기 (rematchDealerId 미설정 → startRematch에서 tiedIds[0]이 선)
       this.state.phase = 'rematch-pending';
       this.state.tiedPlayerIds = tiedPlayers.map(t => t.player.id);
       return;
@@ -708,12 +823,13 @@ export class GameEngine {
     this.state.currentBetAmount = 0;
     this._bettingActed = new Set();
 
-    // 동점자 중 첫 번째(dealer 유지 또는 첫 번째 동점자)가 dealer
-    // dealer를 tiedIds[0]으로 설정
+    // dealer 결정: 구사 재경기면 구사 보유자, 그 외엔 동점자 중 첫 번째
+    const dealerId = this.state.rematchDealerId ?? tiedIds[0];
     this.state.players.forEach(p => { p.isDealer = false; });
-    const newDealer = this.state.players.find(p => p.id === tiedIds[0]);
+    const newDealer = this.state.players.find(p => p.id === dealerId);
     if (newDealer) newDealer.isDealer = true;
 
+    this.state.rematchDealerId = undefined;
     this.state.currentPlayerIndex = newDealer?.seatIndex ?? 0;
 
     // attend-school 건너뜀 (앤티 없음)
@@ -743,12 +859,13 @@ export class GameEngine {
     this.state.attendedPlayerIds = [];
     this.state.dealerSelectCards = [];
     this.state.deck = createDeck();
+    this.state.openingBettorSeatIndex = null;
     this._bettingActed = new Set();
 
-    // 모든 플레이어 리셋
+    // 모든 플레이어 리셋 (absent 플레이어는 isAlive 복원 안 함)
     this.state.players.forEach(p => {
       p.cards = [];
-      p.isAlive = true;
+      p.isAlive = !p.isAbsent;  // absent이면 isAlive = false 유지
       p.isRevealed = false;
       p.currentBet = 0;
       p.isDealer = false;

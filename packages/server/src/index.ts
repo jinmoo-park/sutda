@@ -29,6 +29,11 @@ const io = new Server<
 const roomManager = new RoomManager();
 const gameEngines: Map<string, GameEngine> = new Map();
 
+// 등교 응답 추적 (roomId → Set<playerId>) — 등교 + 잠시쉬기 모두 포함
+const schoolResponded: Map<string, Set<string>> = new Map();
+// 다음 판 투표 추적 (roomId → Set<playerId>)
+const nextRoundVotes: Map<string, Set<string>> = new Map();
+
 // 에러 메시지 맵 (per UI-SPEC 에러 메시지 계약)
 const ERROR_MESSAGES: Record<string, string> = {
   ROOM_NOT_FOUND: '존재하지 않는 방입니다. 링크를 다시 확인해주세요.',
@@ -152,14 +157,88 @@ io.on('connection', (socket) => {
   // 게임 이벤트 핸들러
 
   socket.on('select-dealer-card', ({ roomId, cardIndex }) => {
-    handleGameAction(socket, roomId, () => {
-      getEngine(roomId).selectDealerCard(socket.data.playerId, cardIndex);
-    });
+    try {
+      const engine = getEngine(roomId);
+      engine.selectDealerCard(socket.data.playerId, cardIndex);
+
+      // 선 결정 완료 후 attend-school로 전환됐으면 자동 앤티
+      if (engine.getState().phase === 'attend-school') {
+        const nonAbsentPlayers = engine.getState().players.filter(p => !p.isAbsent && p.isAlive);
+        for (const p of nonAbsentPlayers) {
+          try { engine.attendSchool(p.id); } catch { /* 이미 등교 */ }
+          if (engine.getState().phase !== 'attend-school') break;
+        }
+        if (engine.getState().phase === 'attend-school') {
+          engine.completeAttendSchool();
+        }
+      }
+
+      io.to(roomId).emit('game-state', engine.getState() as GameState);
+    } catch (err: any) {
+      socket.emit('game-error', {
+        code: err.message || 'UNKNOWN_ERROR',
+        message: ERROR_MESSAGES[err.message] || err.message || '알 수 없는 오류',
+      });
+    }
   });
 
   socket.on('attend-school', ({ roomId }) => {
     handleGameAction(socket, roomId, () => {
-      getEngine(roomId).attendSchool(socket.data.playerId);
+      const engine = getEngine(roomId);
+      engine.attendSchool(socket.data.playerId);
+      // 등교 응답 추적 (attendSchool 내부에서 completeAttendSchool 미호출 시)
+      if (engine.getState().phase === 'attend-school') {
+        if (!schoolResponded.has(roomId)) schoolResponded.set(roomId, new Set());
+        const responded = schoolResponded.get(roomId)!;
+        responded.add(socket.data.playerId);
+        // skip-school이 먼저 응답했을 수 있으므로 — 비-absent 플레이어 전원 응답 여부 확인
+        const nonAbsentCount = engine.getState().players.filter(p => !p.isAbsent).length;
+        if (responded.size >= nonAbsentCount) {
+          engine.completeAttendSchool();
+          schoolResponded.delete(roomId);
+        }
+      } else {
+        // phase가 바뀌었으면 이미 완료됨 — 트래킹 초기화
+        schoolResponded.delete(roomId);
+      }
+    });
+  });
+
+  socket.on('skip-school', ({ roomId }) => {
+    try {
+      const engine = getEngine(roomId);
+      const state = engine.getState();
+      if (state.phase !== 'attend-school') return;
+
+      // 선 플레이어는 잠시 쉬기 불가
+      const me = state.players.find(p => p.id === socket.data.playerId);
+      if (me?.isDealer) {
+        socket.emit('game-error', { code: 'INVALID_ACTION', message: '선 플레이어는 잠시 쉬기를 할 수 없습니다.' });
+        return;
+      }
+
+      if (!schoolResponded.has(roomId)) schoolResponded.set(roomId, new Set());
+      const responded = schoolResponded.get(roomId)!;
+      responded.add(socket.data.playerId);
+
+      // 비-absent 플레이어 전원 응답 시 completeAttendSchool 호출
+      const nonAbsentCount = state.players.filter(p => !p.isAbsent).length;
+      if (responded.size >= nonAbsentCount) {
+        engine.completeAttendSchool();
+        schoolResponded.delete(roomId);
+        io.to(roomId).emit('game-state', engine.getState() as GameState);
+      }
+    } catch (err: any) {
+      socket.emit('game-error', { code: err.message, message: err.message });
+    }
+  });
+
+  socket.on('return-from-break', ({ roomId }) => {
+    handleGameAction(socket, roomId, () => {
+      const engine = getEngine(roomId);
+      engine.returnFromBreak(socket.data.playerId);
+      // schoolResponded에서 제거 — 복귀 후 직접 attend-school 응답하게 함
+      schoolResponded.get(roomId)?.delete(socket.data.playerId);
     });
   });
 
@@ -214,10 +293,84 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('next-round', ({ roomId }) => {
+  socket.on('muck-hand', ({ roomId }) => {
     handleGameAction(socket, roomId, () => {
-      getEngine(roomId).nextRound();
+      getEngine(roomId).muckHand(socket.data.playerId);
     });
+  });
+
+  socket.on('next-round', ({ roomId }) => {
+    try {
+      const engine = getEngine(roomId);
+      const state = engine.getState();
+      if (state.phase !== 'result') return;
+
+      if (!nextRoundVotes.has(roomId)) nextRoundVotes.set(roomId, new Set());
+      const votes = nextRoundVotes.get(roomId)!;
+      votes.add(socket.data.playerId);
+
+      // 비-absent 플레이어 전원 투표 시 다음 판 시작
+      const nonAbsentCount = state.players.filter(p => !p.isAbsent).length;
+      if (votes.size >= nonAbsentCount) {
+        nextRoundVotes.delete(roomId);
+        schoolResponded.delete(roomId);
+        engine.nextRound();
+
+        // 모달 없이 자동 앤티: 비-absent 플레이어 전원 자동 등교
+        if (engine.getState().phase === 'attend-school') {
+          const nonAbsentPlayers = engine.getState().players.filter(p => !p.isAbsent && p.isAlive);
+          for (const p of nonAbsentPlayers) {
+            try { engine.attendSchool(p.id); } catch { /* 이미 등교 */ }
+            if (engine.getState().phase !== 'attend-school') break;
+          }
+          // 아직 attend-school이면 (absent 플레이어 때문에 자동완료 안 된 경우) 강제 완료
+          if (engine.getState().phase === 'attend-school') {
+            engine.completeAttendSchool();
+          }
+        }
+
+        io.to(roomId).emit('game-state', engine.getState() as GameState);
+      }
+    } catch (err: any) {
+      socket.emit('game-error', { code: err.message, message: err.message });
+    }
+  });
+
+  socket.on('take-break', ({ roomId }) => {
+    try {
+      const engine = getEngine(roomId);
+      if (engine.getState().phase !== 'result') return;
+      engine.takeBreak(socket.data.playerId);
+      io.to(roomId).emit('game-state', engine.getState() as GameState);
+
+      // take-break 후 비-absent 전원이 이미 투표했으면 다음 판 진행
+      const newState = engine.getState();
+      const votes = nextRoundVotes.get(roomId);
+      if (votes) {
+        const nonAbsentCount = newState.players.filter(p => !p.isAbsent).length;
+        if (nonAbsentCount > 0 && votes.size >= nonAbsentCount) {
+          nextRoundVotes.delete(roomId);
+          schoolResponded.delete(roomId);
+          engine.nextRound();
+
+          // 자동 앤티
+          if (engine.getState().phase === 'attend-school') {
+            const nonAbsentPlayers = engine.getState().players.filter(p => !p.isAbsent && p.isAlive);
+            for (const p of nonAbsentPlayers) {
+              try { engine.attendSchool(p.id); } catch { /* 이미 등교 */ }
+              if (engine.getState().phase !== 'attend-school') break;
+            }
+            if (engine.getState().phase === 'attend-school') {
+              engine.completeAttendSchool();
+            }
+          }
+
+          io.to(roomId).emit('game-state', engine.getState() as GameState);
+        }
+      }
+    } catch (err: any) {
+      socket.emit('game-error', { code: err.message, message: err.message });
+    }
   });
 
   // recharge-request 핸들러

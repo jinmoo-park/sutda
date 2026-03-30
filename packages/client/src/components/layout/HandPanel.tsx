@@ -41,7 +41,7 @@ export function HandPanel({ myPlayer }: HandPanelProps) {
   let handLabel: string | null = null;
   if (cards.length >= 2) {
     try {
-      const result = evaluateHand(cards);
+      const result = evaluateHand(cards[0], cards[1]);
       const baseName = HAND_TYPE_KOREAN[result.handType] ?? result.handType;
       handLabel =
         result.handType === 'kkut' ? `${result.score}끗` : baseName;

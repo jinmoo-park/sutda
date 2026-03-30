@@ -10,14 +10,15 @@ import { InfoPanel } from '@/components/layout/InfoPanel';
 import { ChatPanel } from '@/components/layout/ChatPanel';
 import { ResultScreen } from '@/components/layout/ResultScreen';
 import { DealerSelectModal } from '@/components/modals/DealerSelectModal';
-import { AttendSchoolModal } from '@/components/modals/AttendSchoolModal';
 import { ModeSelectModal } from '@/components/modals/ModeSelectModal';
 import { ShuffleModal } from '@/components/modals/ShuffleModal';
 import { CutModal } from '@/components/modals/CutModal';
 import { RechargeVoteModal } from '@/components/modals/RechargeVoteModal';
+import { MuckChoiceModal } from '@/components/modals/MuckChoiceModal';
 import { LeaveRoomDialog } from '@/components/modals/LeaveRoomDialog';
 import { DealerResultOverlay } from '@/components/modals/DealerResultOverlay';
 import type { DealerSelectResult } from '@/components/modals/DealerResultOverlay';
+import { CardFace } from '@/components/game/CardFace';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -45,6 +46,8 @@ export function RoomPage() {
   const [hasJoined, setHasJoined] = useState(initIsHost);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [showCardConfirm, setShowCardConfirm] = useState(false);
+  const [visibleCardCounts, setVisibleCardCounts] = useState<Record<string, number>>({});
+  const dealingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // 입장 정보를 sessionStorage에 저장 (새로고침 시 복원용)
   useEffect(() => {
@@ -69,10 +72,60 @@ export function RoomPage() {
     if (!socket) connect(serverUrl);
   }, [socket, connect, serverUrl]);
 
-  // cutting → betting 전환 감지 → 카드 확인 오버레이 표시
+  // cutting → betting 전환 감지 → 딜링 애니메이션 후 카드 확인 오버레이 표시
   useEffect(() => {
     if (prevPhaseRef.current === 'cutting' && gameState?.phase === 'betting') {
-      setShowCardConfirm(true);
+      const players = gameState.players;
+      const isTtong = gameState.isTtong;
+
+      // 기존 타이머 정리
+      if (dealingIntervalRef.current) {
+        clearInterval(dealingIntervalRef.current);
+        dealingIntervalRef.current = null;
+      }
+
+      if (isTtong) {
+        // 퉁: 모든 플레이어에게 동시에 2장
+        const counts: Record<string, number> = {};
+        players.forEach((p) => { counts[p.id] = 2; });
+        setVisibleCardCounts(counts);
+        setTimeout(() => setShowCardConfirm(true), 700);
+      } else {
+        // 기리: 각 플레이어에게 한 장씩, 2라운드 (총 players.length * 2 스텝)
+        const initial: Record<string, number> = {};
+        players.forEach((p) => { initial[p.id] = 0; });
+        setVisibleCardCounts(initial);
+
+        let step = 0;
+        const totalSteps = players.length * 2;
+
+        dealingIntervalRef.current = setInterval(() => {
+          const playerIdx = step % players.length;
+          const cardNum = Math.floor(step / players.length) + 1;
+          setVisibleCardCounts((prev) => ({
+            ...prev,
+            [players[playerIdx].id]: cardNum,
+          }));
+          step++;
+          if (step >= totalSteps) {
+            clearInterval(dealingIntervalRef.current!);
+            dealingIntervalRef.current = null;
+            setTimeout(() => setShowCardConfirm(true), 600);
+          }
+        }, 500);
+      }
+    }
+  }, [gameState?.phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 베팅/커팅 phase 벗어나면 딜링 상태 초기화
+  useEffect(() => {
+    const p = gameState?.phase;
+    if (p !== 'betting' && p !== 'cutting') {
+      setVisibleCardCounts({});
+      if (dealingIntervalRef.current) {
+        clearInterval(dealingIntervalRef.current);
+        dealingIntervalRef.current = null;
+      }
     }
   }, [gameState?.phase]);
 
@@ -147,8 +200,15 @@ export function RoomPage() {
     gameState !== null &&
     gameState.players[gameState.currentPlayerIndex]?.id === myPlayerId;
   const isDealer = myPlayer?.isDealer ?? false;
+  const nonAbsentCount = gameState?.players.filter((p) => !p.isAbsent).length ?? 0;
+  const canSkip = nonAbsentCount > 2;
   const currentPlayerNickname =
     gameState?.players[gameState.currentPlayerIndex]?.nickname;
+  // 선 권한 보유자 여부 (체크 가능 조건)
+  const isEffectiveSen =
+    gameState?.openingBettorSeatIndex !== null &&
+    gameState?.openingBettorSeatIndex !== undefined &&
+    myPlayer?.seatIndex === gameState?.openingBettorSeatIndex;
 
   // 닉네임 입력 폼 (방 미입장 상태)
   const handleJoinRoom = () => {
@@ -252,6 +312,7 @@ export function RoomPage() {
           myPlayerId={myPlayerId}
           currentPlayerIndex={gameState.currentPlayerIndex}
           pot={gameState.pot}
+          visibleCardCounts={Object.keys(visibleCardCounts).length > 0 ? visibleCardCounts : undefined}
         />
       </div>
 
@@ -276,12 +337,26 @@ export function RoomPage() {
             roomId={roomId!}
             effectiveMaxBet={gameState.effectiveMaxBet}
             currentPlayerNickname={currentPlayerNickname}
-            isDealer={isDealer}
+            isEffectiveSen={isEffectiveSen}
           />
         )}
 
         <ChatPanel />
       </div>
+
+      {/* 잠시 쉬기 중 → 비차단 복귀 배너 (phase 무관) */}
+      {myPlayer?.isAbsent && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-2 rounded-full bg-secondary text-secondary-foreground shadow-lg text-sm">
+          <span>자리비움 중</span>
+          <Button
+            size="sm"
+            variant="default"
+            onClick={() => socket?.emit('return-from-break', { roomId: roomId! })}
+          >
+            복귀하기
+          </Button>
+        </div>
+      )}
 
       {/* 특수 액션 모달 — phase에 따라 조건부 표시 */}
       <DealerSelectModal open={phase === 'dealer-select'} roomId={roomId!} />
@@ -290,19 +365,22 @@ export function RoomPage() {
         results={dealerResults}
         players={gameState.players}
         winnerId={dealerWinnerId}
+        onOpenChange={setShowDealerResult}
       />
-      <AttendSchoolModal
-        open={
-          phase === 'attend-school' &&
-          !showDealerResult &&
-          myPlayerId !== null &&
-          !gameState?.attendedPlayerIds.includes(myPlayerId)
-        }
-        roomId={roomId!}
-      />
+      {/* AttendSchoolModal 제거: 결과화면 "학교 가기" 클릭 시 자동 앤티 처리 */}
       <ModeSelectModal open={phase === 'mode-select'} isDealer={isDealer} roomId={roomId!} />
       <ShuffleModal open={phase === 'shuffling' && isDealer} roomId={roomId!} />
       <CutModal open={phase === 'cutting' && isMyTurn} roomId={roomId!} />
+      {/* 상대 전원 다이 시 패 공개 선택 */}
+      <MuckChoiceModal
+        open={
+          phase === 'showdown' &&
+          gameState.winnerId === myPlayerId &&
+          myPlayer !== null
+        }
+        roomId={roomId!}
+        myCards={myPlayer?.cards ?? []}
+      />
 
       {/* 재충전 모달 — phase 무관, rechargeRequest 있을 때 */}
       <RechargeVoteModal roomId={roomId!} />
@@ -315,43 +393,24 @@ export function RoomPage() {
       />
 
       {/* 카드 확인 오버레이 — cutting → betting 전환 시 */}
-      {showCardConfirm && myPlayer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+      {showCardConfirm && myPlayer && !myPlayer.isAbsent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75">
           <div className="bg-card rounded-xl p-6 space-y-4 text-center shadow-xl min-w-[280px]">
             <h3 className="text-lg font-semibold">패가 나왔어요!</h3>
-            <p className="text-sm text-muted-foreground">
-              {gameState?.isTtong
-                ? '퉁 — 두 장을 한꺼번에 받았어요'
-                : '한 장씩 두 번 받았어요'}
-            </p>
             {gameState?.isTtong ? (
-              /* 퉁: 두 장이 겹쳐진 모습으로 표시 */
-              <div className="relative flex justify-center h-28">
+              /* 퉁: 두 장이 나란히 */
+              <div className="flex justify-center gap-3">
                 {myPlayer.cards.map((card, i) => (
-                  <div
-                    key={i}
-                    className="absolute w-16 h-24 rounded-lg bg-background border-2 border-primary flex flex-col items-center justify-center gap-1"
-                    style={{ left: `calc(50% - 32px + ${i * 10}px)`, top: `${i * 6}px` }}
-                  >
-                    <span className="text-2xl font-bold">{card.rank}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {card.attribute === 'gwang' ? '광' : card.attribute === 'yeolkkeut' ? '열끗' : ''}
-                    </span>
-                  </div>
+                  <CardFace key={i} card={card} />
                 ))}
               </div>
             ) : (
-              /* 기리: 한 장씩 순서 표시 */
+              /* 기리: 1번째 / 2번째 레이블과 함께 */
               <div className="flex justify-center gap-6">
                 {myPlayer.cards.map((card, i) => (
                   <div key={i} className="flex flex-col items-center gap-1">
                     <span className="text-xs text-muted-foreground">{i + 1}번째</span>
-                    <div className="w-16 h-24 rounded-lg bg-background border-2 border-primary flex flex-col items-center justify-center gap-1">
-                      <span className="text-2xl font-bold">{card.rank}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {card.attribute === 'gwang' ? '광' : card.attribute === 'yeolkkeut' ? '열끗' : ''}
-                      </span>
-                    </div>
+                    <CardFace card={card} />
                   </div>
                 ))}
               </div>

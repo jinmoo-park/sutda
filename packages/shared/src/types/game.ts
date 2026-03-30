@@ -45,6 +45,7 @@ export interface PlayerState {
   chips: number;
   cards: Card[];
   isAlive: boolean;       // 다이하지 않았는지
+  isAbsent: boolean;      // 잠시 쉬기 중 (복귀 전까지 게임 미참여)
   isRevealed: boolean;    // showdown에서 패를 공개했는지 (모두 true가 되면 승패 판정)
   currentBet: number;     // 현재 판에서 베팅한 총액
   isDealer: boolean;      // 선 플레이어 여부
@@ -68,5 +69,8 @@ export interface GameState {
   attendedPlayerIds: string[];    // 등교한 플레이어 ID 목록
   winnerId?: string;              // 이번 판 승자 ID (result phase에서 설정)
   tiedPlayerIds?: string[];       // 동점자 ID 목록 (rematch-pending phase에서 설정)
+  rematchDealerId?: string;       // 재경기에서 선이 될 플레이어 ID (구사 재경기 시 설정)
+  dealerSelectEligibleIds?: string[];  // 밤일낮장 현재 라운드에서 카드 선택 가능한 플레이어 IDs (undefined = 전원)
   effectiveMaxBet?: number;       // 현재 턴 플레이어의 유효 스택 상한 (per D-11)
+  openingBettorSeatIndex?: number | null;  // 선 권한 보유자 seatIndex (null = 이미 행사됨)
 }
