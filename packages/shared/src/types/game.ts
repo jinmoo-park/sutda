@@ -17,7 +17,12 @@ export type GamePhase =
   | 'shuffling'        // 셔플 중
   | 'cutting'          // 기리 진행 중
   | 'dealing'          // 패 돌리기 중
-  | 'betting'          // 베팅 중
+  | 'betting'          // 베팅 중 (오리지날 / 한장공유 모드)
+  | 'betting-1'        // 세장섯다: 1차 베팅 (2장 배분 후)
+  | 'dealing-extra'    // 세장섯다: 3번째 카드 배분 (서버 자동)
+  | 'card-select'      // 세장섯다: 3장 중 2장 선택
+  | 'betting-2'        // 세장섯다: 2차 베팅
+  | 'shared-card-select' // 한장공유: 딜러가 공유 카드 선택
   | 'showdown'         // 족보 비교 / 승패 결정
   | 'result'           // 결과 표시
   | 'rematch-pending'  // 동점 재경기 대기
@@ -58,6 +63,7 @@ export interface PlayerState {
   seatIndex: number;      // 자리 번호 (0부터)
   chipBreakdown: ChipBreakdown;  // 칩 단위별 개수 (per CHIP-04, D-12)
   lastBetAction?: LastBetAction; // 이번 판에서의 마지막 베팅 액션
+  selectedCards?: Card[];  // 세장섯다: 3장 중 선택한 2장 (per D-04)
 }
 
 /** 전체 게임 상태 */
@@ -80,4 +86,5 @@ export interface GameState {
   dealerSelectEligibleIds?: string[];  // 밤일낮장 현재 라운드에서 카드 선택 가능한 플레이어 IDs (undefined = 전원)
   effectiveMaxBet?: number;       // 현재 턴 플레이어의 유효 스택 상한 (per D-11)
   openingBettorSeatIndex?: number | null;  // 선 권한 보유자 seatIndex (null = 이미 행사됨)
+  sharedCard?: Card;              // 한장공유: 공유 카드 (per D-05)
 }

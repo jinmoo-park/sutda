@@ -299,6 +299,18 @@ io.on('connection', (socket) => {
     });
   });
 
+  socket.on('select-cards', ({ roomId, cardIndices }) => {
+    handleGameAction(socket, roomId, () => {
+      getEngine(roomId).selectCards(socket.data.playerId, cardIndices);
+    });
+  });
+
+  socket.on('set-shared-card', ({ roomId, cardIndex }) => {
+    handleGameAction(socket, roomId, () => {
+      getEngine(roomId).setSharedCard(socket.data.playerId, cardIndex);
+    });
+  });
+
   socket.on('next-round', ({ roomId }) => {
     try {
       const engine = getEngine(roomId);

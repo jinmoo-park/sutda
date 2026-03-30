@@ -43,6 +43,8 @@ export interface ClientToServerEvents {
   'recharge-vote': (data: { roomId: string; approved: boolean }) => void;
   'return-from-break': (data: { roomId: string }) => void;
   'take-break': (data: { roomId: string }) => void;
+  'select-cards': (data: { roomId: string; cardIndices: number[] }) => void;
+  'set-shared-card': (data: { roomId: string; cardIndex: number }) => void;
 }
 
 /** 서버 -> 클라이언트 이벤트 */

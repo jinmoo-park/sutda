@@ -1,14 +1,65 @@
 import { createDeck, evaluateHand, compareHands, checkGusaTrigger } from '@sutda/shared';
 import type { Card, GameState, GameMode, PlayerState, RoomPlayer, BetAction, ChipBreakdown } from '@sutda/shared';
 
+// =====================================================================
+// GameModeStrategy 패턴 (per D-01, D-02)
+// deal()과 showdown()만 Strategy에 위임하고, 베팅/정산은 GameEngine에 유지
+// =====================================================================
+
+interface GameModeStrategy {
+  deal(engine: GameEngine, state: GameState): void;
+  showdown(engine: GameEngine, state: GameState): void;
+}
+
+class OriginalModeStrategy implements GameModeStrategy {
+  deal(engine: GameEngine, _state: GameState): void {
+    engine['_dealCardsOriginal']();
+  }
+  showdown(engine: GameEngine, _state: GameState): void {
+    engine['_resolveShowdownOriginal']();
+  }
+}
+
+class SejangModeStrategy implements GameModeStrategy {
+  deal(engine: GameEngine, _state: GameState): void {
+    engine['_dealCardsSejang']();
+  }
+  showdown(engine: GameEngine, _state: GameState): void {
+    engine['_resolveShowdownSejang']();
+  }
+}
+
+class HanjangModeStrategy implements GameModeStrategy {
+  deal(engine: GameEngine, _state: GameState): void {
+    engine['_dealCardsHanjang']();
+  }
+  showdown(engine: GameEngine, _state: GameState): void {
+    engine['_resolveShowdownHanjang']();
+  }
+}
+
 /**
- * GameEngine 클래스 — 오리지날 모드 게임 플로우 FSM
+ * GameEngine 클래스 — 오리지날/세장섯다/한장공유 모드 게임 플로우 FSM
  *
- * 상태 전환: dealer-select -> attend-school -> mode-select -> shuffling -> cutting -> dealing -> betting
+ * 상태 전환 (오리지날): dealer-select -> attend-school -> mode-select -> shuffling -> cutting -> dealing -> betting
+ * 상태 전환 (세장섯다): ... -> dealing -> betting-1 -> card-select -> betting-2 -> showdown/result
+ * 상태 전환 (한장공유): ... -> mode-select -> shared-card-select -> shuffling -> cutting -> dealing(1장) -> betting
  */
 export class GameEngine {
   private state: GameState;
   private cutterPlayerId: string | null = null;
+
+  /** 베팅이 유효한 phase 목록 */
+  private static readonly BETTING_PHASES: GameState['phase'][] = ['betting', 'betting-1', 'betting-2'];
+
+  /** 현재 모드에 맞는 Strategy 반환 (per D-01) */
+  private getModeStrategy(): GameModeStrategy {
+    switch (this.state.mode) {
+      case 'three-card': return new SejangModeStrategy();
+      case 'shared-card': return new HanjangModeStrategy();
+      default: return new OriginalModeStrategy();
+    }
+  }
 
   constructor(
     roomId: string,
@@ -84,7 +135,7 @@ export class GameEngine {
    * betting phase에서만 유효, 그 외 phase에서는 undefined
    */
   private _updateEffectiveMaxBet(): void {
-    if (this.state.phase !== 'betting') {
+    if (!GameEngine.BETTING_PHASES.includes(this.state.phase)) {
       this.state.effectiveMaxBet = undefined;
       return;
     }
@@ -326,6 +377,54 @@ export class GameEngine {
   }
 
   /**
+   * 한장공유: 딜러가 공유 카드 선택
+   * - dealer만 가능
+   * - phase가 'shared-card-select'인지 검증
+   * - deck에서 해당 카드 제거 후 state.sharedCard에 저장
+   */
+  setSharedCard(playerId: string, cardIndex: number): void {
+    this.assertPhase('shared-card-select');
+    const player = this.state.players.find(p => p.id === playerId);
+    if (!player || !player.isDealer) throw new Error('NOT_YOUR_TURN');
+    if (cardIndex < 0 || cardIndex >= this.state.deck.length) throw new Error('INVALID_ACTION');
+    (this.state as any).sharedCard = this.state.deck[cardIndex];
+    this.state.deck = this.state.deck.filter((_, i) => i !== cardIndex);
+    this.state.phase = 'shuffling';
+  }
+
+  /**
+   * 세장섯다: 3장 중 2장 선택
+   * - card-select phase에서만 가능
+   * - 모든 생존자 선택 완료 시 betting-2 phase로 전환
+   */
+  selectCards(playerId: string, cardIndices: number[]): void {
+    this.assertPhase('card-select');
+    if (cardIndices.length !== 2) throw new Error('INVALID_ACTION');
+    const player = this.state.players.find(p => p.id === playerId);
+    if (!player || !player.isAlive) throw new Error('INVALID_ACTION');
+    if ((player as any).selectedCards && (player as any).selectedCards.length === 2) {
+      throw new Error('ALREADY_ATTENDED');
+    }
+    const [i0, i1] = cardIndices;
+    if (i0 === i1 || i0 < 0 || i0 >= 3 || i1 < 0 || i1 >= 3) throw new Error('INVALID_ACTION');
+    (player as any).selectedCards = [player.cards[i0], player.cards[i1]];
+
+    // 모든 생존자 선택 완료 확인
+    const alivePlayers = this.state.players.filter(p => p.isAlive);
+    const allSelected = alivePlayers.every(p => (p as any).selectedCards && (p as any).selectedCards.length === 2);
+    if (allSelected) {
+      const dealerSeatIndex = this.getDealerSeatIndex();
+      this.state.phase = 'betting-2';
+      this.state.currentPlayerIndex = dealerSeatIndex;
+      this.state.openingBettorSeatIndex = dealerSeatIndex;
+      this.state.currentBetAmount = 0;
+      this._bettingActed = new Set();
+      alivePlayers.forEach(p => { p.currentBet = 0; });
+      this._updateEffectiveMaxBet();
+    }
+  }
+
+  /**
    * 게임 모드 선택
    * - dealer만 가능
    * - phase가 'mode-select'인지 검증
@@ -339,7 +438,12 @@ export class GameEngine {
     }
 
     this.state.mode = mode;
-    this.state.phase = 'shuffling';
+    // 한장공유: 딜러가 공유카드를 먼저 선택해야 함 (per D-03)
+    if (mode === 'shared-card') {
+      this.state.phase = 'shared-card-select';
+    } else {
+      this.state.phase = 'shuffling';
+    }
   }
 
   /**
@@ -450,32 +554,22 @@ export class GameEngine {
   }
 
   /**
-   * 패 배분 (private)
+   * 패 배분 — Strategy 패턴으로 모드별 위임 (per D-01, D-02)
+   */
+  private _dealCards(): void {
+    const strategy = this.getModeStrategy();
+    strategy.deal(this, this.state);
+  }
+
+  /**
+   * 오리지날 모드 패 배분 (OriginalModeStrategy에서 호출)
    * - 등교한 플레이어(isAlive===true)만 대상
    * - 반시계 방향 배분
    * - isTtong이면 2장씩, 아니면 1장씩 2라운드
    */
-  private _dealCards(): void {
+  private _dealCardsOriginal(): void {
     const alivePlayers = this.state.players.filter(p => p.isAlive);
     const dealerSeatIndex = this.getDealerSeatIndex();
-    const counterClockwiseOrder = this.getCounterClockwiseOrder(dealerSeatIndex, alivePlayers.length);
-
-    // seatIndex -> PlayerState 매핑
-    const alivePlayersBySeat = new Map<number, PlayerState>();
-    alivePlayers.forEach((p, idx) => {
-      alivePlayersBySeat.set(idx, p);
-    });
-
-    // alive 플레이어의 seatIndex 순서 (dealer 기준 반시계)
-    const aliveSeats = alivePlayers.map(p => p.seatIndex);
-    // dealer의 alive players 내에서의 위치 찾기
-    const dealerAliveIdx = aliveSeats.indexOf(dealerSeatIndex);
-
-    // 반시계 순서로 alive 플레이어 정렬
-    const orderedAlivePlayers: PlayerState[] = counterClockwiseOrder.map(idx => {
-      const seatIdx = (dealerSeatIndex - (idx) + this.state.players.length) % this.state.players.length;
-      return this.state.players.find(p => p.seatIndex === seatIdx)!;
-    }).filter(p => p && p.isAlive);
 
     // alive 플레이어만 대상으로 반시계 순서 재계산
     const orderedByDealerCounterClockwise = this._getAlivePlayersInCounterClockwiseOrder(
@@ -503,6 +597,81 @@ export class GameEngine {
 
     this.state.phase = 'betting';
     // dealer가 첫 베팅
+    this.state.currentPlayerIndex = dealerSeatIndex;
+    this.state.openingBettorSeatIndex = dealerSeatIndex;
+    this._updateChipBreakdowns();
+    this._updateEffectiveMaxBet();
+  }
+
+  /**
+   * 세장섯다 모드 패 배분 (SejangModeStrategy에서 호출)
+   * - 2장 배분 후 betting-1 phase로 전환
+   */
+  private _dealCardsSejang(): void {
+    const alivePlayers = this.state.players.filter(p => p.isAlive);
+    const dealerSeatIndex = this.getDealerSeatIndex();
+
+    const orderedByDealerCounterClockwise = this._getAlivePlayersInCounterClockwiseOrder(
+      dealerSeatIndex,
+      alivePlayers,
+    );
+
+    // 1장씩 2라운드 배분 (퉁 없음)
+    for (let round = 0; round < 2; round++) {
+      for (const player of orderedByDealerCounterClockwise) {
+        const card = this.state.deck.shift();
+        if (card) player.cards.push(card);
+      }
+    }
+
+    this.state.phase = 'betting-1';
+    this.state.currentPlayerIndex = dealerSeatIndex;
+    this.state.openingBettorSeatIndex = dealerSeatIndex;
+    this._bettingActed = new Set();
+    this._updateChipBreakdowns();
+    this._updateEffectiveMaxBet();
+  }
+
+  /**
+   * 세장섯다: betting-1 완료 후 생존자에게 3번째 카드 배분 -> card-select phase
+   */
+  private _dealExtraCardForSejang(): void {
+    const alivePlayers = this.state.players.filter(p => p.isAlive);
+    const dealerSeatIndex = this.getDealerSeatIndex();
+    const orderedByDealerCounterClockwise = this._getAlivePlayersInCounterClockwiseOrder(
+      dealerSeatIndex,
+      alivePlayers,
+    );
+
+    for (const player of orderedByDealerCounterClockwise) {
+      const card = this.state.deck.shift();
+      if (card) player.cards.push(card);
+    }
+
+    this.state.phase = 'card-select';
+  }
+
+  /**
+   * 한장공유 모드 패 배분 (HanjangModeStrategy에서 호출)
+   * - 각 플레이어에게 1장씩만 배분
+   * - betting phase (기존 betting 사용, per D-08)
+   */
+  private _dealCardsHanjang(): void {
+    const alivePlayers = this.state.players.filter(p => p.isAlive);
+    const dealerSeatIndex = this.getDealerSeatIndex();
+
+    const orderedByDealerCounterClockwise = this._getAlivePlayersInCounterClockwiseOrder(
+      dealerSeatIndex,
+      alivePlayers,
+    );
+
+    // 1장씩 배분
+    for (const player of orderedByDealerCounterClockwise) {
+      const card = this.state.deck.shift();
+      if (card) player.cards.push(card);
+    }
+
+    this.state.phase = 'betting';
     this.state.currentPlayerIndex = dealerSeatIndex;
     this.state.openingBettorSeatIndex = dealerSeatIndex;
     this._updateChipBreakdowns();
@@ -559,7 +728,7 @@ export class GameEngine {
    * 베팅 액션 처리 (콜/레이즈/다이/체크)
    */
   processBetAction(playerId: string, action: BetAction): void {
-    if (this.state.phase !== 'betting') {
+    if (!GameEngine.BETTING_PHASES.includes(this.state.phase)) {
       throw new Error('INVALID_PHASE');
     }
 
@@ -650,9 +819,15 @@ export class GameEngine {
 
     // 베팅 종료 조건 확인
     if (this._isBettingComplete()) {
-      // 자동 쇼다운: 모든 생존자 카드 공개 후 즉시 족보 비교
+      if (this.state.phase === 'betting-1') {
+        // 세장섯다: 3번째 카드 배분 -> card-select
+        this._dealExtraCardForSejang();
+        return;
+      }
+      // betting / betting-2: 자동 쇼다운 — Strategy 위임
       this.state.players.filter(p => p.isAlive).forEach(p => { p.isRevealed = true; });
-      this._resolveShowdown();
+      const strategy = this.getModeStrategy();
+      strategy.showdown(this, this.state);
       return;
     }
 
@@ -746,10 +921,18 @@ export class GameEngine {
   }
 
   /**
+   * revealCard에서 모든 생존자 공개 시 호출 — Strategy로 위임
+   */
+  private _resolveShowdown(): void {
+    const strategy = this.getModeStrategy();
+    strategy.showdown(this, this.state);
+  }
+
+  /**
    * 쇼다운 해결: evaluateHand + compareHands로 승자/동점 판정
    * 구사 재경기 조건도 확인하며, 해당 시 구사 보유자가 재경기 선이 됨
    */
-  private _resolveShowdown(): void {
+  private _resolveShowdownOriginal(): void {
     const alivePlayers = this.state.players.filter(p => p.isAlive);
 
     const hands = alivePlayers.map(p => ({
@@ -800,6 +983,113 @@ export class GameEngine {
   }
 
   /**
+   * 세장섯다 쇼다운 — selectedCards 기반으로 족보 판정 (SejangModeStrategy에서 호출)
+   * fallback: selectedCards가 없으면 cards[0], cards[1] 사용
+   */
+  private _resolveShowdownSejang(): void {
+    const alivePlayers = this.state.players.filter(p => p.isAlive);
+
+    const hands = alivePlayers.map(p => {
+      const selected = (p as any).selectedCards as Card[] | undefined;
+      const card1 = selected?.[0] ?? p.cards[0];
+      const card2 = selected?.[1] ?? p.cards[1];
+      return {
+        player: p,
+        hand: evaluateHand(card1, card2),
+      };
+    });
+
+    const allHands = hands.map(h => h.hand);
+
+    // 구사 재경기 체크
+    for (const { player, hand } of hands) {
+      if (hand.isGusa || hand.isMeongtteongguriGusa) {
+        const { shouldRedeal } = checkGusaTrigger(hand, allHands);
+        if (shouldRedeal) {
+          this.state.phase = 'rematch-pending';
+          this.state.tiedPlayerIds = alivePlayers.map(p => p.id);
+          this.state.rematchDealerId = player.id;
+          return;
+        }
+      }
+    }
+
+    let best = hands[0];
+    let tiedPlayers = [hands[0]];
+
+    for (const h of hands.slice(1)) {
+      const result = compareHands(best.hand, h.hand);
+      if (result === 'b') {
+        best = h;
+        tiedPlayers = [h];
+      } else if (result === 'tie') {
+        tiedPlayers.push(h);
+      }
+    }
+
+    if (tiedPlayers.length > 1) {
+      this.state.phase = 'rematch-pending';
+      this.state.tiedPlayerIds = tiedPlayers.map(t => t.player.id);
+      return;
+    }
+
+    this.state.winnerId = best.player.id;
+    this.settleChips();
+    this.state.phase = 'result';
+  }
+
+  /**
+   * 한장공유 쇼다운 — evaluateHand(playerCard, sharedCard) 기반 (HanjangModeStrategy에서 호출)
+   */
+  private _resolveShowdownHanjang(): void {
+    const alivePlayers = this.state.players.filter(p => p.isAlive);
+    const sharedCard = (this.state as any).sharedCard as Card | undefined;
+
+    const hands = alivePlayers.map(p => ({
+      player: p,
+      hand: evaluateHand(p.cards[0], sharedCard ?? p.cards[0]),
+    }));
+
+    const allHands = hands.map(h => h.hand);
+
+    // 구사 재경기 체크
+    for (const { player, hand } of hands) {
+      if (hand.isGusa || hand.isMeongtteongguriGusa) {
+        const { shouldRedeal } = checkGusaTrigger(hand, allHands);
+        if (shouldRedeal) {
+          this.state.phase = 'rematch-pending';
+          this.state.tiedPlayerIds = alivePlayers.map(p => p.id);
+          this.state.rematchDealerId = player.id;
+          return;
+        }
+      }
+    }
+
+    let best = hands[0];
+    let tiedPlayers = [hands[0]];
+
+    for (const h of hands.slice(1)) {
+      const result = compareHands(best.hand, h.hand);
+      if (result === 'b') {
+        best = h;
+        tiedPlayers = [h];
+      } else if (result === 'tie') {
+        tiedPlayers.push(h);
+      }
+    }
+
+    if (tiedPlayers.length > 1) {
+      this.state.phase = 'rematch-pending';
+      this.state.tiedPlayerIds = tiedPlayers.map(t => t.player.id);
+      return;
+    }
+
+    this.state.winnerId = best.player.id;
+    this.settleChips();
+    this.state.phase = 'result';
+  }
+
+  /**
    * 동점 재경기 시작 (rematch-pending phase에서만 가능)
    * - 동점자 외 모두 isAlive=false
    * - pot 유지, 앤티 없음
@@ -819,6 +1109,7 @@ export class GameEngine {
       p.currentBet = 0;
       p.lastBetAction = undefined;
       p.cards = [];
+      (p as any).selectedCards = undefined;  // 세장섯다: 선택 카드 초기화
     });
 
     // 새 덱 생성
@@ -875,7 +1166,9 @@ export class GameEngine {
       p.currentBet = 0;
       p.lastBetAction = undefined;
       p.isDealer = false;
+      (p as any).selectedCards = undefined;  // 세장섯다: 선택 카드 초기화
     });
+    (this.state as any).sharedCard = undefined;  // 한장공유: 공유 카드 초기화
 
     // 이전 승자가 dealer
     if (prevWinnerId) {
