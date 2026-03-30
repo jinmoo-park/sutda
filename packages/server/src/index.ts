@@ -342,6 +342,14 @@ io.on('connection', (socket) => {
     });
   });
 
+  socket.on('gusa-rejoin', ({ roomId, join }) => {
+    handleGameAction(socket, roomId, () => {
+      const engine = gameEngines.get(roomId);
+      if (!engine) throw new Error('ROOM_NOT_FOUND');
+      engine.recordGusaRejoinDecision(socket.data.playerId, join);
+    });
+  });
+
   socket.on('start-rematch', ({ roomId }) => {
     handleGameAction(socket, roomId, () => {
       const engine = getEngine(roomId);

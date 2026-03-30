@@ -158,6 +158,30 @@ export function ResultScreen({ gameState, myPlayerId, roomId }: ResultScreenProp
         })}
       </div>
 
+      {gameState.ttaengPayments && gameState.ttaengPayments.length > 0 && (
+        <div className="flex flex-col items-center gap-1 mt-2">
+          <p className="text-sm font-semibold">땡값</p>
+          {gameState.ttaengPayments.map((payment) => {
+            const payer = gameState.players.find((p) => p.id === payment.playerId);
+            return (
+              <p key={payment.playerId} className="text-sm text-red-500">
+                {payer?.nickname ?? '?'}: -{payment.amount.toLocaleString()}원
+              </p>
+            );
+          })}
+          {(() => {
+            const totalTtaeng = gameState.ttaengPayments!.reduce((sum, p) => sum + p.amount, 0);
+            const winnerName =
+              gameState.players.find((p) => p.id === gameState.winnerId)?.nickname ?? '?';
+            return (
+              <p className="text-sm text-green-500">
+                {winnerName}: +{totalTtaeng.toLocaleString()}원 (땡값)
+              </p>
+            );
+          })()}
+        </div>
+      )}
+
       <div className="flex flex-col items-center gap-2">
         {amAbsent ? (
           hasReturnedFromBreak ? (

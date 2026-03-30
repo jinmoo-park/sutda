@@ -16,6 +16,7 @@ import { SharedCardSelectModal } from '@/components/modals/SharedCardSelectModal
 import { ShuffleModal } from '@/components/modals/ShuffleModal';
 import { CutModal } from '@/components/modals/CutModal';
 import { RechargeVoteModal } from '@/components/modals/RechargeVoteModal';
+import { GusaRejoinModal } from '@/components/modals/GusaRejoinModal';
 import { MuckChoiceModal } from '@/components/modals/MuckChoiceModal';
 import { LeaveRoomDialog } from '@/components/modals/LeaveRoomDialog';
 import { DealerResultOverlay } from '@/components/modals/DealerResultOverlay';
@@ -355,6 +356,34 @@ export function RoomPage() {
         <ResultScreen gameState={gameState} myPlayerId={myPlayerId} roomId={roomId!} />
         <Toaster />
       </>
+    );
+  }
+
+  // 구사 재경기 대기
+  if (phase === 'gusa-pending') {
+    const myDecision = gameState?.gusaPendingDecisions?.[myPlayerId ?? ''];
+    const amDied = myPlayer && !myPlayer.isAlive;
+    const needsDecision = amDied && myDecision === null;
+
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground gap-6 p-6">
+        <h2 className="text-xl font-semibold">구사 재경기!</h2>
+        <p className="text-muted-foreground">구사 패가 감지되어 재경기를 진행합니다</p>
+        {needsDecision ? (
+          <GusaRejoinModal
+            roomId={roomId!}
+            potAmount={gameState!.pot}
+            myChips={myPlayer!.chips}
+          />
+        ) : amDied ? (
+          <p className="text-sm text-muted-foreground">
+            {myDecision === true ? '재참여 결정 완료 — 대기 중...' : '불참 — 대기 중...'}
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground">다이한 플레이어의 결정을 기다리는 중...</p>
+        )}
+        <Toaster />
+      </div>
     );
   }
 
