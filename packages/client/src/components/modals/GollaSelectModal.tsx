@@ -6,7 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { CardFace } from '@/components/game/CardFace';
+import { CardBack } from '@/components/game/CardBack';
 import { cn } from '@/lib/utils';
 
 interface GollaSelectModalProps {
@@ -98,14 +98,14 @@ export function GollaSelectModal({ open, roomId }: GollaSelectModalProps) {
                 className={cn(
                   'rounded-md transition-opacity',
                   isTakenByOther
-                    ? 'opacity-40 cursor-not-allowed'
+                    ? 'opacity-30 cursor-not-allowed'
                     : disabled
                     ? 'cursor-not-allowed opacity-40'
                     : 'cursor-pointer hover:ring-2 hover:ring-primary',
                   isMyPick && !isTakenByOther && 'ring-2 ring-primary opacity-100'
                 )}
               >
-                <CardFace card={card} />
+                <CardBack />
               </button>
             );
           })}

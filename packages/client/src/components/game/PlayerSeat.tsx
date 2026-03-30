@@ -74,7 +74,7 @@ export function PlayerSeat({
                   visible ? 'opacity-100' : 'opacity-0'
                 )}
               >
-                {card !== null && (isMe || mode === 'indian') ? (
+                {card != null && (isMe || mode === 'indian') ? (
                   <CardFace card={card} className="w-10 h-14 text-sm" />
                 ) : (
                   <CardBack className="w-10 h-14" />
