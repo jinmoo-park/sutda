@@ -311,6 +311,14 @@ io.on('connection', (socket) => {
     });
   });
 
+  socket.on('start-rematch', ({ roomId }) => {
+    handleGameAction(socket, roomId, () => {
+      const engine = getEngine(roomId);
+      if (engine.getState().phase !== 'rematch-pending') return;
+      engine.startRematch();
+    });
+  });
+
   socket.on('next-round', ({ roomId }) => {
     try {
       const engine = getEngine(roomId);

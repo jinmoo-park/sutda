@@ -295,6 +295,26 @@ export function RoomPage() {
     );
   }
 
+  // 동점 재경기 대기
+  if (phase === 'rematch-pending') {
+    const tiedIds = gameState?.tiedPlayerIds ?? [];
+    const tiedPlayers = gameState?.players.filter(p => tiedIds.includes(p.id)) ?? [];
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
+        <div className="text-center space-y-4 p-6">
+          <h2 className="text-xl font-semibold">동점!</h2>
+          <p className="text-muted-foreground">
+            {tiedPlayers.map(p => p.nickname).join(' vs ')} — 재경기
+          </p>
+          <Button onClick={() => socket?.emit('start-rematch', { roomId: roomId! })}>
+            재경기 시작
+          </Button>
+        </div>
+        <Toaster />
+      </div>
+    );
+  }
+
   // 게임 진행 중
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
