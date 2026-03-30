@@ -17,7 +17,7 @@
 - [x] **Phase 5: 칩 시스템 + 승패 정산** - 칩 추적, 판돈 계산, 승자 정산, 칩 재충전 (completed 2026-03-29)
 - [x] **Phase 6: 클라이언트 UI 와이어프레임** - 로비, 게임 테이블, 카드/칩 표시, 베팅 액션 UI (completed 2026-03-30)
 - [ ] **Phase 7: 세장섯다 + 한장공유 모드** - 세장섯다/한장공유 Strategy 구현 및 UI 확장
-- [ ] **Phase 8: 골라골라 + 인디언섯다 모드** - 골라골라 카드 선택 UI, 인디언 카드 가시성 반전 로직
+- [x] **Phase 8: 골라골라 + 인디언섯다 모드** - 골라골라 카드 선택 UI, 인디언 카드 가시성 반전 로직 (completed 2026-03-30)
 - [ ] **Phase 9: 특수 규칙 (땡값 + 94재경기)** - 땡값 자동 정산, 구사/멍텅구리구사 재경기 상태 머신
 - [ ] **Phase 10: 통합 테스트 + 배포** - E2E 검증, Railway/Render 배포, 모바일 브라우저 대응
 
@@ -150,7 +150,7 @@ Plans:
 
 Plans:
 - [x] 08-01-PLAN.md — 공유 타입 확장(GameMode/GamePhase/GameState) + GameEngine 신규 Strategy + selectGollaCards + getStateFor
-- [ ] 08-02-PLAN.md — protocol.ts 이벤트 타입 + index.ts 소켓 핸들러 + per-player emit 개편
+- [x] 08-02-PLAN.md — protocol.ts 이벤트 타입 + index.ts 소켓 핸들러 + per-player emit 개편
 - [x] 08-03-PLAN.md — GollaSelectModal 신규 + ModeSelectModal 버튼 추가 + HandPanel null 카드 처리 + RoomPage 통합
 
 ### Phase 9: 특수 규칙 (땡값 + 94재경기)
@@ -198,6 +198,6 @@ Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 5. 칩 시스템 + 승패 정산 | 2/2 | Complete   | 2026-03-29 |
 | 6. 클라이언트 UI 와이어프레임 | 3/3 | Complete   | 2026-03-30 |
 | 7. 세장섯다 + 한장공유 모드 | 2/2 | Complete | 2026-03-30 |
-| 8. 골라골라 + 인디언섯다 모드 | 2/3 | In Progress|  |
+| 8. 골라골라 + 인디언섯다 모드 | 3/3 | Complete   | 2026-03-30 |
 | 9. 특수 규칙 (땡값 + 94재경기) | 0/2 | Not started | - |
 | 10. 통합 테스트 + 배포 | 0/2 | Not started | - |
