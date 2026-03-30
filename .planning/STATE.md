@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: "Phase 07 완료 — Phase 08 대기 중"
-last_updated: "2026-03-30T00:00:00.000Z"
+status: executing
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-03-30T14:25:45.483Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 10
   completed_phases: 7
-  total_plans: 16
-  completed_plans: 16
-  percent: 70
+  total_plans: 19
+  completed_plans: 17
+  percent: 44
 ---
 
 # Project State
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** 아무 설치 없이 링크 하나로 친구들과 실시간으로 섯다를 즐길 수 있어야 한다.
-**Current focus:** Phase 08 — 후회의섯다 + 인디언섯다 모드
+**Current focus:** Phase 08 — huhwi-indian-modes
 
 ## Current Position
 
-Phase: 08 (후회의섯다 + 인디언섯다) — PLANNING
-Plan: 0 of 3
-Status: Phase 07 완료 — Phase 08 준비 중
+Phase: 08 (huhwi-indian-modes) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
 Last activity: 2026-03-30
 
 Progress: [████░░░░░░] 44%
@@ -70,6 +70,7 @@ Progress: [████░░░░░░] 44%
 | Phase 06-ui P02 | 8 | 3 tasks | 13 files |
 | Phase 07-sejang-hanjang-modes P01 | 833 | 1 tasks | 6 files |
 | Phase 07-sejang-hanjang-modes P02 | 0 | 2 tasks | 6 files |
+| Phase 08 P01 | 20 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -122,6 +123,8 @@ Recent decisions affecting current work:
 - [Phase 07-sejang-hanjang-modes]: BETTING_PHASES 상수로 betting/betting-1/betting-2 phase 통합 처리
 - [Phase 07-sejang-hanjang-modes]: sharedCard는 store에서 직접 읽지 않고 RoomPage에서 prop으로 전달 — 데이터 흐름 명확화
 - [Phase 07-sejang-hanjang-modes]: HandPanel card-select 모드: selectedIndices state로 토글 관리, phase prop 외부 주입 방식 채택
+- [Phase 08-01]: _gollaSelectedIndices: Map으로 선착순 골라골라 선택 인덱스 추적
+- [Phase 08-01]: 인디언 betting-1 완료시 phase='dealing-extra' → 소켓 핸들러(08-02)가 dealExtraCardIndian() 자동 호출
 
 ### Pending Todos
 
@@ -135,6 +138,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T00:00:00.000Z
-Stopped at: Phase 07 완료 확인 — Phase 08 대기 중
+Last session: 2026-03-30T14:25:45.477Z
+Stopped at: Completed 08-01-PLAN.md
 Resume file: None

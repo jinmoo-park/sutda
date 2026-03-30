@@ -76,20 +76,20 @@
 - [x] **MODE-SH-03**: 각 플레이어는 1장씩 받아 공유 카드와 조합하여 족보를 비교한다
 - [x] **MODE-SH-04**: 베팅 후 최종 족보 승패를 결정한다
 
-### 게임 모드 -- 후회의섯다 (MODE-HR)
+### 게임 모드 -- 골라골라 (MODE-HR)
 
-- [ ] **MODE-HR-01**: 선 플레이어가 "후회의섯다" 모드를 선택할 수 있다
-- [ ] **MODE-HR-02**: 20장 전부를 뒤집어 판에 깔고, 오른쪽부터 반시계 방향으로 1장씩 가져간다 (5인 이하: 4장, 6인: 3장)
-- [ ] **MODE-HR-03**: 각 플레이어는 뒤집힌 패 중 2장을 선택하고, 선택하지 않은 카드를 공개하여 "후회"한다
-- [ ] **MODE-HR-04**: 베팅 후 선택한 2장으로 족보를 비교하여 승패를 결정한다
+- [x] **MODE-HR-01**: 선 플레이어가 "골라골라" 모드를 선택할 수 있다
+- [x] **MODE-HR-02**: 20장 전부를 오픈으로 판에 깔고, 모든 플레이어가 동시에 자유롭게 2장을 선착순으로 선택한다 (이미 선택된 카드 불가)
+- [x] **MODE-HR-03**: 각 플레이어가 2장 선택을 완료하면 자동으로 베팅 페이즈로 전환된다
+- [x] **MODE-HR-04**: 베팅 후 선택한 2장으로 족보를 비교하여 승패를 결정한다
 
 ### 게임 모드 -- 인디언섯다 (MODE-IN)
 
-- [ ] **MODE-IN-01**: 선 플레이어가 "인디언섯다" 모드를 선택할 수 있다
-- [ ] **MODE-IN-02**: 오른쪽부터 1장 배분 -- 받은 카드는 본인에게는 안 보이고 다른 플레이어에게는 보인다
-- [ ] **MODE-IN-03**: 첫 베팅(자신의 카드 못 보고, 타인 카드 보며 베팅)
-- [ ] **MODE-IN-04**: 베팅 종료 후 각 플레이어에게 1장 추가 배분 (이 카드는 본인만 볼 수 있다)
-- [ ] **MODE-IN-05**: 최종 베팅 후 2장 족보를 비교하여 승패를 결정한다
+- [x] **MODE-IN-01**: 선 플레이어가 "인디언섯다" 모드를 선택할 수 있다
+- [x] **MODE-IN-02**: 오른쪽부터 1장 배분 -- 받은 카드는 본인에게는 안 보이고 다른 플레이어에게는 보인다
+- [x] **MODE-IN-03**: 첫 베팅(자신의 카드 못 보고, 타인 카드 보며 베팅)
+- [x] **MODE-IN-04**: 베팅 종료 후 각 플레이어에게 1장 추가 배분 (이 카드는 본인만 볼 수 있다)
+- [x] **MODE-IN-05**: 최종 베팅 후 2장 족보를 비교하여 승패를 결정한다
 
 ### 특수 규칙 (RULE)
 
@@ -205,15 +205,15 @@
 | MODE-SH-02 | Phase 7 | Complete |
 | MODE-SH-03 | Phase 7 | Complete |
 | MODE-SH-04 | Phase 7 | Complete |
-| MODE-HR-01 | Phase 8 | Pending |
-| MODE-HR-02 | Phase 8 | Pending |
-| MODE-HR-03 | Phase 8 | Pending |
-| MODE-HR-04 | Phase 8 | Pending |
-| MODE-IN-01 | Phase 8 | Pending |
-| MODE-IN-02 | Phase 8 | Pending |
-| MODE-IN-03 | Phase 8 | Pending |
-| MODE-IN-04 | Phase 8 | Pending |
-| MODE-IN-05 | Phase 8 | Pending |
+| MODE-HR-01 | Phase 8 | Complete |
+| MODE-HR-02 | Phase 8 | Complete |
+| MODE-HR-03 | Phase 8 | Complete |
+| MODE-HR-04 | Phase 8 | Complete |
+| MODE-IN-01 | Phase 8 | Complete |
+| MODE-IN-02 | Phase 8 | Complete |
+| MODE-IN-03 | Phase 8 | Complete |
+| MODE-IN-04 | Phase 8 | Complete |
+| MODE-IN-05 | Phase 8 | Complete |
 | MODE-OG-03 | Phase 9 | Pending |
 | RULE-01 | Phase 9 | Pending |
 | RULE-02 | Phase 9 | Pending |

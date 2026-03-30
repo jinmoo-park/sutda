@@ -149,7 +149,7 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 08-01-PLAN.md — 공유 타입 확장(GameMode/GamePhase/GameState) + GameEngine 신규 Strategy + selectGollaCards + getStateFor
+- [x] 08-01-PLAN.md — 공유 타입 확장(GameMode/GamePhase/GameState) + GameEngine 신규 Strategy + selectGollaCards + getStateFor
 - [ ] 08-02-PLAN.md — protocol.ts 이벤트 타입 + index.ts 소켓 핸들러 + per-player emit 개편
 - [ ] 08-03-PLAN.md — GollaSelectModal 신규 + ModeSelectModal 버튼 추가 + HandPanel null 카드 처리 + RoomPage 통합
 
@@ -198,6 +198,6 @@ Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 5. 칩 시스템 + 승패 정산 | 2/2 | Complete   | 2026-03-29 |
 | 6. 클라이언트 UI 와이어프레임 | 3/3 | Complete   | 2026-03-30 |
 | 7. 세장섯다 + 한장공유 모드 | 2/2 | Complete | 2026-03-30 |
-| 8. 골라골라 + 인디언섯다 모드 | 0/3 | Planned | - |
+| 8. 골라골라 + 인디언섯다 모드 | 1/3 | In Progress|  |
 | 9. 특수 규칙 (땡값 + 94재경기) | 0/2 | Not started | - |
 | 10. 통합 테스트 + 배포 | 0/2 | Not started | - |
