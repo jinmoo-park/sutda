@@ -38,6 +38,12 @@ export type BetAction =
   | { type: 'die' }
   | { type: 'check' };
 
+/** 마지막 베팅 액션 기록 */
+export interface LastBetAction {
+  type: 'call' | 'raise' | 'die' | 'check';
+  amount?: number;  // raise 시 추가 금액
+}
+
 /** 개별 플레이어 상태 */
 export interface PlayerState {
   id: string;
@@ -51,6 +57,7 @@ export interface PlayerState {
   isDealer: boolean;      // 선 플레이어 여부
   seatIndex: number;      // 자리 번호 (0부터)
   chipBreakdown: ChipBreakdown;  // 칩 단위별 개수 (per CHIP-04, D-12)
+  lastBetAction?: LastBetAction; // 이번 판에서의 마지막 베팅 액션
 }
 
 /** 전체 게임 상태 */

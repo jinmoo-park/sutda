@@ -578,6 +578,7 @@ export class GameEngine {
         player.chips -= callAmount;
         player.currentBet += callAmount;
         this.state.pot += callAmount;
+        player.lastBetAction = { type: 'call' };
         break;
       }
       case 'raise': {
@@ -590,6 +591,7 @@ export class GameEngine {
         player.currentBet += callAmount + action.amount;
         this.state.pot += callAmount + action.amount;
         this.state.currentBetAmount = player.currentBet;
+        player.lastBetAction = { type: 'raise', amount: action.amount };
 
         // 레이즈 발생 시 선 권한 소멸 + 다른 플레이어 액션 플래그 초기화
         this.state.openingBettorSeatIndex = null;
@@ -602,6 +604,7 @@ export class GameEngine {
       }
       case 'die': {
         player.isAlive = false;
+        player.lastBetAction = { type: 'die' };
         break;
       }
       case 'check': {
@@ -613,6 +616,7 @@ export class GameEngine {
         }
         // 체크: 선 권한 소멸
         this.state.openingBettorSeatIndex = null;
+        player.lastBetAction = { type: 'check' };
         break;
       }
     }
@@ -813,6 +817,7 @@ export class GameEngine {
       p.isAlive = tiedIds.includes(p.id);
       p.isRevealed = false;
       p.currentBet = 0;
+      p.lastBetAction = undefined;
       p.cards = [];
     });
 
@@ -868,6 +873,7 @@ export class GameEngine {
       p.isAlive = !p.isAbsent;  // absent이면 isAlive = false 유지
       p.isRevealed = false;
       p.currentBet = 0;
+      p.lastBetAction = undefined;
       p.isDealer = false;
     });
 
