@@ -18,7 +18,9 @@ export interface ErrorPayload {
     | 'INVALID_ACTION'
     | 'RECHARGE_IN_PROGRESS'
     | 'RECHARGE_NOT_FOUND'
-    | 'INSUFFICIENT_CHIPS';
+    | 'INSUFFICIENT_CHIPS'
+    | 'CARD_ALREADY_TAKEN'
+    | 'SELECTION_COMPLETE';
   message: string;
 }
 
@@ -45,6 +47,8 @@ export interface ClientToServerEvents {
   'take-break': (data: { roomId: string }) => void;
   'select-cards': (data: { roomId: string; cardIndices: number[] }) => void;
   'set-shared-card': (data: { roomId: string; cardIndex: number }) => void;
+  'select-gollagolla-cards': (data: { roomId: string; cardIndices: [number, number] }) => void;
+  'start-rematch': (data: { roomId: string }) => void;
 }
 
 /** 서버 -> 클라이언트 이벤트 */

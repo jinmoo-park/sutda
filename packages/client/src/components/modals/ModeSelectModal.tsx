@@ -56,6 +56,22 @@ export function ModeSelectModal({ open, roomId, isDealer }: ModeSelectModalProps
           >
             한장공유
           </Button>
+          <Button
+            className="w-full"
+            variant="outline"
+            onClick={() => socket?.emit('select-mode', { roomId, mode: 'gollagolla' })}
+            disabled={!isDealer}
+          >
+            골라골라
+          </Button>
+          <Button
+            className="w-full"
+            variant="outline"
+            onClick={() => socket?.emit('select-mode', { roomId, mode: 'indian' })}
+            disabled={!isDealer}
+          >
+            인디언섯다
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
