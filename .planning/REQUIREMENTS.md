@@ -66,15 +66,15 @@
 
 ### 게임 모드 -- 세장섯다 (MODE-SJ)
 
-- [ ] **MODE-SJ-01**: 선 플레이어가 "세장섯다" 모드를 선택할 수 있다
-- [ ] **MODE-SJ-02**: 2장 배분 -> 베팅(세 번째 카드 안 보고 다이 가능) -> 1장 추가 배분 -> 3장 중 2장 조합으로 족보 비교
+- [x] **MODE-SJ-01**: 선 플레이어가 "세장섯다" 모드를 선택할 수 있다
+- [x] **MODE-SJ-02**: 2장 배분 -> 베팅(세 번째 카드 안 보고 다이 가능) -> 1장 추가 배분 -> 3장 중 2장 조합으로 족보 비교
 
 ### 게임 모드 -- 한장공유 (MODE-SH)
 
-- [ ] **MODE-SH-01**: 선 플레이어가 "한장공유" 모드를 선택할 수 있다
-- [ ] **MODE-SH-02**: 선 플레이어가 공유 카드 1장을 20장 중에서 지정한다
-- [ ] **MODE-SH-03**: 각 플레이어는 1장씩 받아 공유 카드와 조합하여 족보를 비교한다
-- [ ] **MODE-SH-04**: 베팅 후 최종 족보 승패를 결정한다
+- [x] **MODE-SH-01**: 선 플레이어가 "한장공유" 모드를 선택할 수 있다
+- [x] **MODE-SH-02**: 선 플레이어가 공유 카드 1장을 20장 중에서 지정한다
+- [x] **MODE-SH-03**: 각 플레이어는 1장씩 받아 공유 카드와 조합하여 족보를 비교한다
+- [x] **MODE-SH-04**: 베팅 후 최종 족보 승패를 결정한다
 
 ### 게임 모드 -- 후회의섯다 (MODE-HR)
 
@@ -199,12 +199,12 @@
 | UI-06 | Phase 6 | Complete |
 | UI-07 | Phase 6 | Complete |
 | UI-08 | Phase 6 | Complete |
-| MODE-SJ-01 | Phase 7 | Pending |
-| MODE-SJ-02 | Phase 7 | Pending |
-| MODE-SH-01 | Phase 7 | Pending |
-| MODE-SH-02 | Phase 7 | Pending |
-| MODE-SH-03 | Phase 7 | Pending |
-| MODE-SH-04 | Phase 7 | Pending |
+| MODE-SJ-01 | Phase 7 | Complete |
+| MODE-SJ-02 | Phase 7 | Complete |
+| MODE-SH-01 | Phase 7 | Complete |
+| MODE-SH-02 | Phase 7 | Complete |
+| MODE-SH-03 | Phase 7 | Complete |
+| MODE-SH-04 | Phase 7 | Complete |
 | MODE-HR-01 | Phase 8 | Pending |
 | MODE-HR-02 | Phase 8 | Pending |
 | MODE-HR-03 | Phase 8 | Pending |

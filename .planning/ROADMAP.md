@@ -133,7 +133,7 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 07-01-PLAN.md — 공유 타입 확장 + GameEngine 세장섯다/한장공유 로직 + Socket.IO 핸들러 + 단위 테스트
+- [x] 07-01-PLAN.md — 공유 타입 확장 + GameEngine 세장섯다/한장공유 로직 + Socket.IO 핸들러 + 단위 테스트
 - [ ] 07-02-PLAN.md — 클라이언트 UI (ModeSelectModal 확장, SharedCardSelectModal, HandPanel 카드 선택, GameTable 공유카드, RoomPage 통합)
 
 ### Phase 8: 후회의섯다 + 인디언섯다 모드
@@ -197,7 +197,7 @@ Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 4. 오리지날 모드 게임 엔진 | 3/3 | Complete | 2026-03-29 |
 | 5. 칩 시스템 + 승패 정산 | 2/2 | Complete   | 2026-03-29 |
 | 6. 클라이언트 UI 와이어프레임 | 3/3 | Complete   | 2026-03-30 |
-| 7. 세장섯다 + 한장공유 모드 | 0/2 | Planned | - |
+| 7. 세장섯다 + 한장공유 모드 | 1/2 | In Progress|  |
 | 8. 후회의섯다 + 인디언섯다 모드 | 0/3 | Not started | - |
 | 9. 특수 규칙 (땡값 + 94재경기) | 0/2 | Not started | - |
 | 10. 통합 테스트 + 배포 | 0/2 | Not started | - |
