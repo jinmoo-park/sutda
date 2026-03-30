@@ -1,5 +1,6 @@
-import type { PlayerState } from '@sutda/shared';
+import type { PlayerState, Card, GameMode } from '@sutda/shared';
 import { PlayerSeat } from '@/components/game/PlayerSeat';
+import { SharedCardDisplay } from '@/components/game/SharedCardDisplay';
 
 interface GameTableProps {
   players: PlayerState[];
@@ -7,9 +8,11 @@ interface GameTableProps {
   currentPlayerIndex: number;
   pot: number;
   visibleCardCounts?: Record<string, number>;
+  sharedCard?: Card;
+  mode?: GameMode;
 }
 
-export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibleCardCounts }: GameTableProps) {
+export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibleCardCounts, sharedCard, mode }: GameTableProps) {
   return (
     <>
       {/* 데스크톱: 원형 배치 */}
@@ -21,7 +24,12 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center bg-background/60 border border-border rounded-2xl px-5 py-3 shadow-inner">
             <p className="text-xs text-muted-foreground tracking-widest uppercase">판돈</p>
-            <p className="text-[26px] font-bold tabular-nums">{pot.toLocaleString()}원</p>
+            <p className="text-[26px] font-semibold tabular-nums">{pot.toLocaleString()}원</p>
+            {mode === 'shared-card' && sharedCard && (
+              <div className="mt-2">
+                <SharedCardDisplay card={sharedCard} />
+              </div>
+            )}
           </div>
         </div>
 
@@ -44,8 +52,13 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
         {/* 팟 한줄 요약 */}
         <div className="text-center py-2">
           <span className="text-xs text-muted-foreground tracking-widest uppercase">판돈 </span>
-          <span className="font-bold tabular-nums">{pot.toLocaleString()}원</span>
+          <span className="font-semibold tabular-nums">{pot.toLocaleString()}원</span>
         </div>
+        {mode === 'shared-card' && sharedCard && (
+          <div className="flex justify-center py-1">
+            <SharedCardDisplay card={sharedCard} />
+          </div>
+        )}
         {/* 그리드 배치 */}
         <div className="grid grid-cols-2 gap-2">
           {players.map((p, i) => (

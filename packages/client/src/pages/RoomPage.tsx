@@ -11,6 +11,7 @@ import { ChatPanel } from '@/components/layout/ChatPanel';
 import { ResultScreen } from '@/components/layout/ResultScreen';
 import { DealerSelectModal } from '@/components/modals/DealerSelectModal';
 import { ModeSelectModal } from '@/components/modals/ModeSelectModal';
+import { SharedCardSelectModal } from '@/components/modals/SharedCardSelectModal';
 import { ShuffleModal } from '@/components/modals/ShuffleModal';
 import { CutModal } from '@/components/modals/CutModal';
 import { RechargeVoteModal } from '@/components/modals/RechargeVoteModal';
@@ -74,7 +75,7 @@ export function RoomPage() {
 
   // cutting → betting 전환 감지 → 딜링 애니메이션 후 카드 확인 오버레이 표시
   useEffect(() => {
-    if (prevPhaseRef.current === 'cutting' && gameState?.phase === 'betting') {
+    if (prevPhaseRef.current === 'cutting' && (gameState?.phase === 'betting' || gameState?.phase === 'betting-1')) {
       const players = gameState.players;
       const isTtong = gameState.isTtong;
 
@@ -120,7 +121,7 @@ export function RoomPage() {
   // 베팅/커팅 phase 벗어나면 딜링 상태 초기화
   useEffect(() => {
     const p = gameState?.phase;
-    if (p !== 'betting' && p !== 'cutting') {
+    if (p !== 'betting' && p !== 'betting-1' && p !== 'betting-2' && p !== 'cutting' && p !== 'card-select') {
       setVisibleCardCounts({});
       if (dealingIntervalRef.current) {
         clearInterval(dealingIntervalRef.current);
@@ -313,13 +314,22 @@ export function RoomPage() {
           currentPlayerIndex={gameState.currentPlayerIndex}
           pot={gameState.pot}
           visibleCardCounts={Object.keys(visibleCardCounts).length > 0 ? visibleCardCounts : undefined}
+          sharedCard={gameState.sharedCard}
+          mode={gameState.mode}
         />
       </div>
 
       {/* 하단 패널 */}
       <div className="border-t border-border">
         <div className="flex flex-col md:flex-row gap-4 p-4">
-          <HandPanel myPlayer={myPlayer} />
+          <HandPanel
+            myPlayer={myPlayer}
+            phase={gameState.phase}
+            onSelectCards={(indices) => {
+              socket?.emit('select-cards', { roomId: roomId!, cardIndices: indices });
+            }}
+            sharedCard={gameState.mode === 'shared-card' ? gameState.sharedCard : undefined}
+          />
           <InfoPanel
             myChips={myPlayer?.chips ?? 0}
             pot={gameState.pot}
@@ -328,7 +338,7 @@ export function RoomPage() {
           />
         </div>
 
-        {phase === 'betting' && !showCardConfirm && (
+        {(phase === 'betting' || phase === 'betting-1' || phase === 'betting-2') && !showCardConfirm && (
           <BettingPanel
             isMyTurn={isMyTurn}
             currentBetAmount={gameState.currentBetAmount}
@@ -369,6 +379,7 @@ export function RoomPage() {
       />
       {/* AttendSchoolModal 제거: 결과화면 "학교 가기" 클릭 시 자동 앤티 처리 */}
       <ModeSelectModal open={phase === 'mode-select'} isDealer={isDealer} roomId={roomId!} />
+      <SharedCardSelectModal open={phase === 'shared-card-select'} roomId={roomId!} />
       <ShuffleModal open={phase === 'shuffling' && isDealer} roomId={roomId!} />
       <CutModal open={phase === 'cutting' && isMyTurn} roomId={roomId!} />
       {/* 상대 전원 다이 시 패 공개 선택 */}
