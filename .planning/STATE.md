@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 06-ui-02-PLAN.md
-last_updated: "2026-03-30T00:00:00.000Z"
+status: executing
+stopped_at: Completed 06-ui-03-PLAN.md
+last_updated: "2026-03-30T09:50:35.327Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 10
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 14
-  completed_plans: 11
+  completed_plans: 12
   percent: 44
 ---
 
@@ -68,6 +68,7 @@ Progress: [████░░░░░░] 44%
 | Phase 05-chip-system-settlement P02 | 198 | 2 tasks | 4 files |
 | Phase 06-ui P01 | 7 | 2 tasks | 29 files |
 | Phase 06-ui P02 | 8 | 3 tasks | 13 files |
+| Phase 06-ui P03 | 35 | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -115,6 +116,8 @@ Recent decisions affecting current work:
 - [Phase 06-ui-02]: evaluateHand를 클라이언트에서 직접 호출하여 족보명 인라인 표시 — 서버 result phase 이전에도 플레이어에게 자신의 패 정보 제공
 - [Phase 06-ui-02]: PlayerSeat 모바일/데스크톱 이중 렌더 채택 — CSS custom properties 원형 배치는 md 이상, 모바일은 별도 flex 아이템
 - [Phase 06-ui-02]: RoomPage waiting/게임진행/result 3단계 FSM, join-room emit은 06-03에서 통합
+- [Phase 06-ui-03]: AttendSchoolModal을 RoomPage에서 제거 — 서버 자동 앤티 처리로 대체
+- [Phase 06-ui-03]: MuckChoiceModal: showdown phase + winnerId === myPlayerId 조건 — 상대 전원 다이 시 패 공개 선택 제공
 
 ### Pending Todos
 
@@ -128,6 +131,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T00:00:00.000Z
-Stopped at: Completed 06-ui-02-PLAN.md
+Last session: 2026-03-30T09:50:35.321Z
+Stopped at: Completed 06-ui-03-PLAN.md
 Resume file: None
