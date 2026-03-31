@@ -113,28 +113,46 @@
 
 ## v2 Requirements
 
-### 향상된 UX
+### 향상된 UX (Phase 10: 시각/UX)
 
 - **UX-01**: 턴 타이머 표시 및 시간 초과 시 자동 다이 처리
-- **UX-02**: 게임 내 텍스트 채팅
-- **UX-03**: 카드 플립/칩 이동 애니메이션
+- **UX-02**: 게임 내 텍스트 채팅 → Phase 11
+- **UX-03**: 카드 뒤집기 인터랙션 — 카드별 개별 클릭/탭으로 3D flip 애니메이션 후 앞면 공개 → Phase 10
 - **UX-04**: 음향 효과 (카드 돌리기, 베팅 소리 등)
-- **UX-05**: 모바일 터치 최적화 (스와이프 제스처 등)
+- **UX-05**: 카드 배분 시 즉시 노출하지 않고 사용자가 직접 뒤집어야 패 확인 처리 (2장 모두 뒤집으면 완료) → Phase 10
+- **UX-06**: 카드 배분 이동 애니메이션 — 중앙 덱에서 각 플레이어 위치로 날아오는 방식 → Phase 10
+- **UX-07**: 셔플 인터랙션 고도화 (sutda-shuffle-giri-ux.md Section 1 전체) → Phase 10
+- **UX-08**: 기리(Cut) 인터랙션 고도화 (sutda-shuffle-giri-ux.md Section 2 전체) → Phase 10
+- **UX-09**: 패널 레이아웃 재설계 — 스크롤 없이 한 화면, 데스크탑 3열/모바일 수직 → Phase 10
 
-### 게임 기록
+### 게임 기록 (Phase 11)
 
-- **HIST-01**: 세션 내 판별 칩 증감 히스토리 표시
-- **HIST-02**: 게임 종료 후 정산 요약 화면
+- **HIST-01**: 세션 내 판별 칩 증감 히스토리 표시 → Phase 11
+- **HIST-02**: 게임 종료 후 정산 요약 화면 → Phase 11
+
+### 소셜/멀티 기능 (Phase 11)
+
+- **SCHOOL-PROXY**: 학교 대신 가주기 — 결과 화면에서 승자가 다른 플레이어의 다음 판 엔티를 대신 납부, 대상 플레이어에게 토스트 알림 → Phase 11
+- **LATE-JOIN**: 뒤늦게 입장 — 게임 시작 후 입장자를 Observer로 처리, 판 교체 시 자동으로 일반 플레이어로 참여 → Phase 11
+- **SESSION-END**: 세션 종료 표시 — 플레이어 연결 끊김 시 시트 제거 + 자리 재배치 + 토스트 알림. 2인 게임 중 1명 퇴장 시 남은 1명은 방장 대기 화면으로 전환 → Phase 11
+
+### 올인 POT (Phase 11)
+
+- **ALLIN-POT**: 올인 승리 시 POT 처리 — 올인 승리자는 자신의 잔액총액만큼만 각 플레이어에게서 받고, 차액은 원래 플레이어들에게 반환. 올인 상태에서는 베팅 패널 비활성화, 나머지 플레이어는 베팅 계속 → Phase 11
+
+### 베팅 강조 (Phase 10)
+
+- **BET-HIGHLIGHT**: 베팅 차례일 때 베팅 패널 강조 표시 → Phase 10
 
 ---
 
-## v3 (이미지 에셋 단계)
+## v3 (이미지 에셋 단계) — Phase 10
 
 ### 화투 이미지
 
-- **IMG-01**: 1~10 광/열끗/일반 화투 카드 이미지로 와이어프레임 텍스트 카드 대체
-- **IMG-02**: 카드 뒷면 이미지
-- **IMG-03**: 게임 테이블 배경 이미지/테마
+- **IMG-01**: 1~10 광/열끗/일반 화투 카드 이미지로 와이어프레임 텍스트 카드 대체 → Phase 10
+- **IMG-02**: 카드 뒷면 이미지 → Phase 10
+- **IMG-03**: 게임 테이블 배경(img/background), 메인 타이틀(img/main_tilte) 적용, 재경기 시 img/regame 투명도 오버레이 → Phase 10
 
 ---
 
@@ -145,7 +163,7 @@
 | 회원가입/로그인 | 친구끼리 닉네임으로 참여가 목적, 마찰 없애기 위해 제외 |
 | 실제 현금 결제/송금 | 법적 리스크, 오프라인 정산 전제 |
 | AI 봇 플레이어 | 친구끼리 플레이 목적, 복잡도 증가 불필요 |
-| 관전자 모드 | v1 범위 밖 |
+| 관전자 모드 (상시) | v1 범위 밖 — 단, 뒤늦게 입장한 플레이어의 일시적 Observer는 Phase 11에서 구현 |
 | 모바일 네이티브 앱 | 웹 앱으로 모바일 브라우저 대응 충분 |
 | 영구 계정/전적 저장 | 방 세션 단위 운영, DB 불필요 |
 | 글로벌 로비/매치메이킹 | 친구 전용, 공개 방 목록 불필요 |
@@ -220,12 +238,24 @@
 | RULE-03 | Phase 9 | Complete |
 | RULE-04 | Phase 9 | Complete |
 | SEAT-01 | Phase 10 | Complete |
-
-**Coverage:**
-- v1 requirements: 64 total
-- Mapped to phases: 64/64
-- Unmapped: 0
+| UX-03 | Phase 10 | Pending |
+| UX-05 | Phase 10 | Pending |
+| UX-06 | Phase 10 | Pending |
+| UX-07 | Phase 10 | Pending |
+| UX-08 | Phase 10 | Pending |
+| UX-09 | Phase 10 | Pending |
+| IMG-01 | Phase 10 | Complete |
+| IMG-02 | Phase 10 | Complete |
+| IMG-03 | Phase 10 | Pending |
+| BET-HIGHLIGHT | Phase 10 | Pending |
+| UX-02 | Phase 11 | Pending |
+| HIST-01 | Phase 11 | Pending |
+| HIST-02 | Phase 11 | Pending |
+| SCHOOL-PROXY | Phase 11 | Pending |
+| LATE-JOIN | Phase 11 | Pending |
+| SESSION-END | Phase 11 | Pending |
+| ALLIN-POT | Phase 11 | Pending |
 
 ---
 *Requirements defined: 2026-03-29*
-*Last updated: 2026-03-29 after roadmap creation*
+*Last updated: 2026-03-31 — Phase 10/11/12 분할 및 신규 요구사항 추가*

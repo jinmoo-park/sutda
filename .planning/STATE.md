@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "B-1/B-2 3번째 카드 타이밍 수정 완료 — 5차 UAT 재검증 대기 (09-02)"
-last_updated: "2026-03-31T13:30:00.000Z"
+stopped_at: Completed 10-ux-01-PLAN.md
+last_updated: "2026-03-31T13:37:28.610Z"
 last_activity: 2026-03-31
 progress:
-  total_phases: 11
+  total_phases: 12
   completed_phases: 9
-  total_plans: 21
-  completed_plans: 21
+  total_plans: 25
+  completed_plans: 22
   percent: 44
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** 아무 설치 없이 링크 하나로 친구들과 실시간으로 섯다를 즐길 수 있어야 한다.
-**Current focus:** Phase 09 — 94
+**Current focus:** Phase 10 — ux
 
 ## Current Position
 
-Phase: 09 (94) — EXECUTING
-Plan: 2 of 2
+Phase: 10 (ux) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-03-30
+Last activity: 2026-03-31
 
 Progress: [████░░░░░░] 44%
 
@@ -75,6 +75,7 @@ Progress: [████░░░░░░] 44%
 | Phase 08-huhwi-indian-modes P02 | 5 | 2 tasks | 1 files |
 | Phase 09-94 P01 | 1420 | 2 tasks | 4 files |
 | Phase 09-94 P02 | 420 | 1 tasks | 4 files |
+| Phase 10-ux P01 | 8 | 2 tasks | 28 files |
 
 ## Accumulated Context
 
@@ -144,6 +145,8 @@ Recent decisions affecting current work:
 - [Phase 09-94 2차UAT]: SejangCardSelectModal 모달로 세장섯다 카드 선택 UI 이동 (HandPanel에서 제거)
 - [Phase 09-94 2차UAT]: cardConfirmed 상태로 베팅 버튼 타이밍 제어 — 패확인 모달 확인 후에만 활성화
 - [Phase 09-94 2차UAT]: takeBreak에서 dealer 거부 (DEALER_CANNOT_SKIP)
+- [Phase 10-ux]: public/img/ 직접 복사 방식 — vite.config.ts publicDir 변경 없이 Vite 기본 public/ 경로 활용
+- [Phase 10-ux]: HwatuCard .hwatu-face=뒷면이미지, .hwatu-back=앞면이미지 — CSS backface-visibility 관례 준수
 
 ### Pending Todos
 
@@ -161,6 +164,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T13:30:00.000Z
-Stopped at: B-1/B-2 3번째 카드 타이밍 수정 완료 — 5차 UAT 재검증 대기 (09-02)
-Resume file: .planning/phases/09-94/.continue-here.md
+Last session: 2026-03-31T13:37:28.605Z
+Stopped at: Completed 10-ux-01-PLAN.md
+Resume file: None
