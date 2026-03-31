@@ -99,3 +99,16 @@ Task 2는 수동 검증 체크포인트입니다. 아래 절차로 전체 플로
 - 커밋 e7e2028: FOUND
 - 서버 테스트: 140 통과 / 34 기존 실패 (회귀 없음)
 - 클라이언트 빌드: 성공
+
+## Post-UAT 버그 수정 (6차 UAT, 2026-03-31)
+
+### 커밋 339f90c
+1. **ResultScreen 세장섯다 카드/족보 표시**: `selectedCards` 기준으로 변경
+   - 기존: 항상 `cards[0], cards[1]`로 족보 계산 → "선택이 반영 안 됨"처럼 보이는 표시 버그
+   - 수정: `player.selectedCards?.length === 2`이면 선택한 2장 사용 (카드 표시 + 족보 라벨)
+   - 서버 승패 결정 로직(`_resolveShowdownSejang`)은 이미 정확했음 — 화면만 수정
+2. **골라골라 베팅패널 미표시**: `gollagolla-select→betting` 전환 시 `cardConfirmed=true` 추가
+3. **인디언 베팅패널 미표시**: `cutting→betting-1` Indian 블록에 `cardConfirmed=true` 추가
+   - 근본 원인: 특수 모드 조기 `return`으로 `cardConfirmed` 미설정. 오리지날/한장공유는 딜링 확인 오버레이 클릭으로 설정되지만 세 모드는 해당 흐름 없었음
+
+**6차 UAT 전 검증 통과 항목 (최종 완료)**
