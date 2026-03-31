@@ -1,40 +1,30 @@
 {
   "version": "1.0",
-  "timestamp": "2026-03-31T01:37:26.589Z",
-  "phase": "09",
-  "phase_name": "94",
-  "phase_dir": ".planning/phases/09-94",
-  "plan": 2,
-  "task": 2,
-  "total_tasks": 2,
+  "timestamp": "2026-03-31T14:40:44.722Z",
+  "phase": "10",
+  "phase_name": "ux",
+  "phase_dir": ".planning/phases/10-ux",
   "status": "paused",
   "completed_tasks": [
-    {"id": "01-1", "name": "공유 타입 확장 + 땡값 정산 로직 TDD", "status": "done", "commit": "27ab857"},
-    {"id": "01-2", "name": "구사 재경기 FSM (gusa-pending) TDD", "status": "done", "commit": "555bc87"},
-    {"id": "02-1", "name": "소켓 핸들러 + GusaRejoinModal + ResultScreen 땡값 + RoomPage 통합", "status": "done", "commit": "e7e2028"},
-    {"id": "hotfix", "name": "revealCard() 단일 생존자 경로 _settleTtaengValue 누락", "status": "done", "commit": "a4715c4"},
-    {"id": "uat-ag", "name": "UAT 버그 A~G 수정 (세장섯다 FSM 순서 변경, 특수패 표기, 재경기 규칙, gusa-announce)", "status": "done", "commit": "97ff996"},
-    {"id": "uat-h", "name": "UAT 버그 H — 세장섯다 잃은돈 합계 오류 (totalBet 필드 도입)", "status": "done", "commit": "46863cf"}
+    {"id": 1, "name": "Phase 10 전체 실행 (플랜 4개)", "status": "done", "commit": "0477cad"},
+    {"id": 2, "name": "CardFace/CardBack orphan 삭제", "status": "done", "commit": "99df7fa"},
+    {"id": 3, "name": "UAT 1라운드 수정 (레이아웃/셔플/기리/플립/베팅)", "status": "done", "commit": "094b1f7"}
   ],
   "remaining_tasks": [
-    {"id": "02-2", "name": "수동 UAT 검증 — 버그 A~H 수정 후 재검증", "status": "in_progress", "progress": "코드 수정 완료, 실제 게임 테스트 대기 중"}
+    {"id": 4, "name": "브라우저 UAT 재검증 (6개 항목)", "status": "not_started"},
+    {"id": 5, "name": "InfoPanel compact 모드 (모바일)", "status": "not_started"},
+    {"id": 6, "name": "패널 내부 여백/레이아웃 세밀 최적화", "status": "not_started"}
   ],
   "blockers": [],
   "human_actions_pending": [
-    {
-      "action": "게임 실행 후 UAT 재검증 (버그 A~H 시나리오별 테스트)",
-      "context": "pnpm dev 실행 후 2인 플레이어로 다음 항목 확인 필요: (1) 세장섯다 betting-1→betting-2→card-select→showdown 순서, (2) 손패 패널 특수패 이름(망통/갑오/암행어사/땡잡이/구사/멍텅구리구사), (3) 구사 전원 생존 시 안내 모달, (4) 구사 재경기 기리 없음, (5) 재경기(구사/동점) 땡값 면제, (6) result 화면 땡값 인라인 표시, (7) 세장섯다 칩 변동 정확도",
-      "blocking": true
-    }
+    {"action": "브라우저에서 셔플/기리/레이아웃 재확인", "context": "UAT 1라운드 수정 후 재검증", "blocking": true}
   ],
   "decisions": [
-    {"decision": "세장섯다 FSM: betting-1 → betting-2 → card-select(+3번째카드배분) → showdown", "rationale": "3번째 카드는 2차 베팅 후 배분. selectCards 완료 후 betting-2가 아닌 자동 showdown 직행.", "phase": "09"},
-    {"decision": "isRematchRound + skipCutting 플래그 도입", "rationale": "GameState에 isRematchRound(땡값면제)와 skipCutting(기리제거) 추가. 재경기 시작 시 설정, nextRound에서 초기화.", "phase": "09"},
-    {"decision": "gusa-announce phase 신설", "rationale": "전원 생존 구사 재경기 시 즉시 shuffling 대신 gusa-announce → 선 플레이어 confirm-gusa-announce emit → _startGusaRematch() 진행", "phase": "09"},
-    {"decision": "totalBet 필드 PlayerState에 추가", "rationale": "currentBet은 현재 베팅 라운드 체크용(라운드별 리셋), totalBet은 앤티+전체 누적(ResultScreen 표시용)", "phase": "09"},
-    {"decision": "revealCard() 단일 생존자 경로에서 gusa 체크 안 함", "rationale": "전원 다이 시 비교 대상 없어 gusa 미적용이 규칙상 맞음", "phase": "09"}
+    {"decision": "ShuffleModal/CutModal 직접 DOM rAF 조작", "rationale": "HTML 참조 구현 포팅, 60fps 성능"},
+    {"decision": "베팅패널 dealingComplete 조건", "rationale": "카드 배분 완료 즉시 베팅 가능"},
+    {"decision": "GameTable 560px + translateY -220px", "rationale": "시트 잘림 해소"}
   ],
   "uncommitted_files": [],
-  "next_action": "pnpm dev 실행 후 세장섯다 모드 2인 UAT 재검증. 통과 시 09-02-SUMMARY.md 작성 후 Phase 09 완료 처리.",
-  "context_notes": "Phase 09 핵심 로직(단위 테스트)은 정상. 이번 세션에서 UAT 버그 A~H 전부 코드 수정 완료 및 빌드/세장섯다 단위 테스트 통과. 재검증만 남은 상태."
+  "next_action": "브라우저에서 UAT 재확인 후 approved 또는 추가 피드백",
+  "context_notes": "sutda-shuffle.html, sutda-giri.html 참조 구현 기준. 테스트 56/56 통과."
 }
