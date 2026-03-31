@@ -17,6 +17,7 @@ import { ShuffleModal } from '@/components/modals/ShuffleModal';
 import { CutModal } from '@/components/modals/CutModal';
 import { RechargeVoteModal } from '@/components/modals/RechargeVoteModal';
 import { GusaRejoinModal } from '@/components/modals/GusaRejoinModal';
+import { GusaAnnounceModal } from '@/components/modals/GusaAnnounceModal';
 import { MuckChoiceModal } from '@/components/modals/MuckChoiceModal';
 import { LeaveRoomDialog } from '@/components/modals/LeaveRoomDialog';
 import { DealerResultOverlay } from '@/components/modals/DealerResultOverlay';
@@ -356,6 +357,16 @@ export function RoomPage() {
         <ResultScreen gameState={gameState} myPlayerId={myPlayerId} roomId={roomId!} />
         <Toaster />
       </>
+    );
+  }
+
+  // 구사 재경기 안내 (전원 생존 시)
+  if (phase === 'gusa-announce') {
+    return (
+      <GusaAnnounceModal
+        roomId={roomId!}
+        isDealer={myPlayer?.isDealer ?? false}
+      />
     );
   }
 

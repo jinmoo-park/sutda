@@ -1,7 +1,7 @@
 /**
  * 세장섯다 모드 단위 테스트
  * Phase 전환: mode-select -> shuffling -> cutting -> dealing(2장) -> betting-1
- *             -> dealing-extra(3번째) -> card-select -> betting-2 -> showdown -> result
+ *             -> betting-2 -> dealing-extra(3번째) -> card-select -> showdown -> result
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GameEngine } from '../game-engine.js';
@@ -52,12 +52,11 @@ describe('세장섯다 모드 - GameEngine', () => {
     expect(state.phase).toBe('betting-1');
   });
 
-  it('Test 3: betting-1 완료 -> phase === "card-select", 생존자 cards.length === 3', () => {
+  it('Test 3: betting-1 완료 -> phase === "betting-2" (카드 배분은 betting-2 완료 후)', () => {
     engine.selectMode('p1', 'three-card');
     engine.shuffle('p1');
     engine.cut('p2', [], [0]);
     // phase === 'betting-1', p1이 선(딜러)
-    // 두 플레이어 모두 체크 (currentBetAmount === 0이고 p1이 선)
     const state1 = engine.getState();
     expect(state1.phase).toBe('betting-1');
 
@@ -65,16 +64,35 @@ describe('세장섯다 모드 - GameEngine', () => {
     engine.processBetAction('p2', { type: 'call' });
 
     const state2 = engine.getState();
-    expect(state2.phase).toBe('card-select');
-    // 모든 생존자가 3장을 가져야 함
+    // NEW: betting-1 완료 -> betting-2 (카드 배분은 betting-2 완료 후)
+    expect(state2.phase).toBe('betting-2');
+    // betting-2 단계에서는 아직 2장 (3번째 카드 미배분)
     const alivePlayers = state2.players.filter((p: any) => p.isAlive);
-    expect(alivePlayers.every((p: any) => p.cards.length === 3)).toBe(true);
+    expect(alivePlayers.every((p: any) => p.cards.length === 2)).toBe(true);
   });
 
-  it('Test 4: selectCards([0,1]) 성공 -> player.selectedCards.length === 2', () => {
+  it('Test 4: betting-2 완료 -> card-select, 생존자 cards.length === 3', () => {
     engine.selectMode('p1', 'three-card');
     engine.shuffle('p1');
     engine.cut('p2', [], [0]);
+    engine.processBetAction('p1', { type: 'check' });
+    engine.processBetAction('p2', { type: 'call' });
+    // phase === 'betting-2'
+    engine.processBetAction('p1', { type: 'check' });
+    engine.processBetAction('p2', { type: 'call' });
+    // phase === 'card-select', 3번째 카드 배분됨
+    const state = engine.getState();
+    expect(state.phase).toBe('card-select');
+    const alivePlayers = state.players.filter((p: any) => p.isAlive);
+    expect(alivePlayers.every((p: any) => p.cards.length === 3)).toBe(true);
+  });
+
+  it('Test 4b: card-select에서 selectCards([0,1]) -> player.selectedCards.length === 2', () => {
+    engine.selectMode('p1', 'three-card');
+    engine.shuffle('p1');
+    engine.cut('p2', [], [0]);
+    engine.processBetAction('p1', { type: 'check' });
+    engine.processBetAction('p2', { type: 'call' });
     engine.processBetAction('p1', { type: 'check' });
     engine.processBetAction('p2', { type: 'call' });
     // phase === 'card-select'
@@ -84,33 +102,37 @@ describe('세장섯다 모드 - GameEngine', () => {
     expect(p1State.selectedCards.length).toBe(2);
   });
 
-  it('Test 5: 모든 생존자 selectCards 완료 -> phase === "betting-2"', () => {
+  it('Test 5: 모든 생존자 selectCards 완료 -> 자동 쇼다운 (result/rematch-pending)', () => {
     engine.selectMode('p1', 'three-card');
     engine.shuffle('p1');
     engine.cut('p2', [], [0]);
+    engine.processBetAction('p1', { type: 'check' });
+    engine.processBetAction('p2', { type: 'call' });
     engine.processBetAction('p1', { type: 'check' });
     engine.processBetAction('p2', { type: 'call' });
     // phase === 'card-select'
     engine.selectCards('p1', [0, 1]);
     engine.selectCards('p2', [1, 2]);
     const state = engine.getState();
-    expect(state.phase).toBe('betting-2');
+    // NEW: card-select 완료 -> 자동 쇼다운 (betting-2가 아닌 showdown/result)
+    expect(['result', 'rematch-pending', 'gusa-pending', 'gusa-announce']).toContain(state.phase);
   });
 
-  it('Test 6: betting-2 완료 -> showdown, 승자 결정 (selectedCards 기반 evaluateHand)', () => {
+  it('Test 6: 전체 흐름 통합 — 세장섯다 betting-1 -> betting-2 -> card-select -> result', () => {
     engine.selectMode('p1', 'three-card');
     engine.shuffle('p1');
     engine.cut('p2', [], [0]);
+    // betting-1
     engine.processBetAction('p1', { type: 'check' });
     engine.processBetAction('p2', { type: 'call' });
+    // betting-2
+    engine.processBetAction('p1', { type: 'check' });
+    engine.processBetAction('p2', { type: 'call' });
+    // card-select
     engine.selectCards('p1', [0, 1]);
     engine.selectCards('p2', [1, 2]);
-    // phase === 'betting-2', p1이 선
-    engine.processBetAction('p1', { type: 'check' });
-    engine.processBetAction('p2', { type: 'call' });
     const state = engine.getState();
-    // betting-2 완료 후 result 또는 rematch-pending
-    expect(['result', 'rematch-pending', 'showdown']).toContain(state.phase);
+    expect(['result', 'rematch-pending', 'gusa-pending', 'gusa-announce']).toContain(state.phase);
   });
 
   it('Test 7: betting-1에서 다이한 플레이어는 3번째 카드 미배분 (cards.length === 2)', () => {
@@ -132,6 +154,8 @@ describe('세장섯다 모드 - GameEngine', () => {
     engine.cut('p2', [], [0]);
     engine.processBetAction('p1', { type: 'check' });
     engine.processBetAction('p2', { type: 'call' });
+    engine.processBetAction('p1', { type: 'check' });
+    engine.processBetAction('p2', { type: 'call' });
     // phase === 'card-select'
     expect(() => engine.selectCards('p1', [1, 1])).toThrow('INVALID_ACTION');
   });
@@ -140,6 +164,8 @@ describe('세장섯다 모드 - GameEngine', () => {
     engine.selectMode('p1', 'three-card');
     engine.shuffle('p1');
     engine.cut('p2', [], [0]);
+    engine.processBetAction('p1', { type: 'check' });
+    engine.processBetAction('p2', { type: 'call' });
     engine.processBetAction('p1', { type: 'check' });
     engine.processBetAction('p2', { type: 'call' });
     // phase === 'card-select'

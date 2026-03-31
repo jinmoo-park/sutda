@@ -222,6 +222,7 @@ export class GameEngine {
   private _settleTtaengValue(): void {
     if (this.state.mode !== 'original') return;
     if (!this.state.winnerId) return;
+    if (this.state.isRematchRound) return;  // 재경기(구사/동점)에서는 땡값 면제
 
     const winner = this.state.players.find(p => p.id === this.state.winnerId);
     if (!winner) return;
@@ -483,14 +484,10 @@ export class GameEngine {
     const alivePlayers = this.state.players.filter(p => p.isAlive);
     const allSelected = alivePlayers.every(p => (p as any).selectedCards && (p as any).selectedCards.length === 2);
     if (allSelected) {
-      const dealerSeatIndex = this.getDealerSeatIndex();
-      this.state.phase = 'betting-2';
-      this.state.currentPlayerIndex = dealerSeatIndex;
-      this.state.openingBettorSeatIndex = dealerSeatIndex;
-      this.state.currentBetAmount = 0;
-      this._bettingActed = new Set();
-      alivePlayers.forEach(p => { p.currentBet = 0; });
-      this._updateEffectiveMaxBet();
+      // 카드 선택 완료 -> 자동 쇼다운 (선택 카드로 족보 판정)
+      alivePlayers.forEach(p => { p.isRevealed = true; });
+      const strategy = this.getModeStrategy();
+      strategy.showdown(this, this.state);
     }
   }
 
@@ -727,6 +724,15 @@ export class GameEngine {
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     this.state.deck = shuffled;
+
+    // 구사 재경기: 기리(cutting) 건너뛰고 바로 dealing
+    if (this.state.skipCutting) {
+      this.state.skipCutting = undefined;
+      this.state.phase = 'dealing';
+      this._dealCards();
+      return;
+    }
+
     this.state.phase = 'cutting';
 
     // cutter = dealer의 왼쪽 첫 번째 비-absent 플레이어
@@ -1167,11 +1173,23 @@ export class GameEngine {
           this.state.phase = 'dealing-extra';
           return;
         }
-        // 세장섯다: 3번째 카드 배분 -> card-select
+        // 세장섯다: betting-1 완료 -> betting-2 (3번째 카드는 betting-2 완료 후 배분)
+        const dealerSeatIndex2 = this.getDealerSeatIndex();
+        this.state.phase = 'betting-2';
+        this.state.currentPlayerIndex = dealerSeatIndex2;
+        this.state.openingBettorSeatIndex = dealerSeatIndex2;
+        this.state.currentBetAmount = 0;
+        this._bettingActed = new Set();
+        this.state.players.filter(p => p.isAlive).forEach(p => { p.currentBet = 0; });
+        this._updateEffectiveMaxBet();
+        return;
+      }
+      // 세장섯다 betting-2 완료: 3번째 카드 배분 -> card-select
+      if (this.state.phase === 'betting-2' && this.state.mode === 'three-card') {
         this._dealExtraCardForSejang();
         return;
       }
-      // betting / betting-2: 자동 쇼다운 — Strategy 위임
+      // betting / betting-2(non-sejang): 자동 쇼다운 — Strategy 위임
       this.state.players.filter(p => p.isAlive).forEach(p => { p.isRevealed = true; });
       const strategy = this.getModeStrategy();
       strategy.showdown(this, this.state);
@@ -1518,6 +1536,7 @@ export class GameEngine {
     // attend-school/mode-select 건너뜀 (앤티 없음), 오리지날 2장 섯다로 자동 실행
     (this.state as any).sharedCard = undefined;  // 한장공유: 이전 공유카드 초기화
     this.state.mode = 'original';
+    this.state.isRematchRound = true;  // 동점 재경기 — 땡값 면제
     this.state.phase = 'shuffling';
   }
 
@@ -1604,13 +1623,28 @@ export class GameEngine {
     (this.state as any).sharedCard = undefined;
 
     // mode 유지 (startRematch와의 핵심 차이)
+    this.state.isRematchRound = true;  // 구사 재경기 — 땡값 면제
+    this.state.skipCutting = true;     // 구사 재경기 — 기리 없이 바로 dealing
     this.state.phase = 'shuffling';
   }
 
   /**
-   * 다이 플레이어 0명 시 즉시 구사 재경기 시작 (gusaPendingDecisions 없이)
+   * 다이 플레이어 0명 시 gusa-announce phase로 전환 — 클라이언트 안내 모달 표시 후 confirmGusaAnnounce() 호출
    */
   private _startGusaRematchImmediate(): void {
+    // 전원 생존: gusa-announce로 안내 모달 표시 (confirmGusaAnnounce 후 _startGusaRematch 호출)
+    this.state.phase = 'gusa-announce';
+  }
+
+  /**
+   * 구사 재경기 안내 확인 (gusa-announce phase에서 선 플레이어가 확인)
+   * - phase = gusa-announce에서만 가능
+   * - _startGusaRematch() 호출하여 shuffling 진행
+   */
+  confirmGusaAnnounce(playerId: string): void {
+    this.assertPhase('gusa-announce');
+    const player = this.state.players.find(p => p.id === playerId);
+    if (!player || !player.isDealer) throw new Error('NOT_YOUR_TURN');
     this._startGusaRematch();
   }
 
@@ -1635,6 +1669,8 @@ export class GameEngine {
     this.state.tiedPlayerIds = undefined;
     this.state.ttaengPayments = undefined;
     this.state.isTtong = false;
+    this.state.isRematchRound = undefined;
+    this.state.skipCutting = undefined;
     this.state.attendedPlayerIds = [];
     this.state.dealerSelectCards = [];
     this.state.deck = createDeck();

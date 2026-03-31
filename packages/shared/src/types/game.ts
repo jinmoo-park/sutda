@@ -28,6 +28,7 @@ export type GamePhase =
   | 'result'           // 결과 표시
   | 'rematch-pending'  // 동점 재경기 대기
   | 'gusa-pending'    // 구사 재경기 대기 (다이 플레이어 재참여 결정 수집 중)
+  | 'gusa-announce'   // 구사 재경기 안내 (전원 생존 시 안내 모달 표시 후 shuffling 진행)
   | 'finished';        // 게임 종료
 
 /** 게임 모드 */
@@ -94,4 +95,6 @@ export interface GameState {
   gollaReservedIndices?: Record<string, number[]>;         // 골라골라: 각 플레이어가 임시 예약 중인 인덱스 (0~1개)
   gusaPendingDecisions?: Record<string, boolean | null>;  // 구사 재경기 대기 중 플레이어 재참여 결정 (null=미결정)
   ttaengPayments?: { playerId: string; amount: number }[];  // 땡값 납부 내역 (오리지날 모드 전용)
+  isRematchRound?: boolean;  // 재경기(구사/동점) 라운드 여부 — 땡값 면제
+  skipCutting?: boolean;  // 구사 재경기: 기리(cutting) 단계 건너뜀
 }

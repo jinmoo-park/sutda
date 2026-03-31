@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { GameState } from '@sutda/shared';
+import type { GameState, HandResult } from '@sutda/shared';
 import { evaluateHand } from '@sutda/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,19 @@ const HAND_TYPE_KOREAN: Record<string, string> = {
   'sae-ryuk': '새륙',
   kkut: '끗',
 };
+
+function getHandLabel(result: HandResult): string {
+  if (result.handType !== 'kkut') {
+    return HAND_TYPE_KOREAN[result.handType] ?? result.handType;
+  }
+  if (result.isMeongtteongguriGusa) return '멍텅구리구사';
+  if (result.isGusa) return '구사';
+  if (result.isSpecialBeater && result.score === 1) return '암행어사';
+  if (result.isSpecialBeater && result.score === 0) return '땡잡이';
+  if (result.score === 0) return '망통';
+  if (result.score === 9) return '갑오';
+  return `${result.score}끗`;
+}
 
 interface ResultScreenProps {
   gameState: GameState;
@@ -102,20 +115,30 @@ export function ResultScreen({ gameState, myPlayerId, roomId }: ResultScreenProp
           let handLabel: string | null = null;
           if (!isDied && player.cards.length >= 2) {
             try {
-              const result = evaluateHand(player.cards[0], player.cards[1]);
-              const baseName = HAND_TYPE_KOREAN[result.handType] ?? result.handType;
-              handLabel = result.handType === 'kkut' ? `${result.score}끗` : baseName;
+              handLabel = getHandLabel(evaluateHand(player.cards[0], player.cards[1]));
             } catch {
               // 평가 불가한 경우 무시
             }
           }
 
-          // 칩 변동 계산 (앤티 500원 포함)
+          // 땡값 계산
           const isWinner = player.id === gameState.winnerId;
+          const myTtaengPayment = gameState.ttaengPayments?.find(
+            (t) => t.playerId === player.id
+          );
+          const totalTtaengReceived =
+            isWinner && gameState.ttaengPayments
+              ? gameState.ttaengPayments.reduce((sum, t) => sum + t.amount, 0)
+              : 0;
+
+          // 칩 변동 계산 (앤티 500원 + 땡값 포함)
           const ante = 500;
-          const chipDelta = isWinner
+          const baseChipDelta = isWinner
             ? gameState.pot - player.currentBet - ante
             : -(player.currentBet + ante);
+          const chipDelta = isWinner
+            ? baseChipDelta + totalTtaengReceived
+            : baseChipDelta - (myTtaengPayment?.amount ?? 0);
 
           return (
             <div
@@ -153,34 +176,20 @@ export function ResultScreen({ gameState, myPlayerId, roomId }: ResultScreenProp
                 {chipDelta > 0 ? '+' : ''}
                 {chipDelta.toLocaleString()}원
               </Badge>
+              {isWinner && totalTtaengReceived > 0 && (
+                <p className="text-xs text-green-400">
+                  땡값 +{totalTtaengReceived.toLocaleString()}원
+                </p>
+              )}
+              {!isWinner && myTtaengPayment && (
+                <p className="text-xs text-red-400">
+                  땡값 -{myTtaengPayment.amount.toLocaleString()}원
+                </p>
+              )}
             </div>
           );
         })}
       </div>
-
-      {gameState.ttaengPayments && gameState.ttaengPayments.length > 0 && (
-        <div className="flex flex-col items-center gap-1 mt-2">
-          <p className="text-sm font-semibold">땡값</p>
-          {gameState.ttaengPayments.map((payment) => {
-            const payer = gameState.players.find((p) => p.id === payment.playerId);
-            return (
-              <p key={payment.playerId} className="text-sm text-red-500">
-                {payer?.nickname ?? '?'}: -{payment.amount.toLocaleString()}원
-              </p>
-            );
-          })}
-          {(() => {
-            const totalTtaeng = gameState.ttaengPayments!.reduce((sum, p) => sum + p.amount, 0);
-            const winnerName =
-              gameState.players.find((p) => p.id === gameState.winnerId)?.nickname ?? '?';
-            return (
-              <p className="text-sm text-green-500">
-                {winnerName}: +{totalTtaeng.toLocaleString()}원 (땡값)
-              </p>
-            );
-          })()}
-        </div>
-      )}
 
       <div className="flex flex-col items-center gap-2">
         {amAbsent ? (

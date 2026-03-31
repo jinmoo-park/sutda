@@ -51,6 +51,7 @@ export interface ClientToServerEvents {
   'reserve-gollagolla-card': (data: { roomId: string; cardIndex: number; reserve: boolean }) => void;
   'start-rematch': (data: { roomId: string }) => void;
   'gusa-rejoin': (data: { roomId: string; join: boolean }) => void;
+  'confirm-gusa-announce': (data: { roomId: string }) => void;
 }
 
 /** 서버 -> 클라이언트 이벤트 */

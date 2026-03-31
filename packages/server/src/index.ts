@@ -350,6 +350,13 @@ io.on('connection', (socket) => {
     });
   });
 
+  socket.on('confirm-gusa-announce', ({ roomId }) => {
+    handleGameAction(socket, roomId, () => {
+      const engine = getEngine(roomId);
+      engine.confirmGusaAnnounce(socket.data.playerId);
+    });
+  });
+
   socket.on('start-rematch', ({ roomId }) => {
     handleGameAction(socket, roomId, () => {
       const engine = getEngine(roomId);

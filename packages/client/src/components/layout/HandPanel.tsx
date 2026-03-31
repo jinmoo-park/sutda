@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { PlayerState, GamePhase, Card } from '@sutda/shared';
+import type { PlayerState, GamePhase, Card, HandResult } from '@sutda/shared';
 import { evaluateHand } from '@sutda/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,22 @@ const HAND_TYPE_KOREAN: Record<string, string> = {
   'sae-ryuk': '새륙',
   kkut: '끗',
 };
+
+/** 족보 판정 결과를 한국어 레이블로 변환 */
+function getHandLabel(result: HandResult): string {
+  if (result.handType !== 'kkut') {
+    return HAND_TYPE_KOREAN[result.handType] ?? result.handType;
+  }
+  // 특수패 이름 우선 적용
+  if (result.isMeongtteongguriGusa) return '멍텅구리구사';
+  if (result.isGusa) return '구사';
+  if (result.isSpecialBeater && result.score === 1) return '암행어사';
+  if (result.isSpecialBeater && result.score === 0) return '땡잡이';
+  // 일반 끗
+  if (result.score === 0) return '망통';
+  if (result.score === 9) return '갑오';
+  return `${result.score}끗`;
+}
 
 export function HandPanel({ myPlayer, phase, onSelectCards, sharedCard, visibleCardCount, nickname }: HandPanelProps) {
   const [showReference, setShowReference] = useState(false);
@@ -82,19 +98,13 @@ export function HandPanel({ myPlayer, phase, onSelectCards, sharedCard, visibleC
   try {
     if (alreadySelected && myPlayer?.selectedCards && myPlayer.selectedCards.length >= 2) {
       // 세장섯다: 선택 완료된 카드로 족보 계산
-      const result = evaluateHand(myPlayer.selectedCards[0], myPlayer.selectedCards[1]);
-      const baseName = HAND_TYPE_KOREAN[result.handType] ?? result.handType;
-      handLabel = result.handType === 'kkut' ? `${result.score}끗` : baseName;
+      handLabel = getHandLabel(evaluateHand(myPlayer.selectedCards[0], myPlayer.selectedCards[1]));
     } else if (cards.length === 1 && sharedCard) {
       // 한장공유: 내 1장 + 공유카드로 족보 계산
-      const result = evaluateHand(cards[0], sharedCard);
-      const baseName = HAND_TYPE_KOREAN[result.handType] ?? result.handType;
-      handLabel = result.handType === 'kkut' ? `${result.score}끗` : baseName;
+      handLabel = getHandLabel(evaluateHand(cards[0], sharedCard));
     } else if (cards.length >= 2 && cards[0] !== null && cards[1] !== null && phase !== 'card-select') {
       // 오리지날: 기본 2장으로 족보 계산 (card-select phase에서는 표시 안 함, 인디언 null 카드 제외)
-      const result = evaluateHand(cards[0], cards[1]);
-      const baseName = HAND_TYPE_KOREAN[result.handType] ?? result.handType;
-      handLabel = result.handType === 'kkut' ? `${result.score}끗` : baseName;
+      handLabel = getHandLabel(evaluateHand(cards[0], cards[1]));
     }
   } catch {
     // 카드가 2장 미만이거나 평가 불가한 경우 무시
