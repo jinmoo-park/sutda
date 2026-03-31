@@ -238,9 +238,9 @@
 | RULE-03 | Phase 9 | Complete |
 | RULE-04 | Phase 9 | Complete |
 | SEAT-01 | Phase 10 | Complete |
-| UX-03 | Phase 10 | Pending |
-| UX-05 | Phase 10 | Pending |
-| UX-06 | Phase 10 | Pending |
+| UX-03 | Phase 10 | Complete |
+| UX-05 | Phase 10 | Complete |
+| UX-06 | Phase 10 | Complete |
 | UX-07 | Phase 10 | Complete |
 | UX-08 | Phase 10 | Complete |
 | UX-09 | Phase 10 | Complete |
