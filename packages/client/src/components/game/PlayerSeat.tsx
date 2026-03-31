@@ -47,7 +47,7 @@ export function PlayerSeat({
   const content = (
     <Card
       className={cn(
-        'w-28 p-2 space-y-1 transition-shadow duration-300',
+        'w-auto min-w-[7rem] p-2 space-y-1 transition-shadow duration-300',
         isCurrentTurn && 'ring-2 ring-primary shadow-[0_0_14px_3px] shadow-primary/50',
         !player.isAlive && 'opacity-50'
       )}
@@ -75,8 +75,8 @@ export function PlayerSeat({
       </div>
 
       {player.cards.length > 0 && (
-        <div className="flex gap-1">
-          {[0, 1].map((idx) => {
+        <div className="flex gap-1 flex-wrap">
+          {Array.from({ length: Math.max(player.cards.length, 2) }, (_, idx) => {
             const visible = idx < showCount;
             const card = player.cards[idx];
             // 세장섯다: openedCardIndex가 있으면 해당 카드는 전원에게 공개

@@ -74,8 +74,8 @@ export function BettingPanel({
         </p>
       )}
 
-      {/* 칩 버튼 — 2×2 그리드 */}
-      <div className="grid grid-cols-2 gap-1.5">
+      {/* 칩 버튼 — 1×4 그리드 */}
+      <div className="grid grid-cols-4 gap-1.5">
         {CHIP_BUTTONS.map(({ amount, color, label }) => (
           <Button
             key={amount}
@@ -83,7 +83,7 @@ export function BettingPanel({
             size="sm"
             disabled={!isMyTurn}
             onClick={() => setRaiseAmount((prev) => prev + amount)}
-            className={cn('h-9 gap-1.5 text-xs', !isMyTurn && 'opacity-40')}
+            className={cn('h-9 gap-1 text-xs px-1', !isMyTurn && 'opacity-40')}
           >
             <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${color}`} />
             +{label}
@@ -104,8 +104,8 @@ export function BettingPanel({
         </Button>
       )}
 
-      {/* 액션 버튼 — 2열 */}
-      <div className="grid grid-cols-2 gap-1.5">
+      {/* 액션 버튼 — 1×4 그리드 */}
+      <div className="grid grid-cols-4 gap-1.5">
         <Button
           variant="outline"
           disabled={!isMyTurn || !canCheck}

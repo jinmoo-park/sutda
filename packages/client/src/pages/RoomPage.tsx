@@ -214,7 +214,7 @@ export function RoomPage() {
     const currentPhase = gameState?.phase ?? null;
     if (
       prevPhaseRef.current === 'dealer-select' &&
-      currentPhase === 'attend-school' &&
+      (currentPhase === 'attend-school' || currentPhase === 'mode-select') &&
       gameState?.dealerSelectCards &&
       gameState.dealerSelectCards.length > 0
     ) {
@@ -503,20 +503,20 @@ export function RoomPage() {
   return (
     <div className="bg-background text-foreground">
       {/* 데스크탑: 3열 그리드 */}
-      <div className="hidden md:grid grid-cols-[256px_1fr_256px] h-dvh overflow-hidden">
+      <div className="hidden md:grid grid-cols-[256px_1fr_512px] h-dvh overflow-hidden">
         {/* 좌사이드: InfoPanel + ChatPanel */}
         <div className="flex flex-col border-r border-border overflow-y-auto">
           {infoPanelNode}
           <ChatPanel />
         </div>
 
-        {/* 중앙: GameTable */}
-        <div className="flex items-center justify-center overflow-hidden">
+        {/* 중앙: GameTable — 배경이미지가 이 영역 전체를 채움 */}
+        <div className="relative overflow-hidden">
           {gameTableNode}
         </div>
 
-        {/* 우사이드: BettingPanel + HandPanel */}
-        <div className="flex flex-col border-l border-border overflow-y-auto p-2 gap-2">
+        {/* 우사이드: BettingPanel + HandPanel — 하단정렬 */}
+        <div className="flex flex-col justify-end border-l border-border overflow-y-auto p-2 gap-2">
           {bettingPanelNode}
           {handPanelNode}
         </div>

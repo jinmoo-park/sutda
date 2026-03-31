@@ -125,6 +125,13 @@ io.on('connection', (socket) => {
       socket.emit('set-player-id', { playerId: socket.id });
       // 방 전체에 갱신된 상태 브로드캐스트 (방장 포함 모든 클라이언트 갱신)
       io.to(roomId).emit('room-state', room);
+      // 게임 진행 중이면 현재 게임 상태도 전송 (재접속 / 뒤늦게 합류한 플레이어 대응)
+      if (room.gamePhase === 'playing') {
+        const engine = gameEngines.get(roomId);
+        if (engine) {
+          socket.emit('game-state', engine.getStateFor(socket.data.playerId) as GameState);
+        }
+      }
     } catch (err: any) {
       emitError(socket, err.message as ErrorCode);
     }

@@ -65,26 +65,44 @@ export function DealerSelectModal({ open, roomId }: DealerSelectModalProps) {
             const isTaken = takenIndices.has(i);
             const isMyPick = mySelection?.cardIndex === i;
             const deck = gameState?.deck ?? [];
-            const disabled = !amEligible || hasSelected || isTaken;
+            // 선택된 카드는 HTML disabled 없이 직접 클릭 차단 (face-up 표시 유지)
+            const disabled = !isTaken && (!amEligible || hasSelected);
+            const pickedBy = isTaken
+              ? dealerSelectCards.find((sc) => sc.cardIndex === i)
+              : undefined;
+            const pickerNickname = pickedBy
+              ? (gameState?.players.find((p) => p.id === pickedBy.playerId)?.nickname ?? '')
+              : '';
             return (
-              <button
-                key={i}
-                onClick={() => handleSelect(i)}
-                disabled={disabled}
-                className={cn(
-                  'rounded-md transition-opacity',
-                  disabled
-                    ? 'cursor-not-allowed opacity-40'
-                    : 'cursor-pointer hover:ring-2 hover:ring-primary',
-                  isMyPick && 'opacity-100 ring-2 ring-primary'
+              <div key={i} className="flex flex-col items-center gap-0.5">
+                <button
+                  onClick={() => handleSelect(i)}
+                  disabled={disabled}
+                  className={cn(
+                    'rounded-md transition-opacity',
+                    isTaken
+                      ? 'cursor-not-allowed'
+                      : !amEligible || hasSelected
+                        ? 'cursor-not-allowed opacity-40'
+                        : 'cursor-pointer hover:ring-2 hover:ring-primary',
+                    isMyPick && 'ring-2 ring-primary'
+                  )}
+                >
+                  {isTaken && deck[i] ? (
+                    <HwatuCard card={deck[i]} faceUp={true} size="sm" />
+                  ) : (
+                    <HwatuCard faceUp={false} size="sm" />
+                  )}
+                </button>
+                {pickerNickname && (
+                  <span className={cn(
+                    'text-[9px] truncate max-w-[52px] text-center leading-tight',
+                    isMyPick ? 'text-primary font-semibold' : 'text-muted-foreground'
+                  )}>
+                    {pickerNickname}
+                  </span>
                 )}
-              >
-                {isMyPick && deck[i] ? (
-                  <HwatuCard card={deck[i]} faceUp={true} size="sm" />
-                ) : (
-                  <HwatuCard faceUp={false} size="sm" />
-                )}
-              </button>
+              </div>
             );
           })}
         </div>
