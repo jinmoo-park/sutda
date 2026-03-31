@@ -109,14 +109,19 @@ describe('evaluateHand', () => {
         .toEqual(result('kkut', 0, { isSpecialBeater: true }));
     });
 
-    it('땡잡이 아님: 3광 + 7normal -> 끗 (0끗)', () => {
+    it('땡잡이: 3광 + 7normal (속성 무관)', () => {
       expect(evaluateHand(card(3, 'gwang'), card(7, 'normal')))
-        .toEqual(result('kkut', 0));
+        .toEqual(result('kkut', 0, { isSpecialBeater: true }));
     });
 
-    it('땡잡이 아님: 3normal + 7열끗 -> 끗 (0끗)', () => {
+    it('땡잡이: 3normal + 7열끗 (속성 무관)', () => {
       expect(evaluateHand(card(3, 'normal'), card(7, 'yeolkkeut')))
-        .toEqual(result('kkut', 0));
+        .toEqual(result('kkut', 0, { isSpecialBeater: true }));
+    });
+
+    it('땡잡이: 3광 + 7열끗 (속성 무관)', () => {
+      expect(evaluateHand(card(3, 'gwang'), card(7, 'yeolkkeut')))
+        .toEqual(result('kkut', 0, { isSpecialBeater: true }));
     });
 
     it('암행어사: 4열끗 + 7열끗', () => {
@@ -144,14 +149,14 @@ describe('evaluateHand', () => {
         .toEqual(result('kkut', 3, { isMeongtteongguriGusa: true }));
     });
 
-    it('구사 아님: 4열끗 + 9normal (속성 혼합) -> 끗 3끗', () => {
+    it('구사: 4열끗 + 9normal (속성 혼합도 구사)', () => {
       expect(evaluateHand(card(4, 'yeolkkeut'), card(9, 'normal')))
-        .toEqual(result('kkut', 3));
+        .toEqual(result('kkut', 3, { isGusa: true }));
     });
 
-    it('구사 아님: 4normal + 9열끗 (속성 혼합) -> 끗 3끗', () => {
+    it('구사: 4normal + 9열끗 (속성 혼합도 구사)', () => {
       expect(evaluateHand(card(4, 'normal'), card(9, 'yeolkkeut')))
-        .toEqual(result('kkut', 3));
+        .toEqual(result('kkut', 3, { isGusa: true }));
     });
   });
 

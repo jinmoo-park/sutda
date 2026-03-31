@@ -703,40 +703,71 @@ describe('rematch', () => {
     engine.revealCard('player-3');
   }
 
-  it('startRematch: 동점자만 alive, pot 유지, phase=shuffling', () => {
+  it('confirmRematch: 모든 동점자 확인 시 동점자만 alive, pot 유지, phase=shuffling', () => {
     const engine = new GameEngine('room1', players, 'original', 2);
     advanceToRematch(engine);
 
     expect(engine.getState().phase).toBe('rematch-pending');
     const potBefore = engine.getState().pot;
 
-    engine.startRematch();
+    // 동점자 두 명 모두 확인해야 시작
+    engine.confirmRematch('player-2');
+    expect(engine.getState().phase).toBe('rematch-pending'); // 아직 대기
+
+    engine.confirmRematch('player-3');
 
     const state = engine.getState();
     expect(state.phase).toBe('shuffling');
     expect(state.pot).toBe(potBefore); // pot 유지
+    expect(state.skipCutting).toBe(true); // 기리 없음
 
     // 동점자(player-2, player-3)만 alive
     const alive = state.players.filter(p => p.isAlive);
     expect(alive.map(p => p.id).sort()).toEqual(['player-2', 'player-3'].sort());
   });
 
-  it('startRematch: 앤티 없음 (attendedPlayerIds 사용하지 않음)', () => {
+  it('confirmRematch: 앤티 없음 (attendedPlayerIds 사용하지 않음)', () => {
     const engine = new GameEngine('room1', players, 'original', 2);
     advanceToRematch(engine);
-    engine.startRematch();
+    engine.confirmRematch('player-2');
+    engine.confirmRematch('player-3');
 
     const state = engine.getState();
     // rematch에서는 attend-school을 건너뜀 (phase=shuffling으로 바로 전환)
     expect(state.phase).toBe('shuffling');
   });
 
-  it('startRematch: rematch-pending이 아닌 phase에서 호출 시 INVALID_PHASE 에러', () => {
+  it('confirmRematch: rematch-pending이 아닌 phase에서 호출 시 INVALID_PHASE 에러', () => {
     const engine = new GameEngine('room1', players, 'original', 2);
     engine.setDealerFromPreviousWinner('player-0');
     players.forEach(p => engine.attendSchool(p.id));
     // mode-select phase
-    expect(() => engine.startRematch()).toThrow('INVALID_PHASE');
+    expect(() => engine.confirmRematch('player-2')).toThrow('INVALID_PHASE');
+  });
+
+  it('confirmRematch: 비동점자가 호출 시 INVALID_ACTION 에러', () => {
+    const engine = new GameEngine('room1', players, 'original', 2);
+    advanceToRematch(engine);
+    expect(() => engine.confirmRematch('player-0')).toThrow('INVALID_ACTION');
+  });
+
+  it('confirmRematch: 비참여자 totalBet 유지 (이전 라운드 손실 표시)', () => {
+    const engine = new GameEngine('room1', players, 'original', 2);
+    advanceToRematch(engine);
+
+    // 비동점자의 totalBet 기록
+    const nonTiedBefore = engine.getState().players.filter(p => !engine.getState().tiedPlayerIds?.includes(p.id));
+    const totalBets = nonTiedBefore.map(p => p.totalBet);
+
+    engine.confirmRematch('player-2');
+    engine.confirmRematch('player-3');
+
+    // 비동점자의 totalBet이 유지됨
+    const state = engine.getState();
+    const nonTiedAfter = state.players.filter(p => !state.players.find(pp => pp.id === p.id && pp.isAlive));
+    for (let i = 0; i < nonTiedAfter.length; i++) {
+      expect(nonTiedAfter[i].totalBet).toBe(totalBets[i]);
+    }
   });
 });
 

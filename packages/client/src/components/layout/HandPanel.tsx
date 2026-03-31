@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { PlayerState, GamePhase, Card, HandResult } from '@sutda/shared';
 import { evaluateHand } from '@sutda/shared';
 import { Badge } from '@/components/ui/badge';
@@ -6,12 +6,10 @@ import { Button } from '@/components/ui/button';
 import { CardFace } from '@/components/game/CardFace';
 import { CardBack } from '@/components/game/CardBack';
 import { HandReferenceDialog } from './HandReferenceDialog';
-import { cn } from '@/lib/utils';
 
 interface HandPanelProps {
   myPlayer: PlayerState | null;
   phase?: GamePhase;
-  onSelectCards?: (indices: number[]) => void;
   sharedCard?: Card;
   visibleCardCount?: number;
   nickname?: string;
@@ -56,42 +54,12 @@ function getHandLabel(result: HandResult): string {
   return `${result.score}끗`;
 }
 
-export function HandPanel({ myPlayer, phase, onSelectCards, sharedCard, visibleCardCount, nickname }: HandPanelProps) {
+export function HandPanel({ myPlayer, phase, sharedCard, visibleCardCount, nickname }: HandPanelProps) {
   const [showReference, setShowReference] = useState(false);
-  const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
-  const [submitting, setSubmitting] = useState(false);
 
   const allCards = myPlayer?.cards ?? [];
   const cards = visibleCardCount !== undefined ? allCards.slice(0, visibleCardCount) : allCards;
   const alreadySelected = (myPlayer?.selectedCards?.length ?? 0) >= 2;
-
-  const isCardSelectMode =
-    phase === 'card-select' && (myPlayer?.isAlive ?? false) && !alreadySelected;
-
-  // card-select phase가 아니면 선택 상태 리셋
-  useEffect(() => {
-    if (phase !== 'card-select') {
-      setSelectedIndices([]);
-      setSubmitting(false);
-    }
-  }, [phase]);
-
-  const toggleCard = (idx: number) => {
-    if (!isCardSelectMode) return;
-    setSelectedIndices((prev) =>
-      prev.includes(idx)
-        ? prev.filter((i) => i !== idx)
-        : prev.length < 2
-        ? [...prev, idx]
-        : prev
-    );
-  };
-
-  const handleSelectCards = () => {
-    if (selectedIndices.length !== 2 || !onSelectCards) return;
-    setSubmitting(true);
-    onSelectCards(selectedIndices);
-  };
 
   // 족보 계산
   let handLabel: string | null = null;
@@ -119,55 +87,18 @@ export function HandPanel({ myPlayer, phase, onSelectCards, sharedCard, visibleC
       ) : (
         <div className="flex gap-2 items-center flex-wrap">
           {cards.map((card, idx) => (
-            <button
-              key={idx}
-              onClick={() => toggleCard(idx)}
-              disabled={!isCardSelectMode}
-              className={cn(
-                'rounded-md transition-all',
-                isCardSelectMode
-                  ? selectedIndices.includes(idx)
-                    ? 'ring-2 ring-primary scale-105 opacity-100 cursor-pointer'
-                    : 'opacity-70 hover:opacity-100 hover:ring-1 hover:ring-primary/50 cursor-pointer'
-                  : 'cursor-default'
-              )}
-            >
+            <div key={idx} className="rounded-md">
               {card === null ? (
                 <CardBack />
               ) : (
                 <CardFace card={card} />
               )}
-            </button>
+            </div>
           ))}
           {handLabel && (
             <Badge variant="secondary" className="ml-2">
               {handLabel}
             </Badge>
-          )}
-        </div>
-      )}
-
-      {/* card-select phase UI */}
-      {phase === 'card-select' && myPlayer?.isAlive && (
-        <div className="space-y-1">
-          {alreadySelected ? (
-            <p className="text-sm text-muted-foreground">
-              선택 완료! 다른 플레이어를 기다리는 중...
-            </p>
-          ) : (
-            <>
-              <p className="text-sm text-muted-foreground">
-                2장을 선택하세요 ({selectedIndices.length}/2)
-              </p>
-              <Button
-                variant="default"
-                size="sm"
-                disabled={selectedIndices.length !== 2 || submitting}
-                onClick={handleSelectCards}
-              >
-                {submitting ? '처리 중...' : '선택 완료'}
-              </Button>
-            </>
           )}
         </div>
       )}

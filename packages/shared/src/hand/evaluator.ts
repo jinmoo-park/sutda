@@ -50,16 +50,15 @@ export function evaluateHand(card1: Card, card2: Card): HandResult {
     return makeResult(TTAENG_MAP[rank], 1000 + rank);
   }
 
-  // 3. 특수패 (속성 조건이 엄격함)
+  // 3. 특수패
   // 암행어사: [4,7] 둘 다 yeolkkeut
   if (low === 4 && high === 7 &&
       card1.attribute === 'yeolkkeut' && card2.attribute === 'yeolkkeut') {
     return makeResult('kkut', 1, { isSpecialBeater: true });
   }
 
-  // 땡잡이: [3,7] 둘 다 normal
-  if (low === 3 && high === 7 &&
-      card1.attribute === 'normal' && card2.attribute === 'normal') {
+  // 땡잡이: [3,7] 모든 속성 조합
+  if (low === 3 && high === 7) {
     return makeResult('kkut', 0, { isSpecialBeater: true });
   }
 
@@ -69,9 +68,8 @@ export function evaluateHand(card1: Card, card2: Card): HandResult {
     return makeResult('kkut', (low + high) % 10, { isMeongtteongguriGusa: true });
   }
 
-  // 일반구사: [4,9] 둘 다 normal
-  if (low === 4 && high === 9 &&
-      card1.attribute === 'normal' && card2.attribute === 'normal') {
+  // 구사: [4,9] 그 외 모든 속성 조합
+  if (low === 4 && high === 9) {
     return makeResult('kkut', (low + high) % 10, { isGusa: true });
   }
 

@@ -120,3 +120,11 @@ completed: 2026-03-30
 ---
 *Phase: 08-huhwi-indian-modes*
 *Completed: 2026-03-30*
+
+## Self-Check: PASSED
+
+- FOUND: `.planning/phases/08-huhwi-indian-modes/08-02-SUMMARY.md`
+- FOUND: `packages/server/src/index.ts`
+- FOUND: commit `fa85a23` (Task 2)
+- FOUND: commit `dfed795` (docs/metadata)
+- `pnpm --filter @sutda/server build` — 성공 (TypeScript 에러 없음)
