@@ -313,6 +313,12 @@ io.on('connection', (socket) => {
     });
   });
 
+  socket.on('open-sejang-card', ({ roomId, cardIndex }) => {
+    handleGameAction(socket, roomId, () => {
+      getEngine(roomId).openSejangCard(socket.data.playerId, cardIndex as 0 | 1);
+    });
+  });
+
   socket.on('select-cards', ({ roomId, cardIndices }) => {
     handleGameAction(socket, roomId, () => {
       getEngine(roomId).selectCards(socket.data.playerId, cardIndices);
@@ -361,7 +367,7 @@ io.on('connection', (socket) => {
     handleGameAction(socket, roomId, () => {
       const engine = getEngine(roomId);
       if (engine.getState().phase !== 'rematch-pending') return;
-      engine.startRematch();
+      engine.confirmRematch(socket.data.playerId);
     });
   });
 

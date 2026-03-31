@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CardFace } from '@/components/game/CardFace';
 import { CardBack } from '@/components/game/CardBack';
-import { LeaveRoomDialog } from '@/components/modals/LeaveRoomDialog';
 import { useGameStore } from '@/store/gameStore';
 
 const HAND_TYPE_KOREAN: Record<string, string> = {
@@ -54,7 +53,6 @@ const AUTO_NEXT_SECONDS = 5;
 
 export function ResultScreen({ gameState, myPlayerId, roomId }: ResultScreenProps) {
   const { socket } = useGameStore();
-  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [hasVotedNextRound, setHasVotedNextRound] = useState(false);
   const [hasReturnedFromBreak, setHasReturnedFromBreak] = useState(false);
   const [hasTakenBreak, setHasTakenBreak] = useState(false);
@@ -209,23 +207,14 @@ export function ResultScreen({ gameState, myPlayerId, roomId }: ResultScreenProp
             <Button variant="secondary" onClick={handleNextRound}>
               학교 가기
             </Button>
-            {canSkip && (
+            {canSkip && myPlayerId !== gameState.winnerId && (
               <Button variant="ghost" disabled={hasTakenBreak} onClick={handleTakeBreak}>
                 다음판 쉬기
               </Button>
             )}
           </div>
         )}
-        <Button variant="ghost" onClick={() => setShowLeaveDialog(true)}>
-          방 나가기
-        </Button>
       </div>
-
-      <LeaveRoomDialog
-        open={showLeaveDialog}
-        onOpenChange={setShowLeaveDialog}
-        roomId={roomId}
-      />
     </div>
   );
 }

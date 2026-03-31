@@ -18,8 +18,9 @@ import { CutModal } from '@/components/modals/CutModal';
 import { RechargeVoteModal } from '@/components/modals/RechargeVoteModal';
 import { GusaRejoinModal } from '@/components/modals/GusaRejoinModal';
 import { GusaAnnounceModal } from '@/components/modals/GusaAnnounceModal';
+import { SejangCardSelectModal } from '@/components/modals/SejangCardSelectModal';
+import { SejangOpenCardModal } from '@/components/modals/SejangOpenCardModal';
 import { MuckChoiceModal } from '@/components/modals/MuckChoiceModal';
-import { LeaveRoomDialog } from '@/components/modals/LeaveRoomDialog';
 import { DealerResultOverlay } from '@/components/modals/DealerResultOverlay';
 import type { DealerSelectResult } from '@/components/modals/DealerResultOverlay';
 import { CardFace } from '@/components/game/CardFace';
@@ -48,9 +49,10 @@ export function RoomPage() {
   const [nickname, setNickname] = useState(initNickname);
   const [initialChips, setInitialChips] = useState(initChips);
   const [hasJoined, setHasJoined] = useState(initIsHost);
-  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [showCardConfirm, setShowCardConfirm] = useState(false);
-  const [showExtraCardConfirm, setShowExtraCardConfirm] = useState(false);
+  const [cardConfirmed, setCardConfirmed] = useState(false);
+  // 세장섯다 3번째 카드 확인: phase === 'card-select' && !sejangThirdCardDismissed 이면 오버레이 표시
+  const [sejangThirdCardDismissed, setSejangThirdCardDismissed] = useState(false);
   const [visibleCardCounts, setVisibleCardCounts] = useState<Record<string, number>>({});
   const dealingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -91,9 +93,11 @@ export function RoomPage() {
     return () => { socket.off('game-error', handleGameError); };
   }, [socket]);
 
-  // cutting → betting 전환 감지 → 딜링 애니메이션 후 카드 확인 오버레이 표시
+  // cutting/shuffling → betting/betting-1/sejang-open 전환 감지 → 딜링 애니메이션 후 카드 확인 오버레이 표시
+  // (skipCutting 재경기 시 shuffling → betting 직접 전환)
   useEffect(() => {
-    if (prevPhaseRef.current === 'cutting' && (gameState?.phase === 'betting' || gameState?.phase === 'betting-1')) {
+    if ((prevPhaseRef.current === 'cutting' || prevPhaseRef.current === 'shuffling') &&
+        (gameState?.phase === 'betting' || gameState?.phase === 'betting-1' || gameState?.phase === 'sejang-open')) {
       const players = gameState.players;
       const isTtong = gameState.isTtong;
 
@@ -127,7 +131,10 @@ export function RoomPage() {
         const counts: Record<string, number> = {};
         players.forEach((p) => { counts[p.id] = 2; });
         setVisibleCardCounts(counts);
-        setTimeout(() => setShowCardConfirm(true), 700);
+        // 세장섯다는 SejangOpenCardModal이 카드 공개 역할 수행 — showCardConfirm 생략
+        if (gameState.mode !== 'three-card') {
+          setTimeout(() => setShowCardConfirm(true), 700);
+        }
       } else {
         const initial: Record<string, number> = {};
         players.forEach((p) => { initial[p.id] = 0; });
@@ -135,6 +142,7 @@ export function RoomPage() {
 
         let step = 0;
         const totalSteps = players.length * cardRounds;
+        const isSejang = gameState.mode === 'three-card';
 
         dealingIntervalRef.current = setInterval(() => {
           const playerIdx = step % players.length;
@@ -147,10 +155,19 @@ export function RoomPage() {
           if (step >= totalSteps) {
             clearInterval(dealingIntervalRef.current!);
             dealingIntervalRef.current = null;
-            setTimeout(() => setShowCardConfirm(true), 600);
+            // 세장섯다는 SejangOpenCardModal이 카드 공개 역할 수행 — showCardConfirm 생략
+            if (!isSejang) {
+              setTimeout(() => setShowCardConfirm(true), 600);
+            }
           }
         }, 500);
       }
+    }
+
+    // 세장섯다: sejang-open → betting-1 전환 시 cardConfirmed 자동 설정
+    // (SejangOpenCardModal에서 이미 카드를 확인했으므로 별도 확인 불필요)
+    if (prevPhaseRef.current === 'sejang-open' && gameState?.phase === 'betting-1') {
+      setCardConfirmed(true);
     }
 
     // 인디언 모드: betting-1 → betting-2 (dealing-extra는 서버 자동처리로 클라이언트에 안 보임)
@@ -164,34 +181,22 @@ export function RoomPage() {
         return;
       }
     }
-
-    // 세장섯다: betting-1 → card-select 전환 시 3번째 카드 모달 표시 + visibleCardCounts 3장으로 업데이트
-    if (prevPhaseRef.current === 'betting-1' && gameState?.phase === 'card-select') {
-      setShowExtraCardConfirm(true);
-      // visibleCardCounts를 3으로 업데이트 — 딜링 애니메이션은 2장까지만 설정하므로 수동 업데이트 필요
-      setVisibleCardCounts((prev) => {
-        const updated = { ...prev };
-        gameState.players.filter(p => p.isAlive).forEach(p => {
-          updated[p.id] = 3;
-        });
-        return updated;
-      });
-    }
   }, [gameState?.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 베팅/커팅 phase 벗어나면 딜링 상태 초기화
   useEffect(() => {
     const p = gameState?.phase;
-    if (p !== 'betting' && p !== 'betting-1' && p !== 'betting-2' && p !== 'cutting' && p !== 'card-select') {
+    if (p !== 'betting' && p !== 'betting-1' && p !== 'betting-2' && p !== 'cutting' && p !== 'card-select' && p !== 'sejang-open') {
       setVisibleCardCounts({});
       setShowCardConfirm(false);
+      setCardConfirmed(false);
       if (dealingIntervalRef.current) {
         clearInterval(dealingIntervalRef.current);
         dealingIntervalRef.current = null;
       }
     }
     if (p !== 'card-select') {
-      setShowExtraCardConfirm(false);
+      setSejangThirdCardDismissed(false);
     }
   }, [gameState?.phase]);
 
@@ -401,7 +406,10 @@ export function RoomPage() {
   // 동점 재경기 대기
   if (phase === 'rematch-pending') {
     const tiedIds = gameState?.tiedPlayerIds ?? [];
+    const confirmedIds = gameState?.rematchConfirmedIds ?? [];
     const tiedPlayers = gameState?.players.filter(p => tiedIds.includes(p.id)) ?? [];
+    const amTied = myPlayerId ? tiedIds.includes(myPlayerId) : false;
+    const alreadyConfirmed = myPlayerId ? confirmedIds.includes(myPlayerId) : false;
     return (
       <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
         <div className="text-center space-y-4 p-6">
@@ -409,9 +417,17 @@ export function RoomPage() {
           <p className="text-muted-foreground">
             {tiedPlayers.map(p => p.nickname).join(' vs ')} — 재경기
           </p>
-          <Button onClick={() => socket?.emit('start-rematch', { roomId: roomId! })}>
-            재경기 시작
-          </Button>
+          {amTied ? (
+            alreadyConfirmed ? (
+              <p className="text-sm text-muted-foreground">다른 동점 플레이어를 기다리는 중...</p>
+            ) : (
+              <Button onClick={() => socket?.emit('start-rematch', { roomId: roomId! })}>
+                재경기 시작
+              </Button>
+            )
+          ) : (
+            <p className="text-sm text-muted-foreground">동점 플레이어들의 재경기 준비를 기다리는 중...</p>
+          )}
         </div>
         <Toaster />
       </div>
@@ -421,12 +437,9 @@ export function RoomPage() {
   // 게임 진행 중
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
-      {/* 상단 헤더 — 방 나가기 버튼 */}
+      {/* 상단 헤더 */}
       <div className="flex items-center justify-between p-2 border-b border-border">
         <span className="text-sm text-muted-foreground">방 {roomId}</span>
-        <Button variant="ghost" size="sm" onClick={() => setShowLeaveDialog(true)}>
-          나가기
-        </Button>
       </div>
 
       {/* 게임 테이블 패널 */}
@@ -448,11 +461,14 @@ export function RoomPage() {
           <HandPanel
             myPlayer={myPlayer}
             phase={gameState.phase}
-            onSelectCards={(indices) => {
-              socket?.emit('select-cards', { roomId: roomId!, cardIndices: indices });
-            }}
             sharedCard={gameState.mode === 'shared-card' ? gameState.sharedCard : undefined}
-            visibleCardCount={Object.keys(visibleCardCounts).length > 0 ? (visibleCardCounts[myPlayerId ?? ''] ?? 0) : undefined}
+            visibleCardCount={
+              phase === 'card-select'
+                ? (myPlayer?.cards.length ?? 0)
+                : Object.keys(visibleCardCounts).length > 0
+                  ? (visibleCardCounts[myPlayerId ?? ''] ?? 0)
+                  : undefined
+            }
             nickname={myPlayer?.nickname}
           />
           <InfoPanel
@@ -463,7 +479,7 @@ export function RoomPage() {
           />
         </div>
 
-        {(phase === 'betting' || phase === 'betting-1' || phase === 'betting-2') && !showCardConfirm && (
+        {(phase === 'betting' || phase === 'betting-1' || phase === 'betting-2') && cardConfirmed && (myPlayer?.isAlive ?? false) && (
           <BettingPanel
             isMyTurn={isMyTurn}
             currentBetAmount={gameState.currentBetAmount}
@@ -479,16 +495,16 @@ export function RoomPage() {
         <ChatPanel />
       </div>
 
-      {/* 잠시 쉬기 중 → 비차단 복귀 배너 (phase 무관) */}
+      {/* 잠시 쉬기 중 → 복귀 예약 배너 (phase 무관) */}
       {myPlayer?.isAbsent && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-2 rounded-full bg-secondary text-secondary-foreground shadow-lg text-sm">
-          <span>자리비움 중</span>
+          <span>자리비움 중 — 다음 판부터 참여</span>
           <Button
             size="sm"
             variant="default"
             onClick={() => socket?.emit('return-from-break', { roomId: roomId! })}
           >
-            복귀하기
+            복귀 예약
           </Button>
         </div>
       )}
@@ -504,6 +520,10 @@ export function RoomPage() {
       />
       {/* AttendSchoolModal 제거: 결과화면 "학교 가기" 클릭 시 자동 앤티 처리 */}
       <GollaSelectModal open={phase === 'gollagolla-select'} roomId={roomId!} />
+      {/* 세장섯다: 2장 배분 후 오픈 카드 선택 */}
+      <SejangOpenCardModal open={phase === 'sejang-open' && (myPlayer?.isAlive ?? false)} roomId={roomId!} />
+      {/* 세장섯다: 3장 중 2장 선택 (3번째 카드 확인 후에만 표시) */}
+      <SejangCardSelectModal open={phase === 'card-select' && (myPlayer?.isAlive ?? false) && sejangThirdCardDismissed} roomId={roomId!} />
       <ModeSelectModal open={phase === 'mode-select'} isDealer={isDealer} roomId={roomId!} />
       <SharedCardSelectModal open={phase === 'shared-card-select'} roomId={roomId!} />
       <ShuffleModal open={phase === 'shuffling' && isDealer} roomId={roomId!} />
@@ -522,15 +542,10 @@ export function RoomPage() {
       {/* 재충전 모달 — phase 무관, rechargeRequest 있을 때 */}
       <RechargeVoteModal roomId={roomId!} />
 
-      {/* 방 나가기 다이얼로그 */}
-      <LeaveRoomDialog
-        open={showLeaveDialog}
-        onOpenChange={setShowLeaveDialog}
-        roomId={roomId!}
-      />
 
-      {/* 카드 확인 오버레이 — cutting → betting 전환 시 */}
-      {showCardConfirm && myPlayer && !myPlayer.isAbsent && (
+
+      {/* 카드 확인 오버레이 — cutting → betting 전환 시 (생존자만) */}
+      {showCardConfirm && myPlayer && !myPlayer.isAbsent && myPlayer.isAlive && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75">
           <div className="bg-card rounded-xl p-6 space-y-4 text-center shadow-xl min-w-[280px]">
             <h3 className="text-lg font-semibold">패가 나왔어요!</h3>
@@ -552,22 +567,22 @@ export function RoomPage() {
                 ))}
               </div>
             )}
-            <Button className="w-full" onClick={() => setShowCardConfirm(false)}>
+            <Button className="w-full" onClick={() => { setShowCardConfirm(false); setCardConfirmed(true); }}>
               확인
             </Button>
           </div>
         </div>
       )}
 
-      {/* 세장섯다 3번째 카드 확인 오버레이 */}
-      {showExtraCardConfirm && myPlayer && !myPlayer.isAbsent && myPlayer.cards.length >= 3 && (
+      {/* 세장섯다 3번째 카드 확인 오버레이 (생존자만, card-select phase 진입 시 자동 표시) */}
+      {phase === 'card-select' && !sejangThirdCardDismissed && myPlayer && !myPlayer.isAbsent && myPlayer.isAlive && myPlayer.cards.length >= 3 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75">
           <div className="bg-card rounded-xl p-6 space-y-4 text-center shadow-xl min-w-[280px]">
             <h3 className="text-lg font-semibold">3번째 카드!</h3>
             <div className="flex justify-center">
               <CardFace card={myPlayer.cards[2]} />
             </div>
-            <Button className="w-full" onClick={() => setShowExtraCardConfirm(false)}>
+            <Button className="w-full" onClick={() => setSejangThirdCardDismissed(true)}>
               확인
             </Button>
           </div>

@@ -66,6 +66,9 @@ export function PlayerSeat({
           {[0, 1].map((idx) => {
             const visible = idx < showCount;
             const card = player.cards[idx];
+            // 세장섯다: openedCardIndex가 있으면 해당 카드는 전원에게 공개
+            const isOpenedCard = mode === 'three-card' && player.openedCardIndex === idx;
+            const showFace = card != null && (isMe || mode === 'indian' || isOpenedCard);
             return (
               <div
                 key={idx}
@@ -74,7 +77,7 @@ export function PlayerSeat({
                   visible ? 'opacity-100' : 'opacity-0'
                 )}
               >
-                {card != null && (isMe || mode === 'indian') ? (
+                {showFace ? (
                   <CardFace card={card} className="w-10 h-14 text-sm" />
                 ) : (
                   <CardBack className="w-10 h-14" />

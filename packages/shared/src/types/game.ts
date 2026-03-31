@@ -19,7 +19,8 @@ export type GamePhase =
   | 'dealing'          // 패 돌리기 중
   | 'betting'          // 베팅 중 (오리지날 / 한장공유 모드)
   | 'betting-1'        // 세장섯다: 1차 베팅 (2장 배분 후)
-  | 'dealing-extra'    // 세장섯다: 3번째 카드 배분 (서버 자동)
+  | 'sejang-open'      // 세장섯다: 2장 배분 후 오픈 카드 선택 (각 플레이어가 1장 공개)
+  | 'dealing-extra'    // 인디언섯다: 2번째 카드 배분 (서버 자동)
   | 'card-select'      // 세장섯다: 3장 중 2장 선택
   | 'betting-2'        // 세장섯다: 2차 베팅
   | 'shared-card-select' // 한장공유: 딜러가 공유 카드 선택
@@ -68,6 +69,7 @@ export interface PlayerState {
   chipBreakdown: ChipBreakdown;  // 칩 단위별 개수 (per CHIP-04, D-12)
   lastBetAction?: LastBetAction; // 이번 판에서의 마지막 베팅 액션
   selectedCards?: Card[];  // 세장섯다: 3장 중 선택한 2장 (per D-04)
+  openedCardIndex?: 0 | 1;  // 세장섯다: 최초 2장 중 오픈한 카드 인덱스 (상대방에게 공개)
 }
 
 /** 전체 게임 상태 */
@@ -97,5 +99,6 @@ export interface GameState {
   gusaPendingDecisions?: Record<string, boolean | null>;  // 구사 재경기 대기 중 플레이어 재참여 결정 (null=미결정)
   ttaengPayments?: { playerId: string; amount: number }[];  // 땡값 납부 내역 (오리지날 모드 전용)
   isRematchRound?: boolean;  // 재경기(구사/동점) 라운드 여부 — 땡값 면제
-  skipCutting?: boolean;  // 구사 재경기: 기리(cutting) 단계 건너뜀
+  skipCutting?: boolean;  // 재경기: 기리(cutting) 단계 건너뜀
+  rematchConfirmedIds?: string[];  // 동점 재경기 확인한 플레이어 ID 목록
 }

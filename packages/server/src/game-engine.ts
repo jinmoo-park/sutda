@@ -429,6 +429,8 @@ export class GameEngine {
     this.assertPhase('result');
     const player = this.state.players.find(p => p.id === playerId);
     if (!player) throw new Error('PLAYER_NOT_FOUND');
+    // 이번 판 승자(다음 판 선 플레이어)는 쉬기 불가
+    if (player.id === this.state.winnerId) throw new Error('DEALER_CANNOT_SKIP');
     player.isAbsent = true;
     player.isAlive = false;
   }
@@ -875,7 +877,7 @@ export class GameEngine {
 
   /**
    * 세장섯다 모드 패 배분 (SejangModeStrategy에서 호출)
-   * - 2장 배분 후 betting-1 phase로 전환
+   * - 2장 배분 후 sejang-open phase로 전환 (각 플레이어가 오픈할 카드 선택)
    */
   private _dealCardsSejang(): void {
     const alivePlayers = this.state.players.filter(p => p.isAlive);
@@ -894,12 +896,37 @@ export class GameEngine {
       }
     }
 
-    this.state.phase = 'betting-1';
-    this.state.currentPlayerIndex = dealerSeatIndex;
-    this.state.openingBettorSeatIndex = dealerSeatIndex;
-    this._bettingActed = new Set();
-    this._updateChipBreakdowns();
-    this._updateEffectiveMaxBet();
+    // sejang-open phase: 각 플레이어가 오픈할 카드 선택 후 betting-1로 전환
+    this.state.phase = 'sejang-open';
+  }
+
+  /**
+   * 세장섯다: 각 플레이어가 오픈할 카드(0 또는 1)를 선택
+   * - sejang-open phase에서만 가능
+   * - 모든 생존자 선택 완료 시 betting-1로 전환
+   */
+  openSejangCard(playerId: string, cardIndex: 0 | 1): void {
+    this.assertPhase('sejang-open');
+    const player = this.state.players.find(p => p.id === playerId);
+    if (!player || !player.isAlive) throw new Error('INVALID_ACTION');
+    if (player.openedCardIndex !== undefined) throw new Error('ALREADY_ATTENDED');
+    if (cardIndex !== 0 && cardIndex !== 1) throw new Error('INVALID_ACTION');
+    if (player.cards.length < 2) throw new Error('INVALID_ACTION');
+
+    player.openedCardIndex = cardIndex;
+
+    // 모든 생존자 선택 완료 시 betting-1 전환
+    const alivePlayers = this.state.players.filter(p => p.isAlive);
+    const allOpened = alivePlayers.every(p => p.openedCardIndex !== undefined);
+    if (allOpened) {
+      const dealerSeatIndex = this.getDealerSeatIndex();
+      this.state.phase = 'betting-1';
+      this.state.currentPlayerIndex = dealerSeatIndex;
+      this.state.openingBettorSeatIndex = dealerSeatIndex;
+      this._bettingActed = new Set();
+      this._updateChipBreakdowns();
+      this._updateEffectiveMaxBet();
+    }
   }
 
   /**
@@ -1486,27 +1513,51 @@ export class GameEngine {
   }
 
   /**
-   * 동점 재경기 시작 (rematch-pending phase에서만 가능)
-   * - 동점자 외 모두 isAlive=false
-   * - pot 유지, 앤티 없음
-   * - phase=shuffling
+   * 동점 재경기 확인 (rematch-pending phase에서만 가능)
+   * - 동점자만 확인 가능
+   * - 모든 동점자가 확인하면 자동으로 재경기 시작
    */
-  startRematch(): void {
+  confirmRematch(playerId: string): void {
     if (this.state.phase !== 'rematch-pending') {
       throw new Error('INVALID_PHASE');
     }
+    const tiedIds = this.state.tiedPlayerIds ?? [];
+    if (!tiedIds.includes(playerId)) {
+      throw new Error('INVALID_ACTION');
+    }
+    if (!this.state.rematchConfirmedIds) {
+      this.state.rematchConfirmedIds = [];
+    }
+    if (this.state.rematchConfirmedIds.includes(playerId)) return;
+    this.state.rematchConfirmedIds.push(playerId);
 
+    // 모든 동점자가 확인했는지 체크
+    if (this.state.rematchConfirmedIds.length >= tiedIds.length) {
+      this._startTieRematch();
+    }
+  }
+
+  /**
+   * 동점 재경기 시작 (내부 호출)
+   * - 동점자 외 모두 isAlive=false
+   * - pot 유지, 앤티 없음
+   * - skipCutting=true (기리 없이 바로 dealing)
+   */
+  private _startTieRematch(): void {
     const tiedIds = this.state.tiedPlayerIds ?? [];
 
     // 동점자 외 모두 isAlive=false, 동점자는 isAlive=true로 복원
+    // totalBet: 전원 유지 — 이전 라운드 + 재경기 누적으로 정확한 손익 표시
     this.state.players.forEach(p => {
-      p.isAlive = tiedIds.includes(p.id);
+      const isTied = tiedIds.includes(p.id);
+      p.isAlive = isTied;
       p.isRevealed = false;
       p.currentBet = 0;
-      p.totalBet = 0;
+      // totalBet 리셋 안 함 — 원래 판 베팅액 유지하여 재경기 베팅과 누적
       p.lastBetAction = undefined;
       p.cards = [];
-      (p as any).selectedCards = undefined;  // 세장섯다: 선택 카드 초기화
+      (p as any).selectedCards = undefined;
+      p.openedCardIndex = undefined;
     });
 
     // 새 덱 생성
@@ -1516,7 +1567,7 @@ export class GameEngine {
     this.state.currentBetAmount = 0;
     this._bettingActed = new Set();
 
-    // dealer 결정: 구사 재경기면 구사 보유자, 그 외엔 이전 선의 반시계 다음 동점자
+    // dealer 결정: 이전 선의 반시계 다음 동점자
     let dealerId = this.state.rematchDealerId;
     if (!dealerId) {
       const prevDealerSeatIndex = this.getDealerSeatIndex();
@@ -1536,12 +1587,14 @@ export class GameEngine {
     if (newDealer) newDealer.isDealer = true;
 
     this.state.rematchDealerId = undefined;
+    this.state.rematchConfirmedIds = undefined;
     this.state.currentPlayerIndex = newDealer?.seatIndex ?? 0;
 
     // attend-school/mode-select 건너뜀 (앤티 없음), 오리지날 2장 섯다로 자동 실행
-    (this.state as any).sharedCard = undefined;  // 한장공유: 이전 공유카드 초기화
+    (this.state as any).sharedCard = undefined;
     this.state.mode = 'original';
-    this.state.isRematchRound = true;  // 동점 재경기 — 땡값 면제
+    this.state.isRematchRound = true;   // 동점 재경기 — 땡값 면제
+    this.state.skipCutting = true;      // 동점 재경기 — 기리 없이 바로 dealing
     this.state.phase = 'shuffling';
   }
 
@@ -1595,14 +1648,15 @@ export class GameEngine {
     // (true인 플레이어는 recordGusaRejoinDecision에서 이미 isAlive=true로 설정됨)
     this.state.gusaPendingDecisions = undefined;
 
-    // 카드/베팅 상태 초기화
+    // 카드/베팅 상태 초기화 — totalBet 유지 (이전 라운드 베팅 누적)
     this.state.players.forEach(p => {
       p.cards = [];
       p.isRevealed = false;
       p.currentBet = 0;
-      p.totalBet = 0;
+      // totalBet 리셋 안 함 — 원래 판 베팅액 유지하여 재경기 베팅과 누적
       p.lastBetAction = undefined;
       (p as any).selectedCards = undefined;
+      p.openedCardIndex = undefined;
     });
 
     // 새 덱 생성
@@ -1673,6 +1727,7 @@ export class GameEngine {
     this.state.currentBetAmount = 0;
     this.state.winnerId = undefined;
     this.state.tiedPlayerIds = undefined;
+    this.state.rematchConfirmedIds = undefined;
     this.state.ttaengPayments = undefined;
     this.state.isTtong = false;
     this.state.isRematchRound = undefined;
@@ -1693,6 +1748,7 @@ export class GameEngine {
       p.lastBetAction = undefined;
       p.isDealer = false;
       (p as any).selectedCards = undefined;  // 세장섯다: 선택 카드 초기화
+      p.openedCardIndex = undefined;  // 세장섯다: 오픈 카드 인덱스 초기화
     });
     (this.state as any).sharedCard = undefined;  // 한장공유: 공유 카드 초기화
 

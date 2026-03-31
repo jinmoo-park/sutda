@@ -45,6 +45,7 @@ export interface ClientToServerEvents {
   'recharge-vote': (data: { roomId: string; approved: boolean }) => void;
   'return-from-break': (data: { roomId: string }) => void;
   'take-break': (data: { roomId: string }) => void;
+  'open-sejang-card': (data: { roomId: string; cardIndex: 0 | 1 }) => void;
   'select-cards': (data: { roomId: string; cardIndices: number[] }) => void;
   'set-shared-card': (data: { roomId: string; cardIndex: number }) => void;
   'select-gollagolla-cards': (data: { roomId: string; cardIndices: [number, number] }) => void;
