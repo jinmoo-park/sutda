@@ -185,7 +185,7 @@ export function ShuffleModal({ open, roomId }: ShuffleModalProps) {
   return (
     <Dialog open={open}>
       <DialogContent
-        className="max-w-xs"
+        className="max-w-sm"
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
@@ -193,9 +193,14 @@ export function ShuffleModal({ open, roomId }: ShuffleModalProps) {
           <DialogTitle>패를 섞으세요</DialogTitle>
         </DialogHeader>
 
-        {/* 카드 더미 — perspective로 3D 효과 */}
-        <div className="flex flex-col items-center py-6">
-          <div style={{ perspective: '700px', perspectiveOrigin: '50% 30%' }}>
+        {/* 카드 더미 — perspective로 3D 효과, 누르면 섞기 */}
+        <div className="flex flex-col items-center py-8">
+          <div
+            style={{ perspective: '700px', perspectiveOrigin: '50% 30%', cursor: 'pointer', userSelect: 'none' }}
+            onPointerDown={startShuffle}
+            onPointerUp={stopShuffle}
+            onPointerLeave={stopShuffle}
+          >
             <div
               style={{
                 position: 'relative',
@@ -227,20 +232,9 @@ export function ShuffleModal({ open, roomId }: ShuffleModalProps) {
               ))}
             </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-3">
-            {isShuffling ? '섞는 중...' : '버튼을 꾹 누르세요'}
+          <p className="text-xs text-muted-foreground mt-4 text-center">
+            {isShuffling ? '섞는 중...' : hasShuffled ? '잘 섞였어요! 확인을 누르세요' : '카드 더미를 꾹 누르면 섞입니다'}
           </p>
-        </div>
-
-        <div className="flex justify-center">
-          <Button
-            className="min-h-12 px-10"
-            onPointerDown={startShuffle}
-            onPointerUp={stopShuffle}
-            onPointerLeave={stopShuffle}
-          >
-            눌러서 섞기
-          </Button>
         </div>
 
         <DialogFooter>

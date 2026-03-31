@@ -160,7 +160,13 @@ export function RoomPage() {
             clearInterval(dealingIntervalRef.current!);
             dealingIntervalRef.current = null;
             // 배분 완료 후 flip 인터랙션 활성화
-            setTimeout(() => setDealingComplete(true), 600);
+            setTimeout(() => {
+              setDealingComplete(true);
+              // 세장섯다: 딜링 완료 시 두 장을 자동으로 공개 (미리 보고 공유 카드 선택)
+              if (gameState.mode === 'three-card') {
+                setMyFlippedIndices(new Set([0, 1]));
+              }
+            }, 600);
           }
         }, 500);
       }
@@ -170,6 +176,8 @@ export function RoomPage() {
     // (SejangOpenCardModal에서 이미 카드를 확인했으므로 별도 확인 불필요)
     if (prevPhaseRef.current === 'sejang-open' && gameState?.phase === 'betting-1') {
       setCardConfirmed(true);
+      // 세장섯다: betting-1 진입 시 두 장 공개 상태 유지
+      setMyFlippedIndices(new Set([0, 1]));
     }
 
     // 골라골라: gollagolla-select → betting 전환 시 cardConfirmed 자동 설정
@@ -180,9 +188,9 @@ export function RoomPage() {
       return;
     }
 
-    // 인디언 모드: betting-1 → betting-2 (dealing-extra는 서버 자동처리로 클라이언트에 안 보임)
+    // 인디언 모드: betting-1 → betting-2 (dealing-extra가 클라이언트에 도달하는 경우도 처리)
     // visibleCardCounts가 1로 묶여 있으므로 2번째 카드가 보이도록 2로 업데이트
-    if (prevPhaseRef.current === 'betting-1' && gameState?.phase === 'betting-2') {
+    if ((prevPhaseRef.current === 'betting-1' || prevPhaseRef.current === 'dealing-extra') && gameState?.phase === 'betting-2') {
       if (gameState.mode === 'indian') {
         const counts: Record<string, number> = {};
         gameState.players.forEach(p => { counts[p.id] = 2; });
@@ -196,7 +204,7 @@ export function RoomPage() {
   // 베팅/커팅 phase 벗어나면 딜링 상태 초기화
   useEffect(() => {
     const p = gameState?.phase;
-    if (p !== 'betting' && p !== 'betting-1' && p !== 'betting-2' && p !== 'cutting' && p !== 'card-select' && p !== 'sejang-open') {
+    if (p !== 'betting' && p !== 'betting-1' && p !== 'betting-2' && p !== 'cutting' && p !== 'card-select' && p !== 'sejang-open' && p !== 'dealing-extra') {
       setVisibleCardCounts({});
       setMyFlippedIndices(new Set());
       setDealingComplete(true);

@@ -127,7 +127,7 @@ export function BettingPanel({
           variant="secondary"
           disabled={!isMyTurn || raiseAmount === 0}
           onClick={() => emitAction({ type: 'raise', amount: raiseAmount })}
-          className={cn('h-10 text-sm', (!isMyTurn || raiseAmount === 0) && 'opacity-40')}
+          className={cn('h-10 text-sm bg-yellow-400 hover:bg-yellow-500 text-black', (!isMyTurn || raiseAmount === 0) && 'opacity-40')}
         >
           레이즈
         </Button>

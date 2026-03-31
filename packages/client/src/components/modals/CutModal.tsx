@@ -18,8 +18,8 @@ interface CutModalProps {
 const CARD_H = 78;
 const GAP = 8;
 const DRAG_THRESHOLD = 8;
-const TABLE_W = 300;
-const TABLE_H = 200;
+const TABLE_W = 360;
+const TABLE_H = 220;
 
 function pileH(n: number) { return CARD_H + (n - 1) * GAP; }
 function easeInOut(t: number) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; }
@@ -193,7 +193,7 @@ export function CutModal({ open, roomId }: CutModalProps) {
   return (
     <Dialog open={open}>
       <DialogContent
-        className="max-w-sm"
+        className="max-w-md"
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >

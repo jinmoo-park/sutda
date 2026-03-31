@@ -1,30 +1,36 @@
 {
   "version": "1.0",
-  "timestamp": "2026-03-31T14:40:44.722Z",
+  "timestamp": "2026-03-31T16:17:51.117Z",
   "phase": "10",
   "phase_name": "ux",
   "phase_dir": ".planning/phases/10-ux",
+  "plan": null,
+  "task": null,
+  "total_tasks": null,
   "status": "paused",
   "completed_tasks": [
-    {"id": 1, "name": "Phase 10 전체 실행 (플랜 4개)", "status": "done", "commit": "0477cad"},
-    {"id": 2, "name": "CardFace/CardBack orphan 삭제", "status": "done", "commit": "99df7fa"},
-    {"id": 3, "name": "UAT 1라운드 수정 (레이아웃/셔플/기리/플립/베팅)", "status": "done", "commit": "094b1f7"}
+    {"id": 1, "name": "ShuffleModal — 크기 확대 + 카드더미로 섞기 UX (버튼 제거)", "status": "done"},
+    {"id": 2, "name": "CutModal(기리) — max-w-md + TABLE_W 360/TABLE_H 220 확대", "status": "done"},
+    {"id": 3, "name": "레이즈 버튼 노란색 (bg-yellow-400 hover:bg-yellow-500)", "status": "done"},
+    {"id": 4, "name": "인디언/한장공유 카드 배분 버그 — dealing-extra phase 허용 + prevPhase 감지 확장", "status": "done"},
+    {"id": 5, "name": "세장섯다 손패 딜링 완료 시 자동 공개 (setMyFlippedIndices)", "status": "done"}
   ],
-  "remaining_tasks": [
-    {"id": 4, "name": "브라우저 UAT 재검증 (6개 항목)", "status": "not_started"},
-    {"id": 5, "name": "InfoPanel compact 모드 (모바일)", "status": "not_started"},
-    {"id": 6, "name": "패널 내부 여백/레이아웃 세밀 최적화", "status": "not_started"}
-  ],
+  "remaining_tasks": [],
   "blockers": [],
   "human_actions_pending": [
-    {"action": "브라우저에서 셔플/기리/레이아웃 재확인", "context": "UAT 1라운드 수정 후 재검증", "blocking": true}
+    {"action": "브라우저에서 5가지 변경사항 확인", "context": "ShuffleModal 카드더미 클릭 섞기 동작, 기리 모달 크기, 레이즈 노란색, 인디언 1장 배분 버그, 세장섯다 손패 자동 공개 검증", "blocking": false}
   ],
   "decisions": [
-    {"decision": "ShuffleModal/CutModal 직접 DOM rAF 조작", "rationale": "HTML 참조 구현 포팅, 60fps 성능"},
-    {"decision": "베팅패널 dealingComplete 조건", "rationale": "카드 배분 완료 즉시 베팅 가능"},
-    {"decision": "GameTable 560px + translateY -220px", "rationale": "시트 잘림 해소"}
+    {"decision": "ShuffleModal 카드더미 자체에 onPointerDown/Up/Leave 이벤트 적용 — 별도 '눌러서 섞기' 버튼 제거", "rationale": "카드더미를 누르는 직관적인 UX, 안내문구로 유도"},
+    {"decision": "세장섯다 자동 공개: 딜링 완료 setTimeout + sejang-open→betting-1 전환 양쪽에서 setMyFlippedIndices(new Set([0,1]))", "rationale": "퉁(즉시 배분)과 일반 딜링 두 경로 모두 커버"},
+    {"decision": "dealing-extra를 visibleCardCounts 리셋 허용 목록에 추가 + prevPhase 'dealing-extra'→betting-2 인디언 케이스 추가", "rationale": "서버가 dealing-extra를 클라이언트에 전달하는 경우 방어적 처리 — 두장 잠깐 표시 버그 수정"}
   ],
-  "uncommitted_files": [],
-  "next_action": "브라우저에서 UAT 재확인 후 approved 또는 추가 피드백",
-  "context_notes": "sutda-shuffle.html, sutda-giri.html 참조 구현 기준. 테스트 56/56 통과."
+  "uncommitted_files": [
+    "packages/client/src/components/layout/BettingPanel.tsx",
+    "packages/client/src/components/modals/CutModal.tsx",
+    "packages/client/src/components/modals/ShuffleModal.tsx",
+    "packages/client/src/pages/RoomPage.tsx"
+  ],
+  "next_action": "브라우저에서 5가지 변경사항 테스트 후 git commit — 이상 없으면 Phase 10 완전 완료",
+  "context_notes": "Phase 10 모든 플랜(01~04) 완료 상태. 이번 세션은 추가 UAT 피드백 5가지를 직접 수정. 빌드 성공 확인 완료 (495.60 kB). 미커밋 파일 4개 있음."
 }
