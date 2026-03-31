@@ -23,7 +23,7 @@ import { SejangOpenCardModal } from '@/components/modals/SejangOpenCardModal';
 import { MuckChoiceModal } from '@/components/modals/MuckChoiceModal';
 import { DealerResultOverlay } from '@/components/modals/DealerResultOverlay';
 import type { DealerSelectResult } from '@/components/modals/DealerResultOverlay';
-import { CardFace } from '@/components/game/CardFace';
+import { HwatuCard } from '@/components/game/HwatuCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -49,8 +49,8 @@ export function RoomPage() {
   const [nickname, setNickname] = useState(initNickname);
   const [initialChips, setInitialChips] = useState(initChips);
   const [hasJoined, setHasJoined] = useState(initIsHost);
-  const [showCardConfirm, setShowCardConfirm] = useState(false);
   const [cardConfirmed, setCardConfirmed] = useState(false);
+  const [dealingComplete, setDealingComplete] = useState(true);
   // 세장섯다 3번째 카드 확인: phase === 'card-select' && !sejangThirdCardDismissed 이면 오버레이 표시
   const [sejangThirdCardDismissed, setSejangThirdCardDismissed] = useState(false);
   const [visibleCardCounts, setVisibleCardCounts] = useState<Record<string, number>>({});
@@ -106,11 +106,15 @@ export function RoomPage() {
         dealingIntervalRef.current = null;
       }
 
+      // 배분 시작: dealingComplete → false (flip 인터랙션 잠금)
+      setDealingComplete(false);
+
       // 골라골라: 직접 선택이므로 딜링 애니메이션 없음 — visibleCardCounts 즉시 최종값으로 설정
       if (gameState.mode === 'gollagolla') {
         const counts: Record<string, number> = {};
         players.forEach(p => { counts[p.id] = 2; });
         setVisibleCardCounts(counts);
+        setDealingComplete(true);
         prevPhaseRef.current = gameState.phase;
         return;
       }
@@ -121,6 +125,7 @@ export function RoomPage() {
         players.forEach(p => { counts[p.id] = 1; });
         setVisibleCardCounts(counts);
         setCardConfirmed(true);
+        setDealingComplete(true);
         prevPhaseRef.current = gameState.phase;
         return;
       }
@@ -132,10 +137,8 @@ export function RoomPage() {
         const counts: Record<string, number> = {};
         players.forEach((p) => { counts[p.id] = 2; });
         setVisibleCardCounts(counts);
-        // 세장섯다는 SejangOpenCardModal이 카드 공개 역할 수행 — showCardConfirm 생략
-        if (gameState.mode !== 'three-card') {
-          setTimeout(() => setShowCardConfirm(true), 700);
-        }
+        // 퉁: 배분 애니메이션 후 즉시 flip 가능
+        setTimeout(() => setDealingComplete(true), 700);
       } else {
         const initial: Record<string, number> = {};
         players.forEach((p) => { initial[p.id] = 0; });
@@ -143,7 +146,6 @@ export function RoomPage() {
 
         let step = 0;
         const totalSteps = players.length * cardRounds;
-        const isSejang = gameState.mode === 'three-card';
 
         dealingIntervalRef.current = setInterval(() => {
           const playerIdx = step % players.length;
@@ -156,10 +158,8 @@ export function RoomPage() {
           if (step >= totalSteps) {
             clearInterval(dealingIntervalRef.current!);
             dealingIntervalRef.current = null;
-            // 세장섯다는 SejangOpenCardModal이 카드 공개 역할 수행 — showCardConfirm 생략
-            if (!isSejang) {
-              setTimeout(() => setShowCardConfirm(true), 600);
-            }
+            // 배분 완료 후 flip 인터랙션 활성화
+            setTimeout(() => setDealingComplete(true), 600);
           }
         }, 500);
       }
@@ -197,8 +197,8 @@ export function RoomPage() {
     const p = gameState?.phase;
     if (p !== 'betting' && p !== 'betting-1' && p !== 'betting-2' && p !== 'cutting' && p !== 'card-select' && p !== 'sejang-open') {
       setVisibleCardCounts({});
-      setShowCardConfirm(false);
       setCardConfirmed(false);
+      setDealingComplete(true);
       if (dealingIntervalRef.current) {
         clearInterval(dealingIntervalRef.current);
         dealingIntervalRef.current = null;
@@ -458,6 +458,8 @@ export function RoomPage() {
             : undefined
       }
       nickname={myPlayer?.nickname}
+      onAllFlipped={() => setCardConfirmed(true)}
+      dealingComplete={dealingComplete}
     />
   );
 
@@ -588,43 +590,13 @@ export function RoomPage() {
 
 
 
-      {/* 카드 확인 오버레이 — cutting → betting 전환 시 (생존자만) */}
-      {showCardConfirm && myPlayer && !myPlayer.isAbsent && myPlayer.isAlive && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75">
-          <div className="bg-card rounded-xl p-6 space-y-4 text-center shadow-xl min-w-[280px]">
-            <h3 className="text-lg font-semibold">패가 나왔어요!</h3>
-            {gameState?.isTtong ? (
-              /* 퉁: 두 장이 나란히 */
-              <div className="flex justify-center gap-3">
-                {myPlayer.cards.map((card, i) => (
-                  <CardFace key={i} card={card} />
-                ))}
-              </div>
-            ) : (
-              /* 기리: 1번째 / 2번째 레이블과 함께 */
-              <div className="flex justify-center gap-6">
-                {myPlayer.cards.map((card, i) => (
-                  <div key={i} className="flex flex-col items-center gap-1">
-                    <span className="text-xs text-muted-foreground">{i + 1}번째</span>
-                    <CardFace card={card} />
-                  </div>
-                ))}
-              </div>
-            )}
-            <Button className="w-full" onClick={() => { setShowCardConfirm(false); setCardConfirmed(true); }}>
-              확인
-            </Button>
-          </div>
-        </div>
-      )}
-
       {/* 세장섯다 3번째 카드 확인 오버레이 (생존자만, betting-2 진입 시 자동 표시) */}
       {phase === 'betting-2' && gameState?.mode === 'three-card' && !sejangThirdCardDismissed && myPlayer && !myPlayer.isAbsent && myPlayer.isAlive && myPlayer.cards.length >= 3 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75">
           <div className="bg-card rounded-xl p-6 space-y-4 text-center shadow-xl min-w-[280px]">
             <h3 className="text-lg font-semibold">3번째 카드!</h3>
             <div className="flex justify-center">
-              <CardFace card={myPlayer.cards[2]} />
+              <HwatuCard card={myPlayer.cards[2]} faceUp={true} size="md" />
             </div>
             <Button className="w-full" onClick={() => setSejangThirdCardDismissed(true)}>
               확인
