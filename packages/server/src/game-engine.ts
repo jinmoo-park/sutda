@@ -109,6 +109,7 @@ export class GameEngine {
       isAbsent: false,
       isRevealed: false,
       currentBet: 0,
+      totalBet: 0,
       isDealer: false,
       seatIndex: p.seatIndex,
       chipBreakdown: GameEngine.calculateChipBreakdown(p.chips),
@@ -393,6 +394,7 @@ export class GameEngine {
     const player = this.state.players.find(p => p.id === playerId);
     if (player) {
       player.chips -= 500;
+      player.totalBet += 500;  // 앤티 누적
     }
     this.state.pot += 500;
     this.state.attendedPlayerIds.push(playerId);
@@ -1093,6 +1095,7 @@ export class GameEngine {
         const callAmount = this.state.currentBetAmount - player.currentBet;
         player.chips -= callAmount;
         player.currentBet += callAmount;
+        player.totalBet += callAmount;
         this.state.pot += callAmount;
         player.lastBetAction = { type: 'call' };
         break;
@@ -1105,6 +1108,7 @@ export class GameEngine {
         const totalDeducted = callAmount + action.amount;
         player.chips -= totalDeducted;
         player.currentBet += callAmount + action.amount;
+        player.totalBet += callAmount + action.amount;
         this.state.pot += callAmount + action.amount;
         this.state.currentBetAmount = player.currentBet;
         player.lastBetAction = { type: 'raise', amount: action.amount };
@@ -1499,6 +1503,7 @@ export class GameEngine {
       p.isAlive = tiedIds.includes(p.id);
       p.isRevealed = false;
       p.currentBet = 0;
+      p.totalBet = 0;
       p.lastBetAction = undefined;
       p.cards = [];
       (p as any).selectedCards = undefined;  // 세장섯다: 선택 카드 초기화
@@ -1595,6 +1600,7 @@ export class GameEngine {
       p.cards = [];
       p.isRevealed = false;
       p.currentBet = 0;
+      p.totalBet = 0;
       p.lastBetAction = undefined;
       (p as any).selectedCards = undefined;
     });
@@ -1683,6 +1689,7 @@ export class GameEngine {
       p.isAlive = !p.isAbsent;  // absent이면 isAlive = false 유지
       p.isRevealed = false;
       p.currentBet = 0;
+      p.totalBet = 0;
       p.lastBetAction = undefined;
       p.isDealer = false;
       (p as any).selectedCards = undefined;  // 세장섯다: 선택 카드 초기화

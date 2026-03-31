@@ -131,11 +131,10 @@ export function ResultScreen({ gameState, myPlayerId, roomId }: ResultScreenProp
               ? gameState.ttaengPayments.reduce((sum, t) => sum + t.amount, 0)
               : 0;
 
-          // 칩 변동 계산 (앤티 500원 + 땡값 포함)
-          const ante = 500;
+          // 칩 변동 계산 (totalBet = 앤티 + 전체 베팅 누적액 포함)
           const baseChipDelta = isWinner
-            ? gameState.pot - player.currentBet - ante
-            : -(player.currentBet + ante);
+            ? gameState.pot - player.totalBet
+            : -player.totalBet;
           const chipDelta = isWinner
             ? baseChipDelta + totalTtaengReceived
             : baseChipDelta - (myTtaengPayment?.amount ?? 0);

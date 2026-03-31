@@ -61,7 +61,8 @@ export interface PlayerState {
   isAlive: boolean;       // 다이하지 않았는지
   isAbsent: boolean;      // 잠시 쉬기 중 (복귀 전까지 게임 미참여)
   isRevealed: boolean;    // showdown에서 패를 공개했는지 (모두 true가 되면 승패 판정)
-  currentBet: number;     // 현재 판에서 베팅한 총액
+  currentBet: number;     // 현재 베팅 라운드에서 베팅한 금액 (베팅 완료 체크용)
+  totalBet: number;       // 이번 판 전체 누적 베팅액 (표시용 — 멀티 베팅 라운드 합산)
   isDealer: boolean;      // 선 플레이어 여부
   seatIndex: number;      // 자리 번호 (0부터)
   chipBreakdown: ChipBreakdown;  // 칩 단위별 개수 (per CHIP-04, D-12)
