@@ -525,7 +525,7 @@ export function RoomPage() {
   return (
     <div className="bg-background text-foreground">
       {/* 데스크탑: 3열 그리드 */}
-      <div className="hidden md:grid grid-cols-[256px_1fr_512px] h-dvh overflow-hidden">
+      <div className="hidden md:grid grid-cols-[256px_1fr_clamp(256px,calc(100vw-768px),512px)] h-dvh overflow-hidden">
         {/* 좌사이드: InfoPanel + ChatPanel */}
         <div className="flex flex-col border-r border-border overflow-y-auto">
           {infoPanelNode}
