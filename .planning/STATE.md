@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Checkpoint: Task 2 수동 검증 대기 (09-02)"
-last_updated: "2026-03-30T16:55:06.189Z"
-last_activity: 2026-03-30
+stopped_at: "B-1/B-2 3번째 카드 타이밍 수정 완료 — 5차 UAT 재검증 대기 (09-02)"
+last_updated: "2026-03-31T13:30:00.000Z"
+last_activity: 2026-03-31
 progress:
   total_phases: 11
   completed_phases: 9
@@ -138,6 +138,12 @@ Recent decisions affecting current work:
 - [Phase 09-94]: _startGusaRematch()는 mode를 변경하지 않음 — startRematch()와 핵심 차이
 - [Phase 09-94]: GusaRejoinModal: decided 상태로 중복 emit 방지 — 결정 완료 후 텍스트로 대체
 - [Phase 09-94]: gusa-pending RoomPage: needsDecision(amDied && decision===null) 조건으로 모달 vs 대기 메시지 분기
+- [Phase 09-94 2차UAT]: evaluateHand 규칙 변경 — 모든 3+7=땡잡이, 모든 4+9=구사 (속성 무관), 열끗+열끗만 멍텅구리구사
+- [Phase 09-94 2차UAT]: startRematch→confirmRematch 패턴 — rematchConfirmedIds로 모든 동점자 확인 후 시작
+- [Phase 09-94 2차UAT]: 동점/구사 재경기 totalBet 리셋 안 함 — 이전 판 + 재경기 베팅 누적으로 정확한 손익
+- [Phase 09-94 2차UAT]: SejangCardSelectModal 모달로 세장섯다 카드 선택 UI 이동 (HandPanel에서 제거)
+- [Phase 09-94 2차UAT]: cardConfirmed 상태로 베팅 버튼 타이밍 제어 — 패확인 모달 확인 후에만 활성화
+- [Phase 09-94 2차UAT]: takeBreak에서 dealer 거부 (DEALER_CANNOT_SKIP)
 
 ### Pending Todos
 
@@ -155,6 +161,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T16:54:57.425Z
-Stopped at: Checkpoint: Task 2 수동 검증 대기 (09-02)
-Resume file: None
+Last session: 2026-03-31T13:30:00.000Z
+Stopped at: B-1/B-2 3번째 카드 타이밍 수정 완료 — 5차 UAT 재검증 대기 (09-02)
+Resume file: .planning/phases/09-94/.continue-here.md
