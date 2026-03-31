@@ -47,11 +47,12 @@ interface ResultScreenProps {
   gameState: GameState;
   myPlayerId: string | null;
   roomId: string;
+  isRematch?: boolean;
 }
 
 const AUTO_NEXT_SECONDS = 5;
 
-export function ResultScreen({ gameState, myPlayerId, roomId }: ResultScreenProps) {
+export function ResultScreen({ gameState, myPlayerId, roomId, isRematch }: ResultScreenProps) {
   const { socket } = useGameStore();
   const [hasVotedNextRound, setHasVotedNextRound] = useState(false);
   const [hasReturnedFromBreak, setHasReturnedFromBreak] = useState(false);
@@ -103,7 +104,20 @@ export function ResultScreen({ gameState, myPlayerId, roomId }: ResultScreenProp
   const allPlayers = gameState.players.filter((p) => !p.isAbsent);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground gap-6 p-6">
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-background text-foreground gap-6 p-6">
+      {isRematch && (
+        <div
+          className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center"
+          style={{ animation: 'fadeIn 0.4s ease-in' }}
+        >
+          <img
+            src="/img/regame.png"
+            alt="재경기"
+            className="object-contain opacity-85"
+            style={{ maxWidth: '80%', maxHeight: '80%' }}
+          />
+        </div>
+      )}
       <h2 className="text-xl font-semibold">{winnerNickname} 승리!</h2>
 
       <div className="flex flex-wrap gap-6 justify-center">

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { BetAction } from '@sutda/shared';
 import { Button } from '@/components/ui/button';
 import { useGameStore } from '@/store/gameStore';
+import { cn } from '@/lib/utils';
 
 interface BettingPanelProps {
   isMyTurn: boolean;
@@ -41,7 +42,10 @@ export function BettingPanel({
   const canDie = currentBetAmount > 0 || !isEffectiveSen;
 
   return (
-    <div className="p-4 space-y-3">
+    <div className={cn(
+      "p-4 space-y-3 rounded-lg transition-shadow",
+      isMyTurn && "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-[0_0_12px_hsl(75_55%_42%/0.35)]"
+    )}>
       {!isMyTurn && currentPlayerNickname && (
         <p className="text-sm text-muted-foreground">{currentPlayerNickname}의 차례예요</p>
       )}

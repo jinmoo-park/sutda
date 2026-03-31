@@ -34,7 +34,11 @@ export function WaitingRoom({ roomState, myPlayerId, roomId }: WaitingRoomProps)
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6 space-y-6">
-      <h2 className="text-xl font-semibold">대기실</h2>
+      <img
+        src="/img/main_tilte.jpg"
+        alt="섯다"
+        style={{ width: 'auto', height: '80px', objectFit: 'contain' }}
+      />
 
       {/* 방 URL 복사 */}
       <div className="w-full max-w-sm space-y-2">

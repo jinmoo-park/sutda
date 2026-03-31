@@ -365,10 +365,11 @@ export function RoomPage() {
   }
 
   // 결과 화면
+  const isRematch = ['gusa-pending', 'gusa-announce', 'rematch-pending'].includes(prevPhaseRef.current ?? '');
   if (phase === 'result' || phase === 'finished') {
     return (
       <>
-        <ResultScreen gameState={gameState} myPlayerId={myPlayerId} roomId={roomId!} />
+        <ResultScreen gameState={gameState} myPlayerId={myPlayerId} roomId={roomId!} isRematch={isRematch} />
         <Toaster />
       </>
     );
