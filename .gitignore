@@ -2,3 +2,7 @@ node_modules/
 dist/
 .turbo/
 *.tsbuildinfo
+
+# Claude Code 서브에이전트 임시 작업 폴더
+.claude/worktrees/
+.clone/
