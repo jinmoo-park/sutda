@@ -241,8 +241,8 @@
 | UX-03 | Phase 10 | Pending |
 | UX-05 | Phase 10 | Pending |
 | UX-06 | Phase 10 | Pending |
-| UX-07 | Phase 10 | Pending |
-| UX-08 | Phase 10 | Pending |
+| UX-07 | Phase 10 | Complete |
+| UX-08 | Phase 10 | Complete |
 | UX-09 | Phase 10 | Complete |
 | IMG-01 | Phase 10 | Complete |
 | IMG-02 | Phase 10 | Complete |
