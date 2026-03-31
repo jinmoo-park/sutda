@@ -195,7 +195,7 @@ export function RoomPage() {
         dealingIntervalRef.current = null;
       }
     }
-    if (p !== 'card-select') {
+    if (p !== 'betting-2') {
       setSejangThirdCardDismissed(false);
     }
   }, [gameState?.phase]);
@@ -463,7 +463,7 @@ export function RoomPage() {
             phase={gameState.phase}
             sharedCard={gameState.mode === 'shared-card' ? gameState.sharedCard : undefined}
             visibleCardCount={
-              phase === 'card-select'
+              phase === 'card-select' || (phase === 'betting-2' && gameState.mode === 'three-card')
                 ? (myPlayer?.cards.length ?? 0)
                 : Object.keys(visibleCardCounts).length > 0
                   ? (visibleCardCounts[myPlayerId ?? ''] ?? 0)
@@ -523,7 +523,7 @@ export function RoomPage() {
       {/* 세장섯다: 2장 배분 후 오픈 카드 선택 */}
       <SejangOpenCardModal open={phase === 'sejang-open' && (myPlayer?.isAlive ?? false)} roomId={roomId!} />
       {/* 세장섯다: 3장 중 2장 선택 (3번째 카드 확인 후에만 표시) */}
-      <SejangCardSelectModal open={phase === 'card-select' && (myPlayer?.isAlive ?? false) && sejangThirdCardDismissed} roomId={roomId!} />
+      <SejangCardSelectModal open={phase === 'card-select' && (myPlayer?.isAlive ?? false)} roomId={roomId!} />
       <ModeSelectModal open={phase === 'mode-select'} isDealer={isDealer} roomId={roomId!} />
       <SharedCardSelectModal open={phase === 'shared-card-select'} roomId={roomId!} />
       <ShuffleModal open={phase === 'shuffling' && isDealer} roomId={roomId!} />
@@ -574,8 +574,8 @@ export function RoomPage() {
         </div>
       )}
 
-      {/* 세장섯다 3번째 카드 확인 오버레이 (생존자만, card-select phase 진입 시 자동 표시) */}
-      {phase === 'card-select' && !sejangThirdCardDismissed && myPlayer && !myPlayer.isAbsent && myPlayer.isAlive && myPlayer.cards.length >= 3 && (
+      {/* 세장섯다 3번째 카드 확인 오버레이 (생존자만, betting-2 진입 시 자동 표시) */}
+      {phase === 'betting-2' && gameState?.mode === 'three-card' && !sejangThirdCardDismissed && myPlayer && !myPlayer.isAbsent && myPlayer.isAlive && myPlayer.cards.length >= 3 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75">
           <div className="bg-card rounded-xl p-6 space-y-4 text-center shadow-xl min-w-[280px]">
             <h3 className="text-lg font-semibold">3번째 카드!</h3>

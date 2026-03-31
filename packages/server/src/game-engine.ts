@@ -930,7 +930,8 @@ export class GameEngine {
   }
 
   /**
-   * 세장섯다: betting-1 완료 후 생존자에게 3번째 카드 배분 -> card-select phase
+   * 세장섯다: 생존자에게 3번째 카드 배분 (phase 전환 없음)
+   * - betting-1 완료 후 호출: 3번째 카드 배분 → betting-2
    */
   private _dealExtraCardForSejang(): void {
     const alivePlayers = this.state.players.filter(p => p.isAlive);
@@ -944,8 +945,6 @@ export class GameEngine {
       const card = this.state.deck.shift();
       if (card) player.cards.push(card);
     }
-
-    this.state.phase = 'card-select';
   }
 
   /**
@@ -1204,7 +1203,10 @@ export class GameEngine {
           this.state.phase = 'dealing-extra';
           return;
         }
-        // 세장섯다: betting-1 완료 -> betting-2 (3번째 카드는 betting-2 완료 후 배분)
+        // 세장섯다: betting-1 완료 → 3번째 카드 배분 → betting-2
+        if (this.state.mode === 'three-card') {
+          this._dealExtraCardForSejang();
+        }
         const dealerSeatIndex2 = this.getDealerSeatIndex();
         this.state.phase = 'betting-2';
         this.state.currentPlayerIndex = dealerSeatIndex2;
@@ -1215,9 +1217,9 @@ export class GameEngine {
         this._updateEffectiveMaxBet();
         return;
       }
-      // 세장섯다 betting-2 완료: 3번째 카드 배분 -> card-select
+      // 세장섯다 betting-2 완료: card-select phase로 전환
       if (this.state.phase === 'betting-2' && this.state.mode === 'three-card') {
-        this._dealExtraCardForSejang();
+        this.state.phase = 'card-select';
         return;
       }
       // betting / betting-2(non-sejang): 자동 쇼다운 — Strategy 위임
