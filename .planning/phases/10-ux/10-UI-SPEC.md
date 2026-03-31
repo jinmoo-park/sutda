@@ -68,9 +68,11 @@ created: 2026-03-31
 | Role | Size | Weight | Line Height | 용도 |
 |------|------|--------|-------------|------|
 | Body | 14px | 400 | 1.5 | 일반 설명 텍스트, 베팅 현황 라벨 |
-| Label | 12px | 500 | 1.4 | 뱃지, 상태 표시, `text-xs` 클래스 |
+| Label | 12px | 400 | 1.4 | 뱃지, 상태 표시, `text-xs` 클래스 |
 | Heading | 16px | 600 | 1.3 | 패널 제목, 판돈 표시 레이블 |
 | Display | 26px | 600 | 1.2 | 판돈 금액 숫자 (tabular-nums) |
+
+**웨이트 2개 선언:** `font-normal(400)` — Body + Label / `font-semibold(600)` — Heading + Display
 
 **참고:** 현재 `GameTable.tsx` 판돈 표시가 `text-[26px] font-semibold`로 이미 정의됨 — 유지.
 
