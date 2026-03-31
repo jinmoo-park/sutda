@@ -4,6 +4,7 @@ import { evaluateHand } from '@sutda/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { HwatuCard } from '@/components/game/HwatuCard';
+import { computeSlotIndices } from '@/lib/cardImageUtils';
 import { useGameStore } from '@/store/gameStore';
 
 const HAND_TYPE_KOREAN: Record<string, string> = {
@@ -102,6 +103,19 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch }: Resul
 
   const allPlayers = gameState.players.filter((p) => !p.isAbsent);
 
+  // 전체 플레이어 표시 카드를 평탄화하여 글로벌 슬롯 인덱스 계산
+  // (같은 rank 카드가 여러 플레이어에게 있을 때 이미지 중복 방지)
+  const playerDisplayCards = allPlayers.map((player) =>
+    (player.selectedCards?.length === 2 ? player.selectedCards : player.cards)
+  );
+  const globalSlots = computeSlotIndices(playerDisplayCards.flat());
+  const playerSlotIndices: number[][] = [];
+  let _slotOffset = 0;
+  for (const dc of playerDisplayCards) {
+    playerSlotIndices.push(globalSlots.slice(_slotOffset, _slotOffset + dc.length));
+    _slotOffset += dc.length;
+  }
+
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center bg-background text-foreground gap-6 p-6">
       {isRematch && (
@@ -120,7 +134,7 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch }: Resul
       <h2 className="text-xl font-semibold">{winnerNickname} 승리!</h2>
 
       <div className="flex flex-wrap gap-6 justify-center">
-        {allPlayers.map((player) => {
+        {allPlayers.map((player, pi) => {
           const isDied = !player.isAlive;
 
           // 세장섯다: selectedCards 기준 족보 계산, 아니면 cards[0]/cards[1] fallback
@@ -165,7 +179,7 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch }: Resul
                   ? player.cards.map((_, idx) => <HwatuCard key={idx} faceUp={false} size="md" />)
                   : displayCards.map((card, idx) =>
                       player.isRevealed ? (
-                        <HwatuCard key={idx} card={card!} faceUp={true} size="md" />
+                        <HwatuCard key={idx} card={card!} faceUp={true} size="md" slotIndex={playerSlotIndices[pi]?.[idx] ?? 0} />
                       ) : (
                         <HwatuCard key={idx} faceUp={false} size="md" />
                       )

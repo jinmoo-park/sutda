@@ -38,6 +38,11 @@
   to { opacity: 1; }
 }
 
+.hwatu-hoverable:hover {
+  transform: scale(1.07);
+  filter: brightness(1.1) drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+}
+
 @keyframes deal-fly-in {
   0% {
     transform: translateY(-80px) scale(0.7);

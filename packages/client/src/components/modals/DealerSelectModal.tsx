@@ -47,7 +47,7 @@ export function DealerSelectModal({ open, roomId }: DealerSelectModalProps) {
           </DialogTitle>
         </DialogHeader>
         {isRedraw && (
-          <p className="text-sm text-center text-amber-500 font-medium">
+          <p className="text-sm text-center text-amber-500 font-semibold">
             동률! {eligibleNicknames}님이 다시 뽑습니다
           </p>
         )}

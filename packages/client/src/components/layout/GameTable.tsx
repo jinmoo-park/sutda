@@ -26,12 +26,10 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
           backgroundPosition: 'center',
         }}
       >
-        {/* 반투명 블랙 그라데이션 오버레이 */}
+        {/* 반투명 블랙 오버레이 */}
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.25) 50%, rgba(0,0,0,0.45) 100%)',
-          }}
+          style={{ background: 'rgba(0,0,0,0.45)' }}
         />
 
         {/* 중앙 팟 표시 */}
@@ -73,10 +71,10 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
           backgroundPosition: 'center',
         }}
       >
-        {/* 반투명 오버레이 */}
+        {/* 반투명 블랙 오버레이 */}
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{ background: 'rgba(0,0,0,0.35)' }}
+          style={{ background: 'rgba(0,0,0,0.45)' }}
         />
 
         <div className="relative z-10 space-y-2 p-4 h-full flex flex-col">

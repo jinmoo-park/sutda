@@ -17,7 +17,7 @@ export function GusaAnnounceModal({ roomId, isDealer }: GusaAnnounceModalProps) 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-card rounded-lg p-6 flex flex-col items-center gap-4 max-w-sm mx-4">
-        <h3 className="text-lg font-bold">구사 재경기</h3>
+        <h3 className="text-lg font-semibold">구사 재경기</h3>
         <p className="text-sm text-center text-muted-foreground">
           구사가 나와서 재경기를 진행합니다.
           <br />

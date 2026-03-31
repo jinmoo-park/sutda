@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { HwatuCard } from '@/components/game/HwatuCard';
+import { computeSlotIndices } from '@/lib/cardImageUtils';
 import { cn } from '@/lib/utils';
 
 interface SejangCardSelectModalProps {
@@ -78,7 +79,7 @@ export function SejangCardSelectModal({ open, roomId }: SejangCardSelectModalPro
               )}
             >
               {card !== null ? (
-                <HwatuCard card={card} faceUp={true} size="lg" />
+                <HwatuCard card={card} faceUp={true} size="lg" slotIndex={computeSlotIndices(cards)[idx]} />
               ) : (
                 <div className="w-16 h-24 bg-muted rounded-md" />
               )}

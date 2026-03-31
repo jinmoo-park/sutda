@@ -60,7 +60,7 @@ export function WaitingRoom({ roomState, myPlayerId, roomId }: WaitingRoomProps)
           <div className="space-y-1">
             {roomState.players.map((p) => (
               <div key={p.id} className="flex justify-between text-sm py-1 border-b border-border">
-                <span className="font-medium">
+                <span className="font-semibold">
                   {p.nickname}
                   {p.id === roomState.hostId && (
                     <span className="ml-1 text-xs text-muted-foreground">(방장)</span>

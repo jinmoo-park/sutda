@@ -57,14 +57,14 @@ export function BettingPanel({
         </p>
         {callAmount > 0 && isMyTurn && (
           <span className="text-xs text-muted-foreground">
-            콜 <span className="text-foreground font-medium">{callAmount.toLocaleString()}원</span>
+            콜 <span className="text-foreground font-semibold">{callAmount.toLocaleString()}원</span>
           </span>
         )}
       </div>
 
       {/* 레이즈 금액 표시 */}
       {raiseAmount > 0 && (
-        <p className="text-2xl font-bold tabular-nums text-primary">
+        <p className="text-2xl font-semibold tabular-nums text-primary">
           +{raiseAmount.toLocaleString()}원
           {callAmount > 0 && (
             <span className="text-xs text-muted-foreground font-normal ml-1">

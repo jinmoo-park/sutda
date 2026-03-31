@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { HwatuCard } from '@/components/game/HwatuCard';
+import { computeSlotIndices } from '@/lib/cardImageUtils';
 import { cn } from '@/lib/utils';
 
 interface SejangOpenCardModalProps {
@@ -65,7 +66,7 @@ export function SejangOpenCardModal({ open, roomId }: SejangOpenCardModalProps) 
                   )}
                 >
                   {card !== null ? (
-                    <HwatuCard card={card} faceUp={true} size="md" />
+                    <HwatuCard card={card} faceUp={true} size="md" slotIndex={computeSlotIndices(cards)[idx]} />
                   ) : (
                     <div className="w-16 h-24 bg-muted rounded-md" />
                   )}

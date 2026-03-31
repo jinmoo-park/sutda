@@ -44,13 +44,14 @@ export function HwatuCard({
 
   return (
     <div
-      className={`hwatu-scene${className ? ` ${className}` : ''}`}
+      className={`hwatu-scene${onClick && !disabled ? ' hwatu-hoverable' : ''}${className ? ` ${className}` : ''}`}
       style={{
         width: `${width}px`,
         height: `${height}px`,
         perspective: '600px',
         cursor: onClick && !disabled ? 'pointer' : undefined,
         pointerEvents: disabled ? 'none' : undefined,
+        transition: 'transform 0.15s ease, filter 0.15s ease',
       }}
       onClick={disabled ? undefined : onClick}
     >

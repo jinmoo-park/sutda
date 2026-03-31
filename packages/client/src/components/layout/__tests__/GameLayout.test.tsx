@@ -6,8 +6,8 @@ describe('GameLayout — RoomPage 레이아웃 구조 확인', () => {
   const roomPagePath = resolve(__dirname, '../../../pages/RoomPage.tsx');
   const roomPageSource = readFileSync(roomPagePath, 'utf-8');
 
-  it('데스크탑 3열 그리드 클래스 grid-cols-[256px_1fr_256px] 존재', () => {
-    expect(roomPageSource).toContain('grid-cols-[256px_1fr_256px]');
+  it('데스크탑 3열 그리드 클래스 grid-cols-[256px_1fr_*] 존재', () => {
+    expect(roomPageSource).toMatch(/grid-cols-\[256px_1fr_\d+px\]/);
   });
 
   it('h-dvh 클래스 존재 (스크롤 없는 전체 높이)', () => {

@@ -55,7 +55,7 @@ export function PlayerSeat({
       <div className="flex items-center gap-1">
         <p className={cn('text-xs font-semibold truncate flex-1', isCurrentTurn && 'text-primary')}>
           {player.nickname}
-          {isMe && <span className="ml-1 text-xs font-bold text-blue-400">[나]</span>}
+          {isMe && <span className="ml-1 text-xs font-semibold text-primary">[나]</span>}
         </p>
         {player.isDealer && (
           <Badge variant="outline" className="text-xs px-1 py-0 shrink-0">

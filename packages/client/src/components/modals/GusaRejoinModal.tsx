@@ -41,10 +41,10 @@ export function GusaRejoinModal({ roomId, potAmount, myChips }: GusaRejoinModalP
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-card rounded-lg p-6 flex flex-col items-center gap-4 max-w-sm mx-4">
-        <h3 className="text-lg font-bold">구사 재경기</h3>
+        <h3 className="text-lg font-semibold">구사 재경기</h3>
         <p className="text-sm text-center text-muted-foreground">
           판돈 {potAmount.toLocaleString()}원의 절반 ={' '}
-          <span className="font-bold text-foreground">{rejoinCost.toLocaleString()}원</span>을 내고
+          <span className="font-semibold text-foreground">{rejoinCost.toLocaleString()}원</span>을 내고
           재참여하시겠습니까?
         </p>
         {!canAfford && (

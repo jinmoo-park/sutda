@@ -4,6 +4,7 @@ import { evaluateHand } from '@sutda/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { HwatuCard } from '@/components/game/HwatuCard';
+import { computeSlotIndices } from '@/lib/cardImageUtils';
 import { HandReferenceDialog } from './HandReferenceDialog';
 
 interface HandPanelProps {
@@ -131,6 +132,8 @@ export function HandPanel({
     // 카드가 2장 미만이거나 평가 불가한 경우 무시
   }
 
+  const cardSlots = computeSlotIndices(cards);
+
   // 배분 날아오기 애니메이션 스타일
   const getDealAnimStyle = (idx: number): React.CSSProperties => {
     if (dealingComplete) return {};
@@ -160,7 +163,7 @@ export function HandPanel({
                   size="md"
                   onClick={() => handleFlip(idx)}
                   disabled={isDisabled}
-                  slotIndex={idx}
+                  slotIndex={cardSlots[idx]}
                 />
               </div>
             );

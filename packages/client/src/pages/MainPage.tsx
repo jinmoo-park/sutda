@@ -11,7 +11,7 @@ export function MainPage() {
   const [roomId, setRoomId] = useState('');
   const [initialChips, setInitialChips] = useState(100000);
   const navigate = useNavigate();
-  const { connect } = useGameStore();
+  const { connect, socket } = useGameStore();
 
   const serverUrl = import.meta.env.VITE_SERVER_URL || '';
 
@@ -79,8 +79,8 @@ export function MainPage() {
                 onChange={(e) => setInitialChips(Number(e.target.value))}
               />
             </div>
-            <Button className="w-full" onClick={handleCreateRoom}>
-              방 만들기
+            <Button className="w-full" onClick={handleCreateRoom} disabled={!socket}>
+              {socket ? '방 만들기' : '연결 중...'}
             </Button>
             <Button variant="secondary" className="w-full" onClick={() => setMode('join')}>
               링크로 참여

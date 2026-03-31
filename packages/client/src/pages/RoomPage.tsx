@@ -50,6 +50,7 @@ export function RoomPage() {
   const [initialChips, setInitialChips] = useState(initChips);
   const [hasJoined, setHasJoined] = useState(initIsHost);
   const [dealingComplete, setDealingComplete] = useState(true);
+  const [cardConfirmed, setCardConfirmed] = useState(false);
   const [myFlippedIndices, setMyFlippedIndices] = useState<Set<number>>(new Set());
   // 세장섯다 3번째 카드 확인: phase === 'card-select' && !sejangThirdCardDismissed 이면 오버레이 표시
   const [sejangThirdCardDismissed, setSejangThirdCardDismissed] = useState(false);
@@ -199,6 +200,7 @@ export function RoomPage() {
       setVisibleCardCounts({});
       setMyFlippedIndices(new Set());
       setDealingComplete(true);
+      setCardConfirmed(false);
       if (dealingIntervalRef.current) {
         clearInterval(dealingIntervalRef.current);
         dealingIntervalRef.current = null;
@@ -305,9 +307,13 @@ export function RoomPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
         <div className="w-full max-w-sm space-y-4 p-6">
-          <h2 className="text-xl font-semibold text-center">방 입장</h2>
+          <img
+            src="/img/main_title_alt.jpg"
+            alt="섯다"
+            style={{ width: '100%', maxWidth: '360px', height: 'auto', objectFit: 'contain', display: 'block', margin: '0 auto 8px' }}
+          />
           <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="nickname-input">
+            <label className="text-sm font-normal text-muted-foreground" htmlFor="nickname-input">
               닉네임
             </label>
             <Input
@@ -321,7 +327,7 @@ export function RoomPage() {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="chips-input">
+            <label className="text-sm font-normal text-muted-foreground" htmlFor="chips-input">
               시작 칩 (원)
             </label>
             <Input
@@ -494,9 +500,17 @@ export function RoomPage() {
   const infoPanelNode = (
     <InfoPanel
       myChips={myPlayer?.chips ?? 0}
-      pot={gameState.pot}
       players={gameState.players}
       myPlayerId={myPlayerId}
+    />
+  );
+
+  const compactInfoPanelNode = (
+    <InfoPanel
+      myChips={myPlayer?.chips ?? 0}
+      players={gameState.players}
+      myPlayerId={myPlayerId}
+      compact
     />
   );
 
@@ -528,7 +542,7 @@ export function RoomPage() {
         <div className="relative flex-1 min-h-0 overflow-hidden">
           {gameTableNode}
           <div className="absolute top-2 right-2 z-10">
-            {infoPanelNode}
+            {compactInfoPanelNode}
           </div>
         </div>
 

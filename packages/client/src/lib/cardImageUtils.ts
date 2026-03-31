@@ -41,3 +41,19 @@ export function getCardImageSrc(card: Card, slotIndex: number = 0): string {
 export function getCardBackSrc(): string {
   return '/img/card_back.jpg';
 }
+
+/**
+ * 카드 배열에서 각 카드의 slotIndex를 계산한다.
+ * 같은 rank 카드가 여러 장 있을 때 앞에서부터 0, 1을 부여한다.
+ * (rank 2/5/6/10의 normal 카드처럼 양쪽 모두 normal인 경우에만 slotIndex가 이미지 선택에 영향을 줌)
+ */
+export function computeSlotIndices(cards: (Card | null | undefined)[]): number[] {
+  const counts: Record<number, number> = {};
+  return cards.map((card) => {
+    if (!card) return 0;
+    const rank = card.rank;
+    const idx = counts[rank] ?? 0;
+    counts[rank] = idx + 1;
+    return idx;
+  });
+}
