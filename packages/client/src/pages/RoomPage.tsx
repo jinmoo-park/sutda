@@ -49,8 +49,8 @@ export function RoomPage() {
   const [nickname, setNickname] = useState(initNickname);
   const [initialChips, setInitialChips] = useState(initChips);
   const [hasJoined, setHasJoined] = useState(initIsHost);
-  const [cardConfirmed, setCardConfirmed] = useState(false);
   const [dealingComplete, setDealingComplete] = useState(true);
+  const [myFlippedIndices, setMyFlippedIndices] = useState<Set<number>>(new Set());
   // 세장섯다 3번째 카드 확인: phase === 'card-select' && !sejangThirdCardDismissed 이면 오버레이 표시
   const [sejangThirdCardDismissed, setSejangThirdCardDismissed] = useState(false);
   const [visibleCardCounts, setVisibleCardCounts] = useState<Record<string, number>>({});
@@ -197,7 +197,7 @@ export function RoomPage() {
     const p = gameState?.phase;
     if (p !== 'betting' && p !== 'betting-1' && p !== 'betting-2' && p !== 'cutting' && p !== 'card-select' && p !== 'sejang-open') {
       setVisibleCardCounts({});
-      setCardConfirmed(false);
+      setMyFlippedIndices(new Set());
       setDealingComplete(true);
       if (dealingIntervalRef.current) {
         clearInterval(dealingIntervalRef.current);
@@ -458,12 +458,13 @@ export function RoomPage() {
             : undefined
       }
       nickname={myPlayer?.nickname}
-      onAllFlipped={() => setCardConfirmed(true)}
+      flippedIndices={myFlippedIndices}
+      onFlip={(idx) => setMyFlippedIndices(prev => { const n = new Set(prev); n.add(idx); return n; })}
       dealingComplete={dealingComplete}
     />
   );
 
-  const bettingPanelNode = (phase === 'betting' || phase === 'betting-1' || phase === 'betting-2') && cardConfirmed && (myPlayer?.isAlive ?? false) ? (
+  const bettingPanelNode = (phase === 'betting' || phase === 'betting-1' || phase === 'betting-2') && dealingComplete && (myPlayer?.isAlive ?? false) ? (
     <BettingPanel
       isMyTurn={isMyTurn}
       currentBetAmount={gameState.currentBetAmount}
@@ -486,6 +487,7 @@ export function RoomPage() {
       sharedCard={gameState.sharedCard}
       mode={gameState.mode}
       dealingComplete={dealingComplete}
+      myFlippedCardIndices={myFlippedIndices}
     />
   );
 
@@ -502,10 +504,10 @@ export function RoomPage() {
     <div className="bg-background text-foreground">
       {/* 데스크탑: 3열 그리드 */}
       <div className="hidden md:grid grid-cols-[256px_1fr_256px] h-dvh overflow-hidden">
-        {/* 좌사이드: BettingPanel + HandPanel */}
+        {/* 좌사이드: InfoPanel + ChatPanel */}
         <div className="flex flex-col border-r border-border overflow-y-auto">
-          {bettingPanelNode}
-          {handPanelNode}
+          {infoPanelNode}
+          <ChatPanel />
         </div>
 
         {/* 중앙: GameTable */}
@@ -513,10 +515,10 @@ export function RoomPage() {
           {gameTableNode}
         </div>
 
-        {/* 우사이드: InfoPanel + ChatPanel */}
-        <div className="flex flex-col border-l border-border overflow-y-auto">
-          {infoPanelNode}
-          <ChatPanel />
+        {/* 우사이드: BettingPanel + HandPanel */}
+        <div className="flex flex-col border-l border-border overflow-y-auto p-2 gap-2">
+          {bettingPanelNode}
+          {handPanelNode}
         </div>
       </div>
 

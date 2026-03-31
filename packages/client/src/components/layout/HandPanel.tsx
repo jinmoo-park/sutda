@@ -14,6 +14,9 @@ interface HandPanelProps {
   nickname?: string;
   onAllFlipped?: () => void;
   dealingComplete?: boolean;
+  /** 외부 제어 모드: RoomPage에서 flip 상태를 관리할 때 사용 */
+  flippedIndices?: Set<number>;
+  onFlip?: (idx: number) => void;
 }
 
 const HAND_TYPE_KOREAN: Record<string, string> = {
@@ -63,14 +66,19 @@ export function HandPanel({
   nickname,
   onAllFlipped,
   dealingComplete = true,
+  flippedIndices: controlledFlipped,
+  onFlip,
 }: HandPanelProps) {
   const [showReference, setShowReference] = useState(false);
-  const [flippedIndices, setFlippedIndices] = useState<Set<number>>(new Set());
+  const [internalFlipped, setInternalFlipped] = useState<Set<number>>(new Set());
 
-  // phase 변경 시 flip 상태 리셋
+  const flippedIndices = controlledFlipped ?? internalFlipped;
+
+  // phase 변경 시 내부 flip 상태 리셋 (외부 제어 모드에서는 RoomPage에서 관리)
   useEffect(() => {
-    setFlippedIndices(new Set());
-  }, [phase]);
+    // setFlippedIndices(new Set()) — 외부 제어 모드에서는 RoomPage에서 관리
+    if (!controlledFlipped) setInternalFlipped(new Set());
+  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const allCards = myPlayer?.cards ?? [];
   const cards = visibleCardCount !== undefined ? allCards.slice(0, visibleCardCount) : allCards;
@@ -87,19 +95,21 @@ export function HandPanel({
   const isCardSelectPhase = phase === 'card-select';
 
   const handleFlip = (idx: number) => {
-    if (!dealingComplete) return; // 배분 중 클릭 불가
-    if (flippedIndices.has(idx)) return; // 이미 뒤집힌 카드
-    if (cards[idx] === null) return; // null 카드 (인디언 숨김)
+    if (!dealingComplete) return;
+    if (flippedIndices.has(idx)) return;
+    if (cards[idx] === null) return;
 
-    setFlippedIndices(prev => {
-      const next = new Set(prev);
-      next.add(idx);
-      // 2장 모두 뒤집으면 콜백 호출
-      if (next.size >= 2 && onAllFlipped) {
-        onAllFlipped();
-      }
-      return next;
-    });
+    if (onFlip) {
+      // 외부 제어 모드
+      onFlip(idx);
+    } else {
+      setInternalFlipped(prev => {
+        const next = new Set(prev);
+        next.add(idx);
+        if (next.size >= 2 && onAllFlipped) onAllFlipped();
+        return next;
+      });
+    }
   };
 
   // 족보 계산

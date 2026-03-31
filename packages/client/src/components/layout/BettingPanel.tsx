@@ -15,6 +15,13 @@ interface BettingPanelProps {
   isEffectiveSen: boolean;
 }
 
+const CHIP_BUTTONS = [
+  { amount: 500,   color: 'bg-zinc-400',   label: '500' },
+  { amount: 1000,  color: 'bg-blue-500',   label: '1천' },
+  { amount: 5000,  color: 'bg-green-500',  label: '5천' },
+  { amount: 10000, color: 'bg-red-500',    label: '1만' },
+];
+
 export function BettingPanel({
   isMyTurn,
   currentBetAmount,
@@ -32,121 +39,104 @@ export function BettingPanel({
     setRaiseAmount(0);
   };
 
-  // 콜 금액 = 현재 베팅 기준액 - 내가 이미 낸 금액
   const callAmount = currentBetAmount - myCurrentBet;
-  // 레이즈 시 실제 납부액 = 콜 금액 + 추가 레이즈 금액
   const totalRaisePayment = callAmount + raiseAmount;
-  // 버튼 활성화 조건
   const canCheck = callAmount === 0 && isEffectiveSen;
-  const canCall = callAmount > 0 || (!isEffectiveSen);
+  const canCall = callAmount > 0 || !isEffectiveSen;
   const canDie = currentBetAmount > 0 || !isEffectiveSen;
 
   return (
     <div className={cn(
-      "p-4 space-y-3 rounded-lg transition-shadow",
-      isMyTurn && "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-[0_0_12px_hsl(75_55%_42%/0.35)]"
+      'p-3 rounded-lg space-y-2 transition-all duration-200',
+      isMyTurn && "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-[0_0_12px_hsl(var(--primary)/0.5)] bg-primary/10"
     )}>
-      {!isMyTurn && currentPlayerNickname && (
-        <p className="text-sm text-muted-foreground">{currentPlayerNickname}의 차례예요</p>
-      )}
+      {/* 상태 표시 */}
+      <div className="flex items-center justify-between">
+        <p className={cn('text-xs font-semibold', isMyTurn ? 'text-primary' : 'text-muted-foreground')}>
+          {isMyTurn ? '내 차례' : currentPlayerNickname ? `${currentPlayerNickname} 차례` : '대기 중'}
+        </p>
+        {callAmount > 0 && isMyTurn && (
+          <span className="text-xs text-muted-foreground">
+            콜 <span className="text-foreground font-medium">{callAmount.toLocaleString()}원</span>
+          </span>
+        )}
+      </div>
 
-      {/* 베팅 현황 표시 */}
-      {isMyTurn && (
-        <div className="text-sm space-y-0.5">
+      {/* 레이즈 금액 표시 */}
+      {raiseAmount > 0 && (
+        <p className="text-2xl font-bold tabular-nums text-primary">
+          +{raiseAmount.toLocaleString()}원
           {callAmount > 0 && (
-            <p className="text-muted-foreground">
-              콜: <span className="text-foreground font-medium">{callAmount.toLocaleString()}원</span>
-            </p>
+            <span className="text-xs text-muted-foreground font-normal ml-1">
+              (총 {totalRaisePayment.toLocaleString()})
+            </span>
           )}
-          {raiseAmount > 0 && (
-            <p className="text-muted-foreground">
-              레이즈 시 납부:{' '}
-              <span className="text-primary font-semibold">{totalRaisePayment.toLocaleString()}원</span>
-              {callAmount > 0 && (
-                <span className="text-xs ml-1">
-                  (콜 {callAmount.toLocaleString()} + 추가 {raiseAmount.toLocaleString()})
-                </span>
-              )}
-            </p>
-          )}
-        </div>
+        </p>
       )}
 
-      {/* 칩 단위 입력 버튼 */}
-      <div className="flex gap-2 flex-wrap">
-        {[
-          { amount: 500, color: 'bg-gray-400' },
-          { amount: 1000, color: 'bg-blue-500' },
-          { amount: 5000, color: 'bg-green-500' },
-          { amount: 10000, color: 'bg-red-500' },
-        ].map(({ amount, color }) => (
+      {/* 칩 버튼 — 2×2 그리드 */}
+      <div className="grid grid-cols-2 gap-1.5">
+        {CHIP_BUTTONS.map(({ amount, color, label }) => (
           <Button
             key={amount}
             variant="secondary"
             size="sm"
             disabled={!isMyTurn}
             onClick={() => setRaiseAmount((prev) => prev + amount)}
-            className="min-h-11"
+            className={cn('h-9 gap-1.5 text-xs', !isMyTurn && 'opacity-40')}
           >
-            <span className={`inline-block w-2 h-2 rounded-full ${color} mr-1`} />
-            +{amount.toLocaleString()}
+            <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${color}`} />
+            +{label}
           </Button>
         ))}
+      </div>
+
+      {/* 초기화 */}
+      {raiseAmount > 0 && (
         <Button
           variant="ghost"
           size="sm"
-          disabled={!isMyTurn || raiseAmount === 0}
+          disabled={!isMyTurn}
           onClick={() => setRaiseAmount(0)}
-          className="min-h-11"
+          className="w-full h-7 text-xs"
         >
           초기화
         </Button>
-      </div>
-
-      {/* 현재 입력 금액 */}
-      {raiseAmount > 0 && (
-        <p className="text-[28px] font-semibold tabular-nums">
-          +{raiseAmount.toLocaleString()}원
-        </p>
       )}
 
-      {/* 액션 버튼 */}
-      <div className="flex gap-2 flex-wrap">
-        {/* 체크: 선 권한 보유자만 가능 */}
+      {/* 액션 버튼 — 2열 */}
+      <div className="grid grid-cols-2 gap-1.5">
         <Button
-          variant="ghost"
+          variant="outline"
           disabled={!isMyTurn || !canCheck}
           onClick={() => emitAction({ type: 'check' })}
-          className="min-h-11"
+          className={cn('h-10 text-sm', !isMyTurn && 'opacity-40')}
         >
           체크
         </Button>
 
-        {/* 콜: 선이 아닐 때 또는 낼 금액이 있을 때 */}
         <Button
           disabled={!isMyTurn || !canCall}
           onClick={() => emitAction({ type: 'call' })}
-          className="min-h-11"
+          className={cn('h-10 text-sm', !isMyTurn && 'opacity-40')}
         >
-          콜 {callAmount > 0 ? `${callAmount.toLocaleString()}원` : ''}
+          콜{callAmount > 0 ? ` ${callAmount.toLocaleString()}` : ''}
         </Button>
 
-        {/* 레이즈: 금액 입력해야만 활성화 */}
         <Button
           variant="secondary"
           disabled={!isMyTurn || raiseAmount === 0}
           onClick={() => emitAction({ type: 'raise', amount: raiseAmount })}
-          className="min-h-11"
+          className={cn('h-10 text-sm', (!isMyTurn || raiseAmount === 0) && 'opacity-40')}
         >
-          레이즈 {raiseAmount > 0 ? `(+${raiseAmount.toLocaleString()})` : ''}
+          레이즈
         </Button>
 
-        {/* 다이: 선 첫 행동 전에는 비활성 */}
         <Button
           variant="destructive"
           disabled={!isMyTurn || !canDie}
           onClick={() => emitAction({ type: 'die' })}
-          className="min-h-11"
+          className={cn('h-10 text-sm', (!isMyTurn || !canDie) && 'opacity-40')}
         >
           다이
         </Button>

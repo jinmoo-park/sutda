@@ -11,17 +11,18 @@ interface GameTableProps {
   sharedCard?: Card;
   mode?: GameMode;
   dealingComplete?: boolean;
+  myFlippedCardIndices?: Set<number>;
 }
 
-export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibleCardCounts, sharedCard, mode, dealingComplete = true }: GameTableProps) {
+export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibleCardCounts, sharedCard, mode, dealingComplete = true, myFlippedCardIndices }: GameTableProps) {
   return (
     <>
-      {/* 데스크톱: 원형 배치 */}
+      {/* 데스크톱: 원형 배치 — 560px로 확장해 시트 잘림 방지 */}
       <div
         className="relative mx-auto hidden md:block rounded-2xl overflow-hidden"
         style={{
-          width: '480px',
-          height: '480px',
+          width: '560px',
+          height: '560px',
           backgroundImage: "url('/img/background.jpg')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',
@@ -52,6 +53,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
             visibleCardCount={visibleCardCounts?.[p.id]}
             mode={mode}
             dealingComplete={dealingComplete}
+            flippedCardIndices={p.id === myPlayerId ? myFlippedCardIndices : undefined}
           />
         ))}
       </div>

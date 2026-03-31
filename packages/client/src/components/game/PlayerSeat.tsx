@@ -10,11 +10,11 @@ interface PlayerSeatProps {
   player: PlayerState;
   isMe: boolean;
   isCurrentTurn: boolean;
-  /** 딜링 애니메이션용: 보여줄 카드 수 (undefined = 전부) */
   visibleCardCount?: number;
   mode?: GameMode;
-  /** 배분 애니메이션 완료 여부 */
   dealingComplete?: boolean;
+  /** 내 카드 flip 동기화 (HandPanel과 연동) */
+  flippedCardIndices?: Set<number>;
 }
 
 export function PlayerSeat({
@@ -26,6 +26,7 @@ export function PlayerSeat({
   visibleCardCount,
   mode,
   dealingComplete = true,
+  flippedCardIndices,
 }: PlayerSeatProps) {
   const style = {
     '--angle': `calc(360deg / ${totalPlayers} * ${seatIndex})`,
@@ -80,7 +81,13 @@ export function PlayerSeat({
             const card = player.cards[idx];
             // 세장섯다: openedCardIndex가 있으면 해당 카드는 전원에게 공개
             const isOpenedCard = mode === 'three-card' && player.openedCardIndex === idx;
-            const showFace = card != null && (isMe || mode === 'indian' || isOpenedCard);
+            // 내 카드: flip 동기화 (HandPanel에서 뒤집은 카드만 앞면)
+            // 상대 카드: 인디언 모드이거나 세장섯다 공개 카드만 앞면
+            const showFace = card != null && (
+              (isMe && (flippedCardIndices ? flippedCardIndices.has(idx) : false))
+              || (!isMe && mode === 'indian')
+              || isOpenedCard
+            );
             return (
               <div
                 key={idx}
@@ -137,7 +144,7 @@ export function PlayerSeat({
         className="absolute top-1/2 left-1/2 -mt-14 -ml-14 hidden md:block transition-transform duration-500"
         style={{
           ...style,
-          transform: `rotate(var(--angle)) translateY(-200px) rotate(calc(var(--angle) * -1))`,
+          transform: `rotate(var(--angle)) translateY(-220px) rotate(calc(var(--angle) * -1))`,
         }}
       >
         {content}

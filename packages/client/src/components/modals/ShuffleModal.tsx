@@ -1,6 +1,5 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import { useGameStore } from '@/store/gameStore';
-import { useShuffleStore, type ShufflePhase } from '@/store/shuffleStore';
 import {
   Dialog,
   DialogContent,
@@ -9,93 +8,184 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { HwatuCard } from '@/components/game/HwatuCard';
 
 interface ShuffleModalProps {
   open: boolean;
   roomId: string;
 }
 
-const CYCLE_MS = 820;
+// --- 참조 구현 포팅 (sutda-shuffle.html) ---
+const N = 5;
+const BASE_TOP = 50;
+const GAP = 13;
+const CYCLE = 820;
+const T = { peek: 0.22, hold: 0.18, rise: 0.35, drop: 0.15, rest: 0.10 };
 
-// 5 페이즈 타이밍 (per D-11):
-// peek:  0~120ms  — translateY(-8px)
-// hold:  120~300ms — 정지
-// rise:  300~480ms — translateY(-20px)
-// drop:  480~700ms — 빠르게 내리기 + 위치 교환 (easeIn)
-// rest:  700~820ms — 제자리 안정화
-
-function getPhaseFromElapsed(elapsed: number): ShufflePhase {
-  const t = elapsed % CYCLE_MS;
-  if (t < 120) return 'peek';
-  if (t < 300) return 'hold';
-  if (t < 480) return 'rise';
-  if (t < 700) return 'drop';
-  return 'rest';
-}
-
-function getCardTransform(cardIdx: number, phase: ShufflePhase, pickedIdx: number): string {
-  const isPicked = cardIdx === pickedIdx;
-  if (!isPicked) return 'translateY(0)';
-
-  switch (phase) {
-    case 'peek': return 'translateY(-8px)';
-    case 'hold': return 'translateY(-8px)';
-    case 'rise': return 'translateY(-20px)';
-    case 'drop': return 'translateY(0)';
-    case 'rest': return 'translateY(0)';
-    default: return 'translateY(0)';
-  }
-}
+function rnd(min: number, max: number) { return min + Math.random() * (max - min); }
+function easeInOut(t: number) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; }
+function easeOut(t: number) { return 1 - (1 - t) * (1 - t); }
 
 export function ShuffleModal({ open, roomId }: ShuffleModalProps) {
   const { socket } = useGameStore();
-  const { isShuffling, phase, pickedIdx, startShuffle, stopShuffle, setPhase, setPickedIdx } =
-    useShuffleStore();
+  const [isShuffling, setIsShuffling] = useState(false);
   const [hasShuffled, setHasShuffled] = useState(false);
 
-  const rafRef = useRef<number>(0);
-  const startTimeRef = useRef<number>(0);
+  // 카드 DOM refs — React 재렌더링 없이 직접 조작
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  function animate(timestamp: number) {
-    if (!startTimeRef.current) startTimeRef.current = timestamp;
-    const elapsed = timestamp - startTimeRef.current;
+  // 애니메이션 상태 ref (모두 mutable, setState 불필요)
+  const anim = useRef({
+    cards: [] as { el: HTMLDivElement | null }[],
+    baseRots: [] as number[],
+    pickedIdx: 0,
+    phase: 'idle',
+    phaseStart: 0,
+    shuffling: false,
+    rafId: 0,
+  });
 
-    const currentPhase = getPhaseFromElapsed(elapsed);
-    setPhase(currentPhase);
-
-    // rest 끝에서 pickedIdx 토글 (다음 사이클은 다른 카드)
-    const t = elapsed % CYCLE_MS;
-    if (currentPhase === 'rest' && t > 810) {
-      setPickedIdx(pickedIdx === 0 ? 1 : 0);
-    }
-
-    rafRef.current = requestAnimationFrame(animate);
+  function applyT(el: HTMLDivElement, top: number, rotZ: number, transZ: number, zi: number, lifted: boolean) {
+    el.style.top = top + 'px';
+    el.style.zIndex = String(zi);
+    el.style.transform = `rotate(${rotZ}deg) translateZ(${transZ}px)`;
+    const dark = Math.max(0, -transZ * 0.4);
+    el.style.filter = dark > 0 ? `brightness(${Math.max(0.55, 1 - dark / 100)})` : '';
+    el.style.boxShadow = lifted
+      ? '0 14px 28px rgba(0,0,0,0.5), 0 4px 8px rgba(0,0,0,0.3)'
+      : `0 ${2 + (zi / N) * 2}px 0 rgba(0,0,0,${0.18 + (1 - zi / N) * 0.15})`;
   }
 
-  const handlePointerDown = () => {
-    startShuffle();
+  function restAll() {
+    const a = anim.current;
+    a.cards.forEach((c, i) => {
+      if (c.el) applyT(c.el, BASE_TOP - i * GAP, a.baseRots[i] ?? 0, 0, i + 1, false);
+    });
+  }
+
+  function buildDeck() {
+    const a = anim.current;
+    a.cards = cardRefs.current.map((el) => ({ el }));
+    a.baseRots = Array.from({ length: N }, () => rnd(-2, 2));
+    restAll();
+  }
+
+  function pickNext() {
+    const a = anim.current;
+    a.pickedIdx = 1 + Math.floor(Math.random() * (N - 2));
+    a.phase = 'peek';
+    a.phaseStart = performance.now();
+  }
+
+  const tick = useCallback((now: number) => {
+    const a = anim.current;
+    if (!a.shuffling) return;
+    const elapsed = now - a.phaseStart;
+
+    if (a.phase === 'peek') {
+      const t = Math.min(elapsed / (CYCLE * T.peek), 1);
+      const et = easeInOut(t);
+      const picked = a.cards[a.pickedIdx];
+      if (picked?.el) applyT(picked.el,
+        BASE_TOP - a.pickedIdx * GAP + GAP * 1.2 * et,
+        a.baseRots[a.pickedIdx] + 1.5 * et, 0, a.pickedIdx + 1, false);
+      a.cards.forEach((c, i) => {
+        if (i === a.pickedIdx || !c.el) return;
+        applyT(c.el, BASE_TOP - i * GAP, a.baseRots[i], 0, i + 1, false);
+      });
+      if (t >= 1) { a.phase = 'hold'; a.phaseStart = now; }
+
+    } else if (a.phase === 'hold') {
+      if (elapsed >= CYCLE * T.hold) { a.phase = 'rise'; a.phaseStart = now; }
+
+    } else if (a.phase === 'rise') {
+      const t = Math.min((now - a.phaseStart) / (CYCLE * T.rise), 1);
+      const et = easeInOut(t);
+      const picked = a.cards[a.pickedIdx];
+      const fromTop = BASE_TOP - a.pickedIdx * GAP + GAP * 1.2;
+      const toTop = BASE_TOP - (N - 1) * GAP - 10;
+      const zArc = Math.sin(t * Math.PI) * 32;
+      const toRot = rnd(-2, 2);
+      if (picked?.el) applyT(picked.el,
+        fromTop + (toTop - fromTop) * et,
+        a.baseRots[a.pickedIdx] + 1.5 + (toRot - a.baseRots[a.pickedIdx] - 1.5) * et,
+        zArc, 10, true);
+
+      const topC = a.cards[N - 1];
+      if (topC?.el) applyT(topC.el,
+        BASE_TOP - (N - 1) * GAP + GAP * et,
+        a.baseRots[N - 1], -38 * Math.sin(t * Math.PI * 0.9), N + 1, false);
+
+      a.cards.forEach((c, i) => {
+        if (i === a.pickedIdx || i === N - 1 || !c.el) return;
+        const fromPos = BASE_TOP - i * GAP;
+        const toPos = i < a.pickedIdx ? fromPos : BASE_TOP - (i - 1) * GAP;
+        applyT(c.el, fromPos + (toPos - fromPos) * et, a.baseRots[i], 0, i + 1, false);
+      });
+
+      if (t >= 1) {
+        const p = a.cards.splice(a.pickedIdx, 1)[0];
+        a.cards.push(p);
+        a.baseRots[N - 1] = rnd(-2, 2);
+        a.phase = 'drop';
+        a.phaseStart = now;
+      }
+
+    } else if (a.phase === 'drop') {
+      const t = Math.min((now - a.phaseStart) / (CYCLE * T.drop), 1);
+      const et = easeOut(t);
+      const c = a.cards[N - 1];
+      if (c?.el) applyT(c.el,
+        BASE_TOP - (N - 1) * GAP - 10 + 10 * et,
+        a.baseRots[N - 1], 8 * (1 - et), N, t < 0.5);
+      a.cards.forEach((c2, i) => {
+        if (i === N - 1 || !c2.el) return;
+        applyT(c2.el, BASE_TOP - i * GAP, a.baseRots[i], 0, i + 1, false);
+      });
+      if (t >= 1) { a.phase = 'rest'; a.phaseStart = now; }
+
+    } else if (a.phase === 'rest') {
+      if (elapsed > CYCLE * T.rest) pickNext();
+    }
+
+    a.rafId = requestAnimationFrame(tick);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function startShuffle() {
+    const a = anim.current;
+    if (a.shuffling) return;
+    a.shuffling = true;
+    setIsShuffling(true);
     setHasShuffled(true);
-    startTimeRef.current = 0;
-    rafRef.current = requestAnimationFrame(animate);
-  };
+    pickNext();
+    a.rafId = requestAnimationFrame(tick);
+  }
 
-  const handlePointerUp = () => {
-    cancelAnimationFrame(rafRef.current);
-    stopShuffle();
-  };
+  function stopShuffle() {
+    const a = anim.current;
+    a.shuffling = false;
+    cancelAnimationFrame(a.rafId);
+    a.phase = 'idle';
+    setIsShuffling(false);
+    restAll();
+    buildDeck();
+  }
 
-  const handleConfirmShuffle = () => {
-    socket?.emit('shuffle', { roomId });
-  };
-
-  // cleanup on unmount
-  useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
+  useEffect(() => {
+    if (open) {
+      setHasShuffled(false);
+      // refs가 준비된 후 덱 초기화
+      requestAnimationFrame(() => buildDeck());
+    }
+    return () => {
+      cancelAnimationFrame(anim.current.rafId);
+      anim.current.shuffling = false;
+    };
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Dialog open={open}>
       <DialogContent
-        className="max-w-sm"
+        className="max-w-xs"
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
@@ -103,39 +193,58 @@ export function ShuffleModal({ open, roomId }: ShuffleModalProps) {
           <DialogTitle>패를 섞으세요</DialogTitle>
         </DialogHeader>
 
-        {/* 카드 더미 시각화 영역 */}
-        <div className="relative h-40 flex items-center justify-center">
-          <div className="relative" style={{ width: 68, height: 110 }}>
-            {[0, 1].map((idx) => (
-              <div
-                key={idx}
-                className="absolute inset-0 transition-none"
-                style={{
-                  transform: getCardTransform(idx, phase, pickedIdx),
-                  zIndex: idx === pickedIdx ? 2 : 1,
-                }}
-              >
-                <HwatuCard faceUp={false} size="md" />
-              </div>
-            ))}
+        {/* 카드 더미 — perspective로 3D 효과 */}
+        <div className="flex flex-col items-center py-6">
+          <div style={{ perspective: '700px', perspectiveOrigin: '50% 30%' }}>
+            <div
+              style={{
+                position: 'relative',
+                width: '80px',
+                height: `${BASE_TOP + N * GAP + 78 + 20}px`,
+                transformStyle: 'preserve-3d',
+              }}
+            >
+              {Array.from({ length: N }, (_, i) => (
+                <div
+                  key={i}
+                  ref={(el) => { cardRefs.current[i] = el; }}
+                  style={{
+                    position: 'absolute',
+                    width: '54px',
+                    height: '78px',
+                    left: '50%',
+                    marginLeft: '-27px',
+                    borderRadius: '5px',
+                    background: '#c0392b',
+                    boxSizing: 'border-box',
+                    top: `${BASE_TOP - i * GAP}px`,
+                    zIndex: i + 1,
+                  }}
+                >
+                  <div style={{ position: 'absolute', inset: '5px', borderRadius: '3px', border: '1.5px solid rgba(255,255,255,0.25)' }} />
+                  <div style={{ position: 'absolute', inset: '9px', borderRadius: '2px', border: '1px solid rgba(255,255,255,0.15)' }} />
+                </div>
+              ))}
+            </div>
           </div>
+          <p className="text-xs text-muted-foreground mt-3">
+            {isShuffling ? '섞는 중...' : '버튼을 꾹 누르세요'}
+          </p>
         </div>
 
-        {/* 셔플 버튼 — pointerdown으로 시작, pointerup/leave로 종료 */}
         <div className="flex justify-center">
           <Button
-            className="min-h-12 px-8"
-            onPointerDown={handlePointerDown}
-            onPointerUp={handlePointerUp}
-            onPointerLeave={handlePointerUp}
+            className="min-h-12 px-10"
+            onPointerDown={startShuffle}
+            onPointerUp={stopShuffle}
+            onPointerLeave={stopShuffle}
           >
-            {isShuffling ? '셔플 중...' : '셔플'}
+            눌러서 섞기
           </Button>
         </div>
 
-        {/* 셔플 후 확인 버튼 */}
         <DialogFooter>
-          <Button onClick={handleConfirmShuffle} disabled={!hasShuffled}>
+          <Button onClick={() => socket?.emit('shuffle', { roomId })} disabled={!hasShuffled}>
             확인
           </Button>
         </DialogFooter>
