@@ -33,6 +33,9 @@ const gameEngines: Map<string, GameEngine> = new Map();
 const schoolResponded: Map<string, Set<string>> = new Map();
 // 다음 판 투표 추적 (roomId → Set<playerId>)
 const nextRoundVotes: Map<string, Set<string>> = new Map();
+// 대기실 끊김 유예 타이머 (roomId:socketId → timeout)
+// 재접속 시 joinRoom이 nickname으로 ID를 갱신하므로, 타이머 만료 시 leaveRoom이 자동으로 no-op
+const waitingDisconnectTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 // 에러 메시지 맵 (per UI-SPEC 에러 메시지 계약)
 const ERROR_MESSAGES: Record<string, string> = {
@@ -526,15 +529,24 @@ io.on('connection', (socket) => {
       if (room && room.gamePhase === 'playing') {
         // 게임 중이면 연결만 끊김 처리 (재접속 대기, per D-05)
         roomManager.disconnectPlayer(roomId, socket.id);
-      } else {
-        // 대기실이면 퇴장 처리
-        const result = roomManager.leaveRoom(roomId, socket.id);
-        if (result) {
-          io.to(roomId).emit('player-left', {
-            playerId: result.removedPlayerId,
-            newHostId: result.newHostId,
-          });
-        }
+      } else if (room) {
+        // 대기실: 즉시 제거 대신 15초 유예 — 순간적 끊김(새로고침 등)으로 인해
+        // 방장이 room.players에서 사라지고 다른 사람이 게임을 시작하는 버그 방지
+        // 재접속 시 joinRoom이 nickname으로 기존 플레이어 ID를 갱신하므로,
+        // 타이머 만료 후 leaveRoom(old socketId)는 자동으로 no-op
+        const disconnectedId = socket.id;
+        const timerKey = `${roomId}:${disconnectedId}`;
+        const timer = setTimeout(() => {
+          waitingDisconnectTimers.delete(timerKey);
+          const result = roomManager.leaveRoom(roomId, disconnectedId);
+          if (result) {
+            io.to(roomId).emit('player-left', {
+              playerId: result.removedPlayerId,
+              newHostId: result.newHostId,
+            });
+          }
+        }, 15_000);
+        waitingDisconnectTimers.set(timerKey, timer);
       }
     }
   });
