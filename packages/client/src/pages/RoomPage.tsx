@@ -115,11 +115,12 @@ export function RoomPage() {
         return;
       }
 
-      // 인디언섯다: 첫 패는 본인에게 숨겨지므로 카드 확인 오버레이 표시 안 함
+      // 인디언섯다: 첫 패는 본인에게 숨겨지므로 카드 확인 오버레이 표시 안 함 — 즉시 베팅 가능
       if (gameState.mode === 'indian') {
         const counts: Record<string, number> = {};
         players.forEach(p => { counts[p.id] = 1; });
         setVisibleCardCounts(counts);
+        setCardConfirmed(true);
         prevPhaseRef.current = gameState.phase;
         return;
       }
@@ -168,6 +169,14 @@ export function RoomPage() {
     // (SejangOpenCardModal에서 이미 카드를 확인했으므로 별도 확인 불필요)
     if (prevPhaseRef.current === 'sejang-open' && gameState?.phase === 'betting-1') {
       setCardConfirmed(true);
+    }
+
+    // 골라골라: gollagolla-select → betting 전환 시 cardConfirmed 자동 설정
+    // (GollaSelectModal에서 이미 카드를 선택했으므로 별도 확인 불필요)
+    if (prevPhaseRef.current === 'gollagolla-select' && gameState?.phase === 'betting') {
+      setCardConfirmed(true);
+      prevPhaseRef.current = gameState.phase;
+      return;
     }
 
     // 인디언 모드: betting-1 → betting-2 (dealing-extra는 서버 자동처리로 클라이언트에 안 보임)

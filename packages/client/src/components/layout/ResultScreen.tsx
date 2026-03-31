@@ -110,10 +110,14 @@ export function ResultScreen({ gameState, myPlayerId, roomId }: ResultScreenProp
         {allPlayers.map((player) => {
           const isDied = !player.isAlive;
 
+          // 세장섯다: selectedCards 기준 족보 계산, 아니면 cards[0]/cards[1] fallback
+          const displayCards = player.selectedCards?.length === 2
+            ? player.selectedCards
+            : player.cards;
           let handLabel: string | null = null;
-          if (!isDied && player.cards.length >= 2) {
+          if (!isDied && displayCards.length >= 2) {
             try {
-              handLabel = getHandLabel(evaluateHand(player.cards[0], player.cards[1]));
+              handLabel = getHandLabel(evaluateHand(displayCards[0]!, displayCards[1]!));
             } catch {
               // 평가 불가한 경우 무시
             }
@@ -146,9 +150,9 @@ export function ResultScreen({ gameState, myPlayerId, roomId }: ResultScreenProp
               <div className="flex gap-2">
                 {isDied
                   ? player.cards.map((_, idx) => <CardBack key={idx} />)
-                  : player.cards.map((card, idx) =>
+                  : displayCards.map((card, idx) =>
                       player.isRevealed ? (
-                        <CardFace key={idx} card={card} />
+                        <CardFace key={idx} card={card!} />
                       ) : (
                         <CardBack key={idx} />
                       )
