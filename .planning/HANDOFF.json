@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "timestamp": "2026-03-30T17:39:52.445Z",
+  "timestamp": "2026-03-31T01:37:26.589Z",
   "phase": "09",
   "phase_name": "94",
   "phase_dir": ".planning/phases/09-94",
@@ -12,39 +12,29 @@
     {"id": "01-1", "name": "공유 타입 확장 + 땡값 정산 로직 TDD", "status": "done", "commit": "27ab857"},
     {"id": "01-2", "name": "구사 재경기 FSM (gusa-pending) TDD", "status": "done", "commit": "555bc87"},
     {"id": "02-1", "name": "소켓 핸들러 + GusaRejoinModal + ResultScreen 땡값 + RoomPage 통합", "status": "done", "commit": "e7e2028"},
-    {"id": "hotfix", "name": "revealCard() 단일 생존자 경로 _settleTtaengValue 누락", "status": "done", "commit": "a4715c4"}
+    {"id": "hotfix", "name": "revealCard() 단일 생존자 경로 _settleTtaengValue 누락", "status": "done", "commit": "a4715c4"},
+    {"id": "uat-ag", "name": "UAT 버그 A~G 수정 (세장섯다 FSM 순서 변경, 특수패 표기, 재경기 규칙, gusa-announce)", "status": "done", "commit": "97ff996"},
+    {"id": "uat-h", "name": "UAT 버그 H — 세장섯다 잃은돈 합계 오류 (totalBet 필드 도입)", "status": "done", "commit": "46863cf"}
   ],
   "remaining_tasks": [
-    {"id": "02-2", "name": "수동 검증 통과 (UAT)", "status": "in_progress", "progress": "버그 발견, 수정 중"},
-    {"id": "gap-A", "name": "result 화면 땡값 표시 방식 변경 (플레이어카드 내 합산 표시)", "status": "not_started"},
-    {"id": "gap-B", "name": "손패 패널 특수패 이름 표기 (구사/망통/갑오/땡잡이/암행어사)", "status": "not_started"},
-    {"id": "gap-C", "name": "구사 재경기 전원 생존 시 안내 모달 추가", "status": "not_started"},
-    {"id": "gap-D", "name": "구사 재경기에서 기리(cutting) 제거", "status": "not_started"},
-    {"id": "gap-E", "name": "재경기(구사/동점)에서 땡값 면제", "status": "not_started"},
-    {"id": "gap-F", "name": "세장섯다 카드 선택 타이밍 버그 (2차 베팅 후로 이동)", "status": "not_started"},
-    {"id": "gap-G", "name": "세장섯다 selectedCards가 족보 판정에 미반영", "status": "not_started"},
-    {"id": "gap-H", "name": "세장섯다 잃은돈 합계 계산 오류", "status": "not_started"}
+    {"id": "02-2", "name": "수동 UAT 검증 — 버그 A~H 수정 후 재검증", "status": "in_progress", "progress": "코드 수정 완료, 실제 게임 테스트 대기 중"}
   ],
-  "blockers": [
-    {
-      "description": "세장섯다 FSM 타이밍 변경(F)은 큰 리팩터링 필요",
-      "type": "technical",
-      "workaround": "별도 gap-closure plan으로 처리"
-    }
-  ],
+  "blockers": [],
   "human_actions_pending": [
     {
-      "action": "버그 수정 후 pnpm dev로 재테스트 필요",
-      "context": "현재 버그 수정 후 브라우저에서 재확인 필요",
-      "blocking": false
+      "action": "게임 실행 후 UAT 재검증 (버그 A~H 시나리오별 테스트)",
+      "context": "pnpm dev 실행 후 2인 플레이어로 다음 항목 확인 필요: (1) 세장섯다 betting-1→betting-2→card-select→showdown 순서, (2) 손패 패널 특수패 이름(망통/갑오/암행어사/땡잡이/구사/멍텅구리구사), (3) 구사 전원 생존 시 안내 모달, (4) 구사 재경기 기리 없음, (5) 재경기(구사/동점) 땡값 면제, (6) result 화면 땡값 인라인 표시, (7) 세장섯다 칩 변동 정확도",
+      "blocking": true
     }
   ],
   "decisions": [
-    {"decision": "revealCard() 단일 생존자 경로에서 gusa 체크 추가 안 함", "rationale": "전원 다이 시 비교 대상 없어 gusa 미적용이 규칙상 맞음", "phase": "09"},
-    {"decision": "muckHand()에서 _settleTtaengValue 미호출 유지", "rationale": "패 숨기기 = 패 등급 불명 = 땡값 미적용이 맞음", "phase": "09"},
-    {"decision": "재경기 땡값 면제는 isRematch 플래그 방식 권장", "rationale": "GameState에 isRematchRound: boolean 추가 후 _settleTtaengValue에서 체크", "phase": "09"}
+    {"decision": "세장섯다 FSM: betting-1 → betting-2 → card-select(+3번째카드배분) → showdown", "rationale": "3번째 카드는 2차 베팅 후 배분. selectCards 완료 후 betting-2가 아닌 자동 showdown 직행.", "phase": "09"},
+    {"decision": "isRematchRound + skipCutting 플래그 도입", "rationale": "GameState에 isRematchRound(땡값면제)와 skipCutting(기리제거) 추가. 재경기 시작 시 설정, nextRound에서 초기화.", "phase": "09"},
+    {"decision": "gusa-announce phase 신설", "rationale": "전원 생존 구사 재경기 시 즉시 shuffling 대신 gusa-announce → 선 플레이어 confirm-gusa-announce emit → _startGusaRematch() 진행", "phase": "09"},
+    {"decision": "totalBet 필드 PlayerState에 추가", "rationale": "currentBet은 현재 베팅 라운드 체크용(라운드별 리셋), totalBet은 앤티+전체 누적(ResultScreen 표시용)", "phase": "09"},
+    {"decision": "revealCard() 단일 생존자 경로에서 gusa 체크 안 함", "rationale": "전원 다이 시 비교 대상 없어 gusa 미적용이 규칙상 맞음", "phase": "09"}
   ],
   "uncommitted_files": [],
-  "next_action": "/gsd:plan-phase 9 --gaps 실행하여 gap-A~H를 gap-closure 플랜으로 생성",
-  "context_notes": "Phase 09 핵심 로직(31개 단위 테스트)은 정상 동작. UAT에서 UI 표시 방식 및 세장섯다 버그 다수 발견."
+  "next_action": "pnpm dev 실행 후 세장섯다 모드 2인 UAT 재검증. 통과 시 09-02-SUMMARY.md 작성 후 Phase 09 완료 처리.",
+  "context_notes": "Phase 09 핵심 로직(단위 테스트)은 정상. 이번 세션에서 UAT 버그 A~H 전부 코드 수정 완료 및 빌드/세장섯다 단위 테스트 통과. 재검증만 남은 상태."
 }
