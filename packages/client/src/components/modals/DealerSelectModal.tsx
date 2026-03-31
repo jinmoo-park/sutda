@@ -5,8 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { CardBack } from '@/components/game/CardBack';
-import { CardFace } from '@/components/game/CardFace';
+import { HwatuCard } from '@/components/game/HwatuCard';
 import { cn } from '@/lib/utils';
 
 interface DealerSelectModalProps {
@@ -81,9 +80,9 @@ export function DealerSelectModal({ open, roomId }: DealerSelectModalProps) {
                 )}
               >
                 {isMyPick && deck[i] ? (
-                  <CardFace card={deck[i]} />
+                  <HwatuCard card={deck[i]} faceUp={true} size="sm" />
                 ) : (
-                  <CardBack />
+                  <HwatuCard faceUp={false} size="sm" />
                 )}
               </button>
             );

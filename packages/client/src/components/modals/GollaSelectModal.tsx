@@ -6,7 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { CardBack } from '@/components/game/CardBack';
+import { HwatuCard } from '@/components/game/HwatuCard';
 import { cn } from '@/lib/utils';
 
 interface GollaSelectModalProps {
@@ -112,7 +112,7 @@ export function GollaSelectModal({ open, roomId }: GollaSelectModalProps) {
                   isMyPick && !isTakenByOther && 'ring-2 ring-primary scale-105'
                 )}
               >
-                <CardBack />
+                <HwatuCard faceUp={false} size="sm" />
               </button>
             );
           })}

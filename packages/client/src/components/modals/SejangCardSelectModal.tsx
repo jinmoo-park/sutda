@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { CardFace } from '@/components/game/CardFace';
+import { HwatuCard } from '@/components/game/HwatuCard';
 import { cn } from '@/lib/utils';
 
 interface SejangCardSelectModalProps {
@@ -78,7 +78,7 @@ export function SejangCardSelectModal({ open, roomId }: SejangCardSelectModalPro
               )}
             >
               {card !== null ? (
-                <CardFace card={card} />
+                <HwatuCard card={card} faceUp={true} size="lg" />
               ) : (
                 <div className="w-16 h-24 bg-muted rounded-md" />
               )}

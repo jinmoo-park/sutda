@@ -7,8 +7,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { CardBack } from '@/components/game/CardBack';
-import { CardFace } from '@/components/game/CardFace';
+import { HwatuCard } from '@/components/game/HwatuCard';
 import { cn } from '@/lib/utils';
 
 interface SharedCardSelectModalProps {
@@ -62,9 +61,9 @@ export function SharedCardSelectModal({ open, roomId }: SharedCardSelectModalPro
                 )}
               >
                 {isDealer && deck[i] ? (
-                  <CardFace card={deck[i]} />
+                  <HwatuCard card={deck[i]} faceUp={true} size="lg" />
                 ) : (
-                  <CardBack />
+                  <HwatuCard faceUp={false} size="sm" />
                 )}
               </button>
             );

@@ -1,8 +1,7 @@
 import type { PlayerState, GameMode } from '@sutda/shared';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { CardFace } from './CardFace';
-import { CardBack } from './CardBack';
+import { HwatuCard } from './HwatuCard';
 import { cn } from '@/lib/utils';
 
 interface PlayerSeatProps {
@@ -14,6 +13,8 @@ interface PlayerSeatProps {
   /** 딜링 애니메이션용: 보여줄 카드 수 (undefined = 전부) */
   visibleCardCount?: number;
   mode?: GameMode;
+  /** 배분 애니메이션 완료 여부 */
+  dealingComplete?: boolean;
 }
 
 export function PlayerSeat({
@@ -24,12 +25,23 @@ export function PlayerSeat({
   isCurrentTurn,
   visibleCardCount,
   mode,
+  dealingComplete = true,
 }: PlayerSeatProps) {
   const style = {
     '--angle': `calc(360deg / ${totalPlayers} * ${seatIndex})`,
   } as React.CSSProperties;
 
   const showCount = visibleCardCount ?? 2;
+
+  // 배분 날아오기 애니메이션 스타일
+  const getDealAnimStyle = (cardIdx: number): React.CSSProperties => {
+    if (dealingComplete) return {};
+    return {
+      animation: `deal-fly-in 0.4s ease-out forwards`,
+      animationDelay: `${cardIdx * 200}ms`,
+      opacity: 0,
+    };
+  };
 
   const content = (
     <Card
@@ -76,12 +88,14 @@ export function PlayerSeat({
                   'transition-opacity duration-300',
                   visible ? 'opacity-100' : 'opacity-0'
                 )}
+                style={getDealAnimStyle(idx)}
               >
-                {showFace ? (
-                  <CardFace card={card} className="w-10 h-14 text-sm" />
-                ) : (
-                  <CardBack className="w-10 h-14" />
-                )}
+                <HwatuCard
+                  card={card ?? undefined}
+                  faceUp={showFace}
+                  size="sm"
+                  disabled
+                />
               </div>
             );
           })}

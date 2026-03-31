@@ -10,9 +10,10 @@ interface GameTableProps {
   visibleCardCounts?: Record<string, number>;
   sharedCard?: Card;
   mode?: GameMode;
+  dealingComplete?: boolean;
 }
 
-export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibleCardCounts, sharedCard, mode }: GameTableProps) {
+export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibleCardCounts, sharedCard, mode, dealingComplete = true }: GameTableProps) {
   return (
     <>
       {/* 데스크톱: 원형 배치 */}
@@ -50,6 +51,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
             isCurrentTurn={i === currentPlayerIndex}
             visibleCardCount={visibleCardCounts?.[p.id]}
             mode={mode}
+            dealingComplete={dealingComplete}
           />
         ))}
       </div>
@@ -84,6 +86,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
               isMe={p.id === myPlayerId}
               isCurrentTurn={i === currentPlayerIndex}
               visibleCardCount={visibleCardCounts?.[p.id]}
+              dealingComplete={dealingComplete}
             />
           ))}
         </div>

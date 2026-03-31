@@ -3,8 +3,7 @@ import type { GameState, HandResult } from '@sutda/shared';
 import { evaluateHand } from '@sutda/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CardFace } from '@/components/game/CardFace';
-import { CardBack } from '@/components/game/CardBack';
+import { HwatuCard } from '@/components/game/HwatuCard';
 import { useGameStore } from '@/store/gameStore';
 
 const HAND_TYPE_KOREAN: Record<string, string> = {
@@ -163,12 +162,12 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch }: Resul
               <p className="text-sm font-semibold">{player.nickname}</p>
               <div className="flex gap-2">
                 {isDied
-                  ? player.cards.map((_, idx) => <CardBack key={idx} />)
+                  ? player.cards.map((_, idx) => <HwatuCard key={idx} faceUp={false} size="md" />)
                   : displayCards.map((card, idx) =>
                       player.isRevealed ? (
-                        <CardFace key={idx} card={card!} />
+                        <HwatuCard key={idx} card={card!} faceUp={true} size="md" />
                       ) : (
-                        <CardBack key={idx} />
+                        <HwatuCard key={idx} faceUp={false} size="md" />
                       )
                     )}
               </div>

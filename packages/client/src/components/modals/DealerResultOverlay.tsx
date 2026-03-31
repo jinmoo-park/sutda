@@ -1,5 +1,5 @@
 import type { Card, PlayerState } from '@sutda/shared';
-import { CardFace } from '@/components/game/CardFace';
+import { HwatuCard } from '@/components/game/HwatuCard';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export interface DealerSelectResult {
@@ -36,7 +36,7 @@ export function DealerResultOverlay({ open, results, players, winnerId, onOpenCh
                   isWinner ? 'bg-primary/10 ring-1 ring-primary' : 'bg-muted/40'
                 }`}
               >
-                <CardFace card={card} />
+                <HwatuCard card={card} faceUp={true} size="sm" />
                 <div>
                   <p className="font-semibold text-sm">{getNickname(playerId)}</p>
                   {isWinner && (

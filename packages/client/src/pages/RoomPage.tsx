@@ -485,6 +485,7 @@ export function RoomPage() {
       visibleCardCounts={Object.keys(visibleCardCounts).length > 0 ? visibleCardCounts : undefined}
       sharedCard={gameState.sharedCard}
       mode={gameState.mode}
+      dealingComplete={dealingComplete}
     />
   );
 
