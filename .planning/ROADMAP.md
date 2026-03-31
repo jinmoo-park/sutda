@@ -199,7 +199,7 @@ Plans:
 
 Plans:
 - [x] 10-01-PLAN.md — HwatuCard 컴포넌트 + cardImageUtils + img 에셋 설정 (IMG-01, IMG-02)
-- [ ] 10-02-PLAN.md — 패널 레이아웃 3열/수직 재설계 + 배경/타이틀/재경기 이미지 + 베팅 강조 (UX-09, IMG-03, BET-HIGHLIGHT)
+- [x] 10-02-PLAN.md — 패널 레이아웃 3열/수직 재설계 + 배경/타이틀/재경기 이미지 + 베팅 강조 (UX-09, IMG-03, BET-HIGHLIGHT)
 - [ ] 10-03-PLAN.md — 카드 flip 인터랙션 + CardFace/CardBack 전면 교체 + 배분 애니메이션 (UX-03, UX-05, UX-06)
 - [ ] 10-04-PLAN.md — 셔플 rAF 애니메이션 + 기리 드래그/탭 UX 재설계 (UX-07, UX-08)
 
@@ -258,6 +258,6 @@ Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12
 | 7. 세장섯다 + 한장공유 모드 | 2/2 | Complete | 2026-03-30 |
 | 8. 골라골라 + 인디언섯다 모드 | 3/3 | Complete   | 2026-03-30 |
 | 9. 특수 규칙 (땡값 + 94재경기) | 2/2 | Complete   | 2026-03-30 |
-| 10. 시각/UX 완성 | 1/4 | In Progress|  |
+| 10. 시각/UX 완성 | 2/4 | In Progress|  |
 | 11. 소셜/기능 완성 | 0/TBD | Not started | - |
 | 12. 통합 테스트 + 배포 | 0/TBD | Not started | - |

@@ -243,11 +243,11 @@
 | UX-06 | Phase 10 | Pending |
 | UX-07 | Phase 10 | Pending |
 | UX-08 | Phase 10 | Pending |
-| UX-09 | Phase 10 | Pending |
+| UX-09 | Phase 10 | Complete |
 | IMG-01 | Phase 10 | Complete |
 | IMG-02 | Phase 10 | Complete |
-| IMG-03 | Phase 10 | Pending |
-| BET-HIGHLIGHT | Phase 10 | Pending |
+| IMG-03 | Phase 10 | Complete |
+| BET-HIGHLIGHT | Phase 10 | Complete |
 | UX-02 | Phase 11 | Pending |
 | HIST-01 | Phase 11 | Pending |
 | HIST-02 | Phase 11 | Pending |
