@@ -444,64 +444,98 @@ export function RoomPage() {
   }
 
   // 게임 진행 중
+  const handPanelNode = (
+    <HandPanel
+      myPlayer={myPlayer}
+      phase={gameState.phase}
+      sharedCard={gameState.mode === 'shared-card' ? gameState.sharedCard : undefined}
+      visibleCardCount={
+        phase === 'card-select' || (phase === 'betting-2' && gameState.mode === 'three-card')
+          ? (myPlayer?.cards.length ?? 0)
+          : Object.keys(visibleCardCounts).length > 0
+            ? (visibleCardCounts[myPlayerId ?? ''] ?? 0)
+            : undefined
+      }
+      nickname={myPlayer?.nickname}
+    />
+  );
+
+  const bettingPanelNode = (phase === 'betting' || phase === 'betting-1' || phase === 'betting-2') && cardConfirmed && (myPlayer?.isAlive ?? false) ? (
+    <BettingPanel
+      isMyTurn={isMyTurn}
+      currentBetAmount={gameState.currentBetAmount}
+      myCurrentBet={myPlayer?.currentBet ?? 0}
+      myChips={myPlayer?.chips ?? 0}
+      roomId={roomId!}
+      effectiveMaxBet={gameState.effectiveMaxBet}
+      currentPlayerNickname={currentPlayerNickname}
+      isEffectiveSen={isEffectiveSen}
+    />
+  ) : null;
+
+  const gameTableNode = (
+    <GameTable
+      players={gameState.players}
+      myPlayerId={myPlayerId}
+      currentPlayerIndex={gameState.currentPlayerIndex}
+      pot={gameState.pot}
+      visibleCardCounts={Object.keys(visibleCardCounts).length > 0 ? visibleCardCounts : undefined}
+      sharedCard={gameState.sharedCard}
+      mode={gameState.mode}
+    />
+  );
+
+  const infoPanelNode = (
+    <InfoPanel
+      myChips={myPlayer?.chips ?? 0}
+      pot={gameState.pot}
+      players={gameState.players}
+      myPlayerId={myPlayerId}
+    />
+  );
+
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
-      {/* 상단 헤더 */}
-      <div className="flex items-center justify-between p-2 border-b border-border">
-        <span className="text-sm text-muted-foreground">방 {roomId}</span>
-      </div>
-
-      {/* 게임 테이블 패널 */}
-      <div className="flex-1 flex items-center justify-center">
-        <GameTable
-          players={gameState.players}
-          myPlayerId={myPlayerId}
-          currentPlayerIndex={gameState.currentPlayerIndex}
-          pot={gameState.pot}
-          visibleCardCounts={Object.keys(visibleCardCounts).length > 0 ? visibleCardCounts : undefined}
-          sharedCard={gameState.sharedCard}
-          mode={gameState.mode}
-        />
-      </div>
-
-      {/* 하단 패널 */}
-      <div className="border-t border-border">
-        <div className="flex flex-col md:flex-row gap-4 p-4">
-          <HandPanel
-            myPlayer={myPlayer}
-            phase={gameState.phase}
-            sharedCard={gameState.mode === 'shared-card' ? gameState.sharedCard : undefined}
-            visibleCardCount={
-              phase === 'card-select' || (phase === 'betting-2' && gameState.mode === 'three-card')
-                ? (myPlayer?.cards.length ?? 0)
-                : Object.keys(visibleCardCounts).length > 0
-                  ? (visibleCardCounts[myPlayerId ?? ''] ?? 0)
-                  : undefined
-            }
-            nickname={myPlayer?.nickname}
-          />
-          <InfoPanel
-            myChips={myPlayer?.chips ?? 0}
-            pot={gameState.pot}
-            players={gameState.players}
-            myPlayerId={myPlayerId}
-          />
+    <div className="bg-background text-foreground">
+      {/* 데스크탑: 3열 그리드 */}
+      <div className="hidden md:grid grid-cols-[256px_1fr_256px] h-dvh overflow-hidden">
+        {/* 좌사이드: BettingPanel + HandPanel */}
+        <div className="flex flex-col border-r border-border overflow-y-auto">
+          {bettingPanelNode}
+          {handPanelNode}
         </div>
 
-        {(phase === 'betting' || phase === 'betting-1' || phase === 'betting-2') && cardConfirmed && (myPlayer?.isAlive ?? false) && (
-          <BettingPanel
-            isMyTurn={isMyTurn}
-            currentBetAmount={gameState.currentBetAmount}
-            myCurrentBet={myPlayer?.currentBet ?? 0}
-            myChips={myPlayer?.chips ?? 0}
-            roomId={roomId!}
-            effectiveMaxBet={gameState.effectiveMaxBet}
-            currentPlayerNickname={currentPlayerNickname}
-            isEffectiveSen={isEffectiveSen}
-          />
-        )}
+        {/* 중앙: GameTable */}
+        <div className="flex items-center justify-center overflow-hidden">
+          {gameTableNode}
+        </div>
 
-        <ChatPanel />
+        {/* 우사이드: InfoPanel + ChatPanel */}
+        <div className="flex flex-col border-l border-border overflow-y-auto">
+          {infoPanelNode}
+          <ChatPanel />
+        </div>
+      </div>
+
+      {/* 모바일: 수직 flex */}
+      <div className="md:hidden flex flex-col h-dvh overflow-hidden">
+        {/* 상단: GameTable + InfoPanel 오버레이 */}
+        <div className="relative flex-1 min-h-0 overflow-hidden">
+          {gameTableNode}
+          <div className="absolute top-2 right-2 z-10">
+            {infoPanelNode}
+          </div>
+        </div>
+
+        {/* 중단: HandPanel + BettingPanel */}
+        <div className="shrink-0 border-t border-border">
+          {handPanelNode}
+          {bettingPanelNode}
+        </div>
+
+        {/* 하단: ChatPanel placeholder */}
+        <div className="shrink-0 h-12 border-t border-border flex items-center justify-center">
+          <ChatPanel />
+        </div>
       </div>
 
       {/* 잠시 쉬기 중 → 복귀 예약 배너 (phase 무관) */}

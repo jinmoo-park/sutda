@@ -17,8 +17,14 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
     <>
       {/* 데스크톱: 원형 배치 */}
       <div
-        className="relative mx-auto hidden md:block"
-        style={{ width: '480px', height: '480px' }}
+        className="relative mx-auto hidden md:block rounded-2xl overflow-hidden"
+        style={{
+          width: '480px',
+          height: '480px',
+          backgroundImage: "url('/img/background.jpg')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
       >
         {/* 중앙 팟 표시 */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -49,7 +55,14 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
       </div>
 
       {/* 모바일: 세로 스택 */}
-      <div className="md:hidden space-y-2 p-4">
+      <div
+        className="md:hidden space-y-2 p-4"
+        style={{
+          backgroundImage: "url('/img/background.jpg')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
         {/* 팟 한줄 요약 */}
         <div className="text-center py-2">
           <span className="text-xs text-muted-foreground tracking-widest uppercase">판돈 </span>
