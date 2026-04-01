@@ -67,6 +67,8 @@ const nextRoundVotes: Map<string, Set<string>> = new Map();
 // 대기실 끊김 유예 타이머 (roomId:socketId → timeout)
 // 재접속 시 joinRoom이 nickname으로 ID를 갱신하므로, 타이머 만료 시 leaveRoom이 자동으로 no-op
 const waitingDisconnectTimers = new Map<string, ReturnType<typeof setTimeout>>();
+// 게임 중 끊김 유예 타이머 (roomId:playerId → timeout) — 30초 후 강제 퇴장 (D-17)
+const gameDisconnectTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 // 에러 메시지 맵 (per UI-SPEC 에러 메시지 계약)
 const ERROR_MESSAGES: Record<string, string> = {
@@ -171,6 +173,12 @@ io.on('connection', (socket) => {
           socket.emit('game-state', engine.getStateFor(socket.data.playerId) as GameState);
         }
       }
+      // 재접속 시 게임 disconnect 타이머 클리어
+      const reconnectTimerKey = `${roomId}:${socket.data.playerId}`;
+      if (gameDisconnectTimers.has(reconnectTimerKey)) {
+        clearTimeout(gameDisconnectTimers.get(reconnectTimerKey)!);
+        gameDisconnectTimers.delete(reconnectTimerKey);
+      }
     } catch (err: any) {
       emitError(socket, err.message as ErrorCode);
     }
@@ -184,6 +192,7 @@ io.on('connection', (socket) => {
       io.to(roomId).emit('player-left', {
         playerId: result.removedPlayerId,
         newHostId: result.newHostId,
+        nickname: socket.data.nickname,
       });
       // 방이 비었으면 채팅 이력 정리
       const room = roomManager.getRoom(roomId);
@@ -586,6 +595,61 @@ io.on('connection', (socket) => {
       if (room && room.gamePhase === 'playing') {
         // 게임 중이면 연결만 끊김 처리 (재접속 대기, per D-05)
         roomManager.disconnectPlayer(roomId, socket.id);
+        const disconnectedPlayerId = socket.data.playerId;
+        const disconnectedNickname = socket.data.nickname;
+        const timerKey = `${roomId}:${disconnectedPlayerId}`;
+
+        // 기존 타이머가 있으면 제거 (중복 방지)
+        if (gameDisconnectTimers.has(timerKey)) {
+          clearTimeout(gameDisconnectTimers.get(timerKey)!);
+        }
+
+        // 30초 후 강제 퇴장 처리 (D-17)
+        const timer = setTimeout(async () => {
+          gameDisconnectTimers.delete(timerKey);
+          const currentRoom = roomManager.getRoom(roomId);
+          if (!currentRoom) return;
+
+          const playerInRoom = currentRoom.players.find(p => p.id === disconnectedPlayerId);
+          if (!playerInRoom || playerInRoom.isConnected) return; // 이미 재접속함
+
+          // 게임 진행 중이면 자동 다이 처리 (D-19)
+          const engine = gameEngines.get(roomId);
+          if (engine) {
+            try { engine.forcePlayerLeave(disconnectedPlayerId); } catch { /* no-op */ }
+          }
+
+          // 방에서 제거
+          const result = roomManager.leaveRoom(roomId, disconnectedPlayerId);
+          if (result) {
+            io.to(roomId).emit('player-left', {
+              playerId: result.removedPlayerId,
+              newHostId: result.newHostId,
+              nickname: disconnectedNickname,
+            });
+
+            // 게임 상태 업데이트 broadcast (per-player emit)
+            if (engine) {
+              const room2 = roomManager.getRoom(roomId);
+              if (room2) {
+                const sockets2 = await io.in(roomId).fetchSockets();
+                for (const s of sockets2) {
+                  s.emit('game-state', engine.getStateFor(s.data.playerId) as GameState);
+                }
+              }
+            }
+
+            // 2인 → 1인 남으면 대기실 전환 (D-18)
+            const remainingRoom = roomManager.getRoom(roomId);
+            if (remainingRoom && remainingRoom.players.filter(p => !p.isObserver).length < 2) {
+              remainingRoom.gamePhase = 'waiting';
+              gameEngines.delete(roomId);
+              io.to(roomId).emit('room-state', remainingRoom);
+            }
+          }
+        }, 30_000); // D-17: 30초
+
+        gameDisconnectTimers.set(timerKey, timer);
       } else if (room) {
         // 대기실: 즉시 제거 대신 15초 유예 — 순간적 끊김(새로고침 등)으로 인해
         // 방장이 room.players에서 사라지고 다른 사람이 게임을 시작하는 버그 방지

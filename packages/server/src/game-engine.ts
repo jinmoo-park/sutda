@@ -1711,6 +1711,57 @@ export class GameEngine {
   }
 
   /**
+   * 게임 중 플레이어 강제 퇴장 처리 (D-19: 30초 disconnect 타이머 만료 시 호출)
+   * - 베팅 phase 중이면 자동 다이 처리
+   * - 그 외 phase에서는 isAlive = false 설정
+   */
+  forcePlayerLeave(playerId: string): void {
+    const player = this.state.players.find(p => p.id === playerId);
+    if (!player) return;
+
+    const bettingPhases: GameState['phase'][] = ['betting', 'betting-1', 'betting-2'];
+    if (bettingPhases.includes(this.state.phase) && player.isAlive) {
+      try {
+        this.processBetAction(playerId, { type: 'die' });
+      } catch {
+        // 이미 다이 등 — 무시
+        player.isAlive = false;
+      }
+    } else {
+      player.isAlive = false;
+    }
+  }
+
+  /**
+   * 등교 대납 (D-15: 학교 대신 가주기)
+   * - sponsorId 플레이어가 beneficiaryId 플레이어 대신 앤티 500원 납부
+   * - phase가 'attend-school'인지 검증
+   */
+  attendSchoolProxy(beneficiaryId: string, sponsorId: string): void {
+    this.assertPhase('attend-school');
+
+    if (this.state.attendedPlayerIds.includes(beneficiaryId)) {
+      throw new Error('ALREADY_ATTENDED');
+    }
+
+    const beneficiary = this.state.players.find(p => p.id === beneficiaryId);
+    const sponsor = this.state.players.find(p => p.id === sponsorId);
+    if (!beneficiary || !sponsor) return;
+
+    // 후원자가 앤티 납부
+    sponsor.chips -= 500;
+    this.state.pot += 500;
+    this.state.attendedPlayerIds.push(beneficiaryId);
+
+    this._updateChipBreakdowns();
+
+    // 모든 플레이어 등교 완료 여부 확인
+    if (this.state.attendedPlayerIds.length === this.state.players.length) {
+      this.completeAttendSchool();
+    }
+  }
+
+  /**
    * 다음 판 시작 (result phase에서만 가능)
    * - roundNumber 증가
    * - 모든 플레이어 리셋
