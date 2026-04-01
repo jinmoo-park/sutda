@@ -587,15 +587,30 @@ io.on('connection', (socket) => {
         // 모달 없이 자동 앤티: 비-absent 플레이어 전원 자동 등교
         const activeEngine = getEngine(roomId);
         if (activeEngine.getState().phase === 'attend-school') {
+          // proxy-ante 수혜자 목록 및 후원자 ID 읽기 (이전 판 result phase에서 설정됨)
+          const activeState = activeEngine.getState() as any;
+          const proxyBeneficiaries: string[] = activeState.schoolProxyBeneficiaryIds ?? [];
+          const proxySponsorId: string | undefined = activeState.schoolProxySponsorId;
+
           const nonAbsentPlayers = activeEngine.getState().players.filter(p => !p.isAbsent && p.isAlive);
           for (const p of nonAbsentPlayers) {
-            try { activeEngine.attendSchool(p.id); } catch { /* 이미 등교 */ }
+            try {
+              // proxy 수혜자이고 후원자 ID가 있으면 대납 처리
+              if (proxyBeneficiaries.includes(p.id) && proxySponsorId) {
+                activeEngine.attendSchoolProxy(p.id, proxySponsorId);
+              } else {
+                activeEngine.attendSchool(p.id);
+              }
+            } catch { /* 이미 등교 */ }
             if (activeEngine.getState().phase !== 'attend-school') break;
           }
           // 아직 attend-school이면 (absent 플레이어 때문에 자동완료 안 된 경우) 강제 완료
           if (activeEngine.getState().phase === 'attend-school') {
             activeEngine.completeAttendSchool();
           }
+          // proxy 상태 초기화 (1판 1회성)
+          (activeEngine.getState() as any).schoolProxyBeneficiaryIds = undefined;
+          (activeEngine.getState() as any).schoolProxySponsorId = undefined;
         }
 
         io.to(roomId).emit('room-state', room);
@@ -625,14 +640,25 @@ io.on('connection', (socket) => {
 
           // 자동 앤티
           if (engine.getState().phase === 'attend-school') {
+            const tbState = engine.getState() as any;
+            const tbProxyBeneficiaries: string[] = tbState.schoolProxyBeneficiaryIds ?? [];
+            const tbProxySponsorId: string | undefined = tbState.schoolProxySponsorId;
             const nonAbsentPlayers = engine.getState().players.filter(p => !p.isAbsent && p.isAlive);
             for (const p of nonAbsentPlayers) {
-              try { engine.attendSchool(p.id); } catch { /* 이미 등교 */ }
+              try {
+                if (tbProxyBeneficiaries.includes(p.id) && tbProxySponsorId) {
+                  engine.attendSchoolProxy(p.id, tbProxySponsorId);
+                } else {
+                  engine.attendSchool(p.id);
+                }
+              } catch { /* 이미 등교 */ }
               if (engine.getState().phase !== 'attend-school') break;
             }
             if (engine.getState().phase === 'attend-school') {
               engine.completeAttendSchool();
             }
+            (engine.getState() as any).schoolProxyBeneficiaryIds = undefined;
+            (engine.getState() as any).schoolProxySponsorId = undefined;
           }
 
           io.to(roomId).emit('game-state', engine.getState() as GameState);
