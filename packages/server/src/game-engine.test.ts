@@ -2086,3 +2086,251 @@ describe('D-07 우선순위 (땡잡이/암행어사 vs 구사)', () => {
     expect(state.phase).toBe('gusa-pending');
   });
 });
+
+// ============================================================
+// 올인 POT 정산 (Task 11-02-1)
+// ============================================================
+describe('allIn: 올인 POT 정산', () => {
+  /** showdown 직전 상태로 설정하는 헬퍼 */
+  function setupShowdownState(playerChips: number[], playerCards: [number, string][][]): GameEngine {
+    const ps = playerChips.map((chips, i) => ({
+      id: `player-${i}`, nickname: `P${i}`, chips, seatIndex: i, isConnected: true,
+    }));
+    const engine = new GameEngine('room1', ps, 'original', 2);
+    const state = engine.getState() as GameState;
+    // dealer 설정
+    state.players[0].isDealer = true;
+    // 모두 등교 완료 (mode-select 진입)
+    state.phase = 'betting';
+    state.currentBetAmount = 0;
+    for (const p of state.players) {
+      p.isAlive = true;
+      p.cards = playerCards[p.seatIndex]!.map(([rank, attr]) => ({
+        rank, attribute: attr as 'gwang' | 'yeolkkeut' | 'normal',
+      }));
+      p.isRevealed = true;
+    }
+    return engine;
+  }
+
+  it('Test 1: betAction call 후 플레이어 잔액이 0이 되면 isAllIn===true, chips===0', () => {
+    const ps = [
+      { id: 'player-0', nickname: 'P0', chips: 1000, seatIndex: 0, isConnected: true },
+      { id: 'player-1', nickname: 'P1', chips: 100000, seatIndex: 1, isConnected: true },
+    ];
+    const engine = new GameEngine('room1', ps, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.players[0].isDealer = true;
+    state.phase = 'betting';
+    state.currentBetAmount = 5000;
+    state.players[0].currentBet = 0;
+    state.players[1].currentBet = 5000;
+    (engine as any)._bettingActed = new Set(['player-1']);
+
+    engine.processBetAction('player-0', { type: 'call' });
+
+    const p0 = engine.getState().players.find(p => p.id === 'player-0')!;
+    expect(p0.chips).toBe(0);
+    expect(p0.isAllIn).toBe(true);
+  });
+
+  it('Test 2: 올인 플레이어는 베팅 순환에서 자동 스킵된다', () => {
+    const ps = [
+      { id: 'player-0', nickname: 'P0', chips: 1000, seatIndex: 0, isConnected: true },
+      { id: 'player-1', nickname: 'P1', chips: 100000, seatIndex: 1, isConnected: true },
+      { id: 'player-2', nickname: 'P2', chips: 100000, seatIndex: 2, isConnected: true },
+    ];
+    const engine = new GameEngine('room1', ps, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.players[0].isDealer = true;
+    state.phase = 'betting';
+    state.currentBetAmount = 5000;
+    state.players[0].currentBet = 0;
+    state.players[1].currentBet = 5000;
+    state.players[2].currentBet = 5000;
+    (engine as any)._bettingActed = new Set(['player-1', 'player-2']);
+
+    // player-0 올인 콜 후 베팅이 종료되어 showdown으로
+    engine.processBetAction('player-0', { type: 'call' });
+    // 올인 후 베팅 종료(모든 alive+non-allIn 플레이어가 액션 완료)
+    // showdown 또는 result여야 함
+    expect(['showdown', 'result']).toContain(engine.getState().phase);
+  });
+
+  it('Test 3: 단일 올인 — totalCommitted=1만인 올인 승자(장땡)가 4인 팟에서 올바르게 수령', () => {
+    // 시나리오: A(올인,1만), B(3만), C(5만), D(5만) → 총 14만
+    // A가 장땡(최강), 레벨1(1만×4=4만) 수령
+    // A는 레벨2,3 참여 불가 (totalCommitted=1만)
+    // B/C/D 중 2등(손안에 따라)이 레벨2(2만×3=6만) 수령
+    // C/D 중 강한 패가 레벨3(2만×2=4만) 수령
+    const ps = [
+      { id: 'A', nickname: 'A', chips: 100000, seatIndex: 0, isConnected: true },
+      { id: 'B', nickname: 'B', chips: 100000, seatIndex: 1, isConnected: true },
+      { id: 'C', nickname: 'C', chips: 100000, seatIndex: 2, isConnected: true },
+      { id: 'D', nickname: 'D', chips: 100000, seatIndex: 3, isConnected: true },
+    ];
+    const engine = new GameEngine('room1', ps, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'betting';
+    state.players[0].isDealer = true;
+
+    // totalCommitted 설정
+    state.players[0].totalCommitted = 10000; // A: 올인 1만
+    state.players[1].totalCommitted = 30000; // B: 3만
+    state.players[2].totalCommitted = 50000; // C: 5만
+    state.players[3].totalCommitted = 50000; // D: 5만
+    state.players[0].isAllIn = true;
+    state.players[0].chips = 0;
+    state.players[1].chips = 100000 - 30000;
+    state.players[2].chips = 100000 - 50000;
+    state.players[3].chips = 100000 - 50000;
+    state.pot = 140000;
+
+    // 카드: A=장땡(10+10), B=구땡(9+9), C=팔땡(8+8), D=칠땡(7+7)
+    state.players[0].cards = [{ rank: 10, attribute: 'normal' }, { rank: 10, attribute: 'yeolkkeut' }];
+    state.players[1].cards = [{ rank: 9, attribute: 'normal' }, { rank: 9, attribute: 'normal' }];
+    state.players[2].cards = [{ rank: 8, attribute: 'normal' }, { rank: 8, attribute: 'normal' }];
+    state.players[3].cards = [{ rank: 7, attribute: 'normal' }, { rank: 7, attribute: 'normal' }];
+    state.players.forEach(p => { p.isAlive = true; p.isRevealed = true; });
+
+    // 직접 settleChipsWithAllIn 호출
+    (engine as any).settleChipsWithAllIn();
+
+    const A = state.players[0];
+    const B = state.players[1];
+    const C = state.players[2];
+    const D = state.players[3];
+
+    // A: 장땡 — 레벨1(1만×4=4만)만 수령 → 0 + 40000 = 40000
+    expect(A.chips).toBe(40000);
+    // B(구땡): 레벨2(A제외 3명×2만=6만) 수령 → 70000 + 60000 = 130000
+    expect(B.chips).toBe(130000);
+    // C(팔땡): 레벨3(A,B 제외 C,D×2만=4만) 수령 → 50000 + 40000 = 90000
+    expect(C.chips).toBe(90000);
+    // D(칠땡): 레벨3 패배 → 50000
+    expect(D.chips).toBe(50000);
+  });
+
+  it('Test 4: 계단식 다중 올인 — C 최강, 레벨별 정산 검증', () => {
+    // B=1만 올인, C=3만 올인, A=5만, D=5만 → 총 14만
+    // 레벨1 (0→1만): 1만×4 = 4만 → B/C/A/D 중 C(장땡)이 best → C 수령 4만
+    // 레벨2 (1만→3만, 2만 증분): 2만×3(C/A/D) = 6만 → C/A/D 중 C가 best → C 수령 6만
+    // 레벨3 (3만→5만, 2만 증분): 2만×2(A/D) = 4만 → A/D 중 강한 패 (A=칠땡 > D=삼땡) → A 수령 4만
+    const ps = [
+      { id: 'A', nickname: 'A', chips: 100000, seatIndex: 0, isConnected: true },
+      { id: 'B', nickname: 'B', chips: 100000, seatIndex: 1, isConnected: true },
+      { id: 'C', nickname: 'C', chips: 100000, seatIndex: 2, isConnected: true },
+      { id: 'D', nickname: 'D', chips: 100000, seatIndex: 3, isConnected: true },
+    ];
+    const engine = new GameEngine('room1', ps, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'betting';
+    state.players[0].isDealer = true;
+
+    state.players[0].totalCommitted = 50000; // A: 5만
+    state.players[1].totalCommitted = 10000; // B: 1만 올인
+    state.players[2].totalCommitted = 30000; // C: 3만 올인
+    state.players[3].totalCommitted = 50000; // D: 5만
+    state.players[1].isAllIn = true;
+    state.players[1].chips = 0;
+    state.players[2].isAllIn = true;
+    state.players[2].chips = 0;
+    state.players[0].chips = 100000 - 50000;
+    state.players[3].chips = 100000 - 50000;
+    state.pot = 140000;
+
+    // A=칠땡, B=팔땡(1만 올인), C=장땡(최강, 3만 올인), D=삼땡
+    state.players[0].cards = [{ rank: 7, attribute: 'normal' }, { rank: 7, attribute: 'normal' }];
+    state.players[1].cards = [{ rank: 8, attribute: 'normal' }, { rank: 8, attribute: 'normal' }];
+    state.players[2].cards = [{ rank: 10, attribute: 'normal' }, { rank: 10, attribute: 'yeolkkeut' }];
+    state.players[3].cards = [{ rank: 3, attribute: 'normal' }, { rank: 3, attribute: 'normal' }];
+    state.players.forEach(p => { p.isAlive = true; p.isRevealed = true; });
+
+    (engine as any).settleChipsWithAllIn();
+
+    const A = state.players[0]; // 칠땡
+    const B = state.players[1]; // 팔땡 올인 1만
+    const C = state.players[2]; // 장땡 올인 3만
+    const D = state.players[3]; // 삼땡
+
+    // C: 레벨1(4만) + 레벨2(6만) = 10만 → 0 + 100000 = 100000
+    expect(C.chips).toBe(100000);
+    // A: 레벨3(4만) 수령 → 50000 + 40000 = 90000
+    expect(A.chips).toBe(90000);
+    // B: 팔땡이지만 레벨1에서 C한테 짐 → 0
+    expect(B.chips).toBe(0);
+    // D: 삼땡 레벨3 패배 → 50000
+    expect(D.chips).toBe(50000);
+  });
+
+  it('Test 5: 비올인 승자 있을 때 기존 settleChips() 동작 (hasAllIn=false)', () => {
+    const ps = Array.from({ length: 4 }, (_, i) => ({
+      id: `player-${i}`, nickname: `P${i}`, chips: 100000, seatIndex: i, isConnected: true,
+    }));
+    const engine = new GameEngine('room1', ps, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'betting';
+    state.pot = 10000;
+    state.winnerId = 'player-0';
+    state.players.forEach(p => { p.isAlive = true; p.isRevealed = true; });
+    // 올인 플레이어 없음
+    state.players[0].chips = 90000;
+
+    (engine as any).settleChipsWithAllIn();
+
+    // pot이 player-0에게 합산됨
+    expect(state.players[0].chips).toBe(100000);
+  });
+
+  it('Test 6: attendSchool에서 totalCommitted += 500 추적', () => {
+    const ps = Array.from({ length: 2 }, (_, i) => ({
+      id: `player-${i}`, nickname: `P${i}`, chips: 100000, seatIndex: i, isConnected: true,
+    }));
+    const engine = new GameEngine('room1', ps, 'original', 2);
+    engine.setDealerFromPreviousWinner('player-0');
+    engine.attendSchool('player-0');
+
+    const p0 = engine.getState().players.find(p => p.id === 'player-0')!;
+    expect(p0.totalCommitted).toBe(500);
+  });
+
+  it('Test 7: betAction call에서 totalCommitted += actualAmount 추적', () => {
+    const ps = [
+      { id: 'player-0', nickname: 'P0', chips: 10000, seatIndex: 0, isConnected: true },
+      { id: 'player-1', nickname: 'P1', chips: 100000, seatIndex: 1, isConnected: true },
+    ];
+    const engine = new GameEngine('room1', ps, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.players[0].isDealer = true;
+    state.phase = 'betting';
+    state.currentBetAmount = 3000;
+    state.players[0].currentBet = 0;
+    state.players[1].currentBet = 3000;
+    (engine as any)._bettingActed = new Set(['player-1']);
+
+    engine.processBetAction('player-0', { type: 'call' });
+
+    const p0 = engine.getState().players.find(p => p.id === 'player-0')!;
+    expect((p0.totalCommitted ?? 0)).toBeGreaterThan(0);
+  });
+
+  it('Test 8: nextRound에서 isAllIn=false, totalCommitted=0 리셋', () => {
+    const ps = Array.from({ length: 2 }, (_, i) => ({
+      id: `player-${i}`, nickname: `P${i}`, chips: 100000, seatIndex: i, isConnected: true,
+    }));
+    const engine = new GameEngine('room1', ps, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'result';
+    state.winnerId = 'player-0';
+    state.players[0].isAllIn = true;
+    state.players[0].totalCommitted = 5000;
+    state.players[1].isAllIn = false;
+    state.players[1].totalCommitted = 3000;
+
+    engine.nextRound();
+
+    expect(engine.getState().players[0].isAllIn).toBe(false);
+    expect(engine.getState().players[0].totalCommitted).toBe(0);
+    expect(engine.getState().players[1].totalCommitted).toBe(0);
+  });
+});
