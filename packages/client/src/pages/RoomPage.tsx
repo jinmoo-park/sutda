@@ -6,7 +6,6 @@ import { WaitingRoom } from '@/components/layout/WaitingRoom';
 import { GameTable } from '@/components/layout/GameTable';
 import { HandPanel } from '@/components/layout/HandPanel';
 import { BettingPanel } from '@/components/layout/BettingPanel';
-import { InfoPanel } from '@/components/layout/InfoPanel';
 import { ChatPanel } from '@/components/layout/ChatPanel';
 import { ResultScreen } from '@/components/layout/ResultScreen';
 import { DealerSelectModal } from '@/components/modals/DealerSelectModal';
@@ -27,6 +26,8 @@ import { computeSlotIndices } from '@/lib/cardImageUtils';
 import { HwatuCard } from '@/components/game/HwatuCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { HistoryModal } from '@/components/modals/HistoryModal';
+import { Clock } from 'lucide-react';
 
 // sessionStorage 키 헬퍼 (roomId별로 입장 정보 저장)
 function getRoomSessionKey(roomId: string) { return `sutda_room_${roomId}`; }
@@ -53,6 +54,8 @@ export function RoomPage() {
   const [dealingComplete, setDealingComplete] = useState(true);
   const [cardConfirmed, setCardConfirmed] = useState(false);
   const [myFlippedIndices, setMyFlippedIndices] = useState<Set<number>>(new Set());
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const { roundHistory } = useGameStore();
   // 세장섯다 3번째 카드 확인: phase === 'card-select' && !sejangThirdCardDismissed 이면 오버레이 표시
   const [sejangThirdCardDismissed, setSejangThirdCardDismissed] = useState(false);
   const [visibleCardCounts, setVisibleCardCounts] = useState<Record<string, number>>({});
@@ -520,21 +523,17 @@ export function RoomPage() {
     />
   );
 
-  const infoPanelNode = (
-    <InfoPanel
-      myChips={myPlayer?.chips ?? 0}
-      players={gameState.players}
-      myPlayerId={myPlayerId}
-    />
-  );
-
-  const compactInfoPanelNode = (
-    <InfoPanel
-      myChips={myPlayer?.chips ?? 0}
-      players={gameState.players}
-      myPlayerId={myPlayerId}
-      compact
-    />
+  // 이력 버튼 노드 (데스크탑 우사이드 상단, 모바일 GameTable 우상단)
+  const historyButtonNode = (
+    <button
+      onClick={() => setHistoryOpen(true)}
+      disabled={roundHistory.length === 0}
+      className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-40 rounded transition-colors"
+      aria-label={roundHistory.length === 0 ? '이력 없음' : '게임 이력'}
+    >
+      <Clock className="h-3.5 w-3.5" />
+      이력
+    </button>
   );
 
   return (
@@ -546,13 +545,17 @@ export function RoomPage() {
           {gameTableNode}
         </div>
 
-        {/* 우사이드: InfoPanel + ChatPanel (상단) + BettingPanel + HandPanel (하단) */}
+        {/* 우사이드: 이력 버튼 (상단) + ChatPanel (중단, 내부만 스크롤) + BettingPanel + HandPanel (하단) */}
         <div className="flex flex-col border-l border-border overflow-hidden">
-          <div className="flex-1 overflow-y-auto">
-            {infoPanelNode}
+          {/* 이력 버튼 헤더 */}
+          <div className="shrink-0 flex items-center justify-end px-3 py-1.5 border-b border-border">
+            {historyButtonNode}
+          </div>
+          {/* ChatPanel: 내부에서만 스크롤, 상위는 overflow-hidden */}
+          <div className="flex-1 min-h-0 overflow-hidden">
             <ChatPanel />
           </div>
-          <div className="shrink-0 p-2 space-y-2">
+          <div className="shrink-0 p-2 space-y-2 border-t border-border">
             {bettingPanelNode}
             {handPanelNode}
           </div>
@@ -561,23 +564,35 @@ export function RoomPage() {
 
       {/* 모바일: 수직 flex */}
       <div className="md:hidden flex flex-col h-dvh overflow-hidden">
-        {/* 상단: GameTable + InfoPanel 오버레이 */}
+        {/* 상단: GameTable (flex-1) — 이력 버튼 + shared card 오버레이 포함 */}
         <div className="relative flex-1 min-h-0 overflow-hidden">
           {gameTableNode}
-          <div className="absolute top-2 right-2 z-10">
-            {compactInfoPanelNode}
+          {/* 우상단: 이력 버튼 */}
+          <div className="absolute top-2 right-2 z-10 bg-black/50 rounded backdrop-blur-sm">
+            {historyButtonNode}
+          </div>
+          {/* 모바일: InfoPanel 자리에 shared card 표시 (한장공유 모드) */}
+          {gameState.mode === 'shared-card' && gameState.sharedCard && (
+            <div className="absolute top-2 left-2 z-10">
+              {/* shared card는 GameTable 내부에서 이미 표시되므로 여기서는 생략 */}
+            </div>
+          )}
+          {/* 모바일 채팅 오버레이 */}
+          <div className="absolute bottom-0 left-0 right-0 z-10 max-h-[40%]">
+            <ChatPanel mobile />
           </div>
         </div>
 
-        {/* 중단: HandPanel + BettingPanel */}
-        <div className="shrink-0 border-t border-border">
-          {handPanelNode}
-          {bettingPanelNode}
-        </div>
-
-        {/* 하단: ChatPanel placeholder */}
-        <div className="shrink-0 h-12 border-t border-border flex items-center justify-center">
-          <ChatPanel />
+        {/* 하단: HandPanel + BettingPanel 한 줄 flex */}
+        <div className="shrink-0 border-t border-border flex flex-row items-start gap-1 p-1">
+          <div className="flex-1 min-w-0">
+            {handPanelNode}
+          </div>
+          {bettingPanelNode && (
+            <div className="flex-1 min-w-0">
+              {bettingPanelNode}
+            </div>
+          )}
         </div>
       </div>
 
@@ -645,6 +660,7 @@ export function RoomPage() {
         </div>
       )}
 
+      <HistoryModal entries={roundHistory} open={historyOpen} onOpenChange={setHistoryOpen} />
       <Toaster />
     </div>
   );

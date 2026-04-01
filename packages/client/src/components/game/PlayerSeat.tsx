@@ -22,6 +22,8 @@ interface PlayerSeatProps {
   isObserver?: boolean;
   /** 소켓 연결 상태 (재접속 대기 중 표시) */
   isConnected?: boolean;
+  /** 모바일 compact 모드 — 카드 크기 축소 */
+  compact?: boolean;
 }
 
 export function PlayerSeat({
@@ -37,6 +39,7 @@ export function PlayerSeat({
   cardSlotIndices,
   isObserver,
   isConnected = true,
+  compact = false,
 }: PlayerSeatProps) {
   const style = {
     '--angle': `calc(360deg / ${totalPlayers} * ${seatIndex})`,
@@ -57,16 +60,17 @@ export function PlayerSeat({
   const content = (
     <Card
       className={cn(
-        'w-auto min-w-[7rem] p-2 space-y-1 transition-shadow duration-300',
+        'w-auto transition-shadow duration-300',
+        compact ? 'min-w-0 p-1 space-y-0.5' : 'min-w-[7rem] p-2 space-y-1',
         isCurrentTurn && 'ring-2 ring-primary shadow-[0_0_14px_3px] shadow-primary/50',
         !player.isAlive && 'opacity-50',
         !isConnected && 'opacity-50'
       )}
     >
       <div className="flex items-center gap-1">
-        <p className={cn('text-xs font-semibold truncate flex-1', isCurrentTurn && 'text-primary')}>
+        <p className={cn(compact ? 'text-[10px]' : 'text-xs', 'font-semibold truncate flex-1', isCurrentTurn && 'text-primary')}>
           {player.nickname}
-          {isMe && <span className="ml-1 text-xs font-semibold text-primary">[나]</span>}
+          {isMe && <span className={cn('ml-1 font-semibold text-primary', compact ? 'text-[10px]' : 'text-xs')}>[나]</span>}
         </p>
         {player.isDealer && (
           <Badge variant="outline" className="text-xs px-1 py-0 shrink-0">
@@ -142,7 +146,7 @@ export function PlayerSeat({
         );
       })()}
 
-      <p className="text-xs tabular-nums text-muted-foreground">{player.chips.toLocaleString()}원</p>
+      <p className={`tabular-nums ${compact ? 'text-[10px]' : 'text-xs'} ${isMe ? 'text-yellow-400 font-semibold' : 'text-muted-foreground'}`}>{player.chips.toLocaleString()}원</p>
 
       {player.lastBetAction && (
         <div className="flex items-center gap-1 flex-wrap">

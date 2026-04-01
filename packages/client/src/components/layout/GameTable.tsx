@@ -110,32 +110,36 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
           style={{ background: 'rgba(0,0,0,0.45)' }}
         />
 
-        <div className="relative z-10 space-y-2 p-4 h-full flex flex-col">
-          {/* 팟 한줄 요약 */}
-          <div className="text-center py-2">
+        <div className="relative z-10 flex flex-col h-full">
+          {/* 팟 한줄 요약 — padding으로 overflow 방지 */}
+          <div className="text-center pt-2 pb-1 px-2 shrink-0">
             <span className="text-xs text-muted-foreground tracking-widest uppercase">판돈 </span>
             <span className="font-semibold tabular-nums">{pot.toLocaleString()}원</span>
+            {hasAllIn && <span className="text-[10px] text-muted-foreground ml-1">올인 포함</span>}
           </div>
           {mode === 'shared-card' && sharedCard && (
-            <div className="flex justify-center py-1">
+            <div className="flex justify-center py-1 shrink-0">
               <SharedCardDisplay card={sharedCard} />
             </div>
           )}
-          {/* 그리드 배치 */}
-          <div className="grid grid-cols-2 gap-2">
-            {players.map((p, i) => (
-              <PlayerSeat
-                key={p.id}
-                seatIndex={i}
-                totalPlayers={players.length}
-                player={p}
-                isMe={p.id === myPlayerId}
-                isCurrentTurn={i === currentPlayerIndex}
-                visibleCardCount={visibleCardCounts?.[p.id]}
-                dealingComplete={dealingComplete}
-                cardSlotIndices={playerCardSlots[i]}
-              />
-            ))}
+          {/* 그리드 배치: 6명까지 2열 3행 */}
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="grid grid-cols-2 gap-1.5 p-1.5">
+              {players.map((p, i) => (
+                <PlayerSeat
+                  key={p.id}
+                  seatIndex={i}
+                  totalPlayers={players.length}
+                  player={p}
+                  isMe={p.id === myPlayerId}
+                  isCurrentTurn={i === currentPlayerIndex}
+                  visibleCardCount={visibleCardCounts?.[p.id]}
+                  dealingComplete={dealingComplete}
+                  cardSlotIndices={playerCardSlots[i]}
+                  compact
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
