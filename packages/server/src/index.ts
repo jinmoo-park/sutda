@@ -9,6 +9,8 @@ import type {
   SocketData,
   ErrorPayload,
   GameState,
+  RoundHistoryEntry,
+  RoomPlayer,
 } from '@sutda/shared';
 import { RoomManager } from './room-manager.js';
 import { GameEngine } from './game-engine.js';
@@ -69,6 +71,8 @@ const nextRoundVotes: Map<string, Set<string>> = new Map();
 const waitingDisconnectTimers = new Map<string, ReturnType<typeof setTimeout>>();
 // 게임 중 끊김 유예 타이머 (roomId:playerId → timeout) — 30초 후 강제 퇴장 (D-17)
 const gameDisconnectTimers = new Map<string, ReturnType<typeof setTimeout>>();
+// 라운드 이력 (roomId → RoundHistoryEntry[])
+const gameHistories = new Map<string, RoundHistoryEntry[]>();
 
 // 에러 메시지 맵 (per UI-SPEC 에러 메시지 계약)
 const ERROR_MESSAGES: Record<string, string> = {
@@ -153,25 +157,93 @@ io.on('connection', (socket) => {
       return emitError(socket, 'INVALID_CHIPS');
     }
     try {
-      const { room, player } = roomManager.joinRoom(roomId, socket.id, nickname, initialChips);
+      const room = roomManager.getRoom(roomId);
+      if (!room) {
+        return emitError(socket, 'ROOM_NOT_FOUND');
+      }
+
+      // 게임 중 신규 입장 → Observer로 추가 (D-12, D-15)
+      if (room.gamePhase === 'playing') {
+        // 재접속 확인 (닉네임으로 기존 플레이어 찾기)
+        const existing = room.players.find(p => p.nickname === nickname);
+        if (existing) {
+          // 기존 재접속 — roomManager.joinRoom으로 처리
+          const { room: updatedRoom } = roomManager.joinRoom(roomId, socket.id, nickname, initialChips);
+          socket.data.playerId = socket.id;
+          socket.data.nickname = nickname;
+          socket.data.roomId = roomId;
+          socket.join(roomId);
+          socket.emit('set-player-id', { playerId: socket.id });
+          io.to(roomId).emit('room-state', updatedRoom);
+          const chatHistory = chatHistories.get(roomId);
+          if (chatHistory && chatHistory.length > 0) {
+            socket.emit('chat-history', { messages: chatHistory });
+          }
+          const engine = gameEngines.get(roomId);
+          if (engine) {
+            socket.emit('game-state', engine.getStateFor(socket.id) as GameState);
+          }
+          // 재접속 시 게임 disconnect 타이머 클리어
+          const timerKey = `${roomId}:${socket.id}`;
+          if (gameDisconnectTimers.has(timerKey)) {
+            clearTimeout(gameDisconnectTimers.get(timerKey)!);
+            gameDisconnectTimers.delete(timerKey);
+          }
+          return;
+        }
+
+        // 신규 입장 → Observer로 추가
+        if (room.players.length >= room.maxPlayers) {
+          return emitError(socket, 'ROOM_FULL');
+        }
+
+        const playerId = socket.id;
+        const observer: RoomPlayer = {
+          id: playerId,
+          nickname,
+          chips: 0,  // Observer 동안 칩 0 (합류 시 observerChips 사용)
+          seatIndex: room.players.length,
+          isConnected: true,
+          isObserver: true,
+          observerChips: initialChips,
+        };
+
+        room.players.push(observer);
+        socket.data = { playerId, nickname, roomId };
+        socket.join(roomId);
+
+        socket.emit('set-player-id', { playerId });
+
+        // Observer에게 현재 게임 상태 전송 (D-13)
+        const engine = gameEngines.get(roomId);
+        if (engine) {
+          socket.emit('game-state', engine.getStateFor(playerId) as GameState);
+        }
+
+        // 방 상태 업데이트 broadcast
+        io.to(roomId).emit('room-state', room);
+
+        // 채팅 이력 전송
+        const chatHistory = chatHistories.get(roomId);
+        if (chatHistory && chatHistory.length > 0) {
+          socket.emit('chat-history', { messages: chatHistory });
+        }
+        return;
+      }
+
+      // 대기실 입장 (기존 로직)
+      const { room: updatedRoom } = roomManager.joinRoom(roomId, socket.id, nickname, initialChips);
       socket.data.playerId = socket.id;
       socket.data.nickname = nickname;
       socket.data.roomId = roomId;
       socket.join(roomId);
       socket.emit('set-player-id', { playerId: socket.id });
       // 방 전체에 갱신된 상태 브로드캐스트 (방장 포함 모든 클라이언트 갱신)
-      io.to(roomId).emit('room-state', room);
+      io.to(roomId).emit('room-state', updatedRoom);
       // 채팅 이력 전송 (입장 시 기존 채팅 복원)
       const chatHistory = chatHistories.get(roomId);
       if (chatHistory && chatHistory.length > 0) {
         socket.emit('chat-history', { messages: chatHistory });
-      }
-      // 게임 진행 중이면 현재 게임 상태도 전송 (재접속 / 뒤늦게 합류한 플레이어 대응)
-      if (room.gamePhase === 'playing') {
-        const engine = gameEngines.get(roomId);
-        if (engine) {
-          socket.emit('game-state', engine.getStateFor(socket.data.playerId) as GameState);
-        }
       }
       // 재접속 시 게임 disconnect 타이머 클리어
       const reconnectTimerKey = `${roomId}:${socket.data.playerId}`;
@@ -269,12 +341,30 @@ io.on('connection', (socket) => {
   socket.on('attend-school', ({ roomId }) => {
     handleGameAction(socket, roomId, () => {
       const engine = getEngine(roomId);
-      engine.attendSchool(socket.data.playerId);
+      const playerId = socket.data.playerId;
+
+      // 학교 대납 체크 (proxy-ante 핸들러에서 설정한 수혜자 목록)
+      const state = engine.getState();
+      const proxies = state.schoolProxyBeneficiaryIds;
+      if (proxies && proxies.includes(playerId)) {
+        // 후원자: dealer(선) 플레이어 또는 schoolProxySponsorId
+        const sponsorId = (state as any).schoolProxySponsorId ?? state.players.find(p => p.isDealer)?.id;
+        if (sponsorId) {
+          engine.attendSchoolProxy(playerId, sponsorId);
+          // 수혜자 목록에서 제거 (1회성)
+          (state as any).schoolProxyBeneficiaryIds = proxies.filter(id => id !== playerId);
+        } else {
+          engine.attendSchool(playerId);
+        }
+      } else {
+        engine.attendSchool(playerId);
+      }
+
       // 등교 응답 추적 (attendSchool 내부에서 completeAttendSchool 미호출 시)
       if (engine.getState().phase === 'attend-school') {
         if (!schoolResponded.has(roomId)) schoolResponded.set(roomId, new Set());
         const responded = schoolResponded.get(roomId)!;
-        responded.add(socket.data.playerId);
+        responded.add(playerId);
         // skip-school이 먼저 응답했을 수 있으므로 — 비-absent 플레이어 전원 응답 여부 확인
         const nonAbsentCount = engine.getState().players.filter(p => !p.isAbsent).length;
         if (responded.size >= nonAbsentCount) {
@@ -462,22 +552,54 @@ io.on('connection', (socket) => {
       if (votes.size >= nonAbsentCount) {
         nextRoundVotes.delete(roomId);
         schoolResponded.delete(roomId);
+
+        // 이력 수집 — lastRoundHistory가 있으면 gameHistories에 추가 (Plan 02 연동)
+        const lastHistory = (engine as any).lastRoundHistory;
+        if (lastHistory) {
+          if (!gameHistories.has(roomId)) gameHistories.set(roomId, []);
+          gameHistories.get(roomId)!.push(lastHistory);
+          io.to(roomId).emit('game-history', { entries: gameHistories.get(roomId)! });
+        }
+
         engine.nextRound();
 
+        // Observer → 일반 플레이어 자동 합류 (D-15)
+        const room = roomManager.getRoom(roomId)!;
+        const observers = room.players.filter(p => p.isObserver);
+        if (observers.length > 0) {
+          for (const obs of observers) {
+            obs.isObserver = false;
+            obs.chips = obs.observerChips ?? 100000;  // 입장 시 입력한 초기 칩
+            obs.observerChips = undefined;
+          }
+
+          // Observer 합류: GameEngine 재생성 (방법 A — nextRound() 이후 안전)
+          const currentState = engine.getState();
+          const newEngine = new GameEngine(
+            roomId,
+            room.players.filter(p => !p.isObserver),  // 모든 Observer 이미 해제됨
+            currentState.mode,
+            currentState.roundNumber,
+          );
+          gameEngines.set(roomId, newEngine);
+        }
+
         // 모달 없이 자동 앤티: 비-absent 플레이어 전원 자동 등교
-        if (engine.getState().phase === 'attend-school') {
-          const nonAbsentPlayers = engine.getState().players.filter(p => !p.isAbsent && p.isAlive);
+        const activeEngine = getEngine(roomId);
+        if (activeEngine.getState().phase === 'attend-school') {
+          const nonAbsentPlayers = activeEngine.getState().players.filter(p => !p.isAbsent && p.isAlive);
           for (const p of nonAbsentPlayers) {
-            try { engine.attendSchool(p.id); } catch { /* 이미 등교 */ }
-            if (engine.getState().phase !== 'attend-school') break;
+            try { activeEngine.attendSchool(p.id); } catch { /* 이미 등교 */ }
+            if (activeEngine.getState().phase !== 'attend-school') break;
           }
           // 아직 attend-school이면 (absent 플레이어 때문에 자동완료 안 된 경우) 강제 완료
-          if (engine.getState().phase === 'attend-school') {
-            engine.completeAttendSchool();
+          if (activeEngine.getState().phase === 'attend-school') {
+            activeEngine.completeAttendSchool();
           }
         }
 
-        io.to(roomId).emit('game-state', engine.getState() as GameState);
+        io.to(roomId).emit('room-state', room);
+        io.to(roomId).emit('game-state', activeEngine.getState() as GameState);
       }
     } catch (err: any) {
       socket.emit('game-error', { code: err.message, message: err.message });
@@ -518,6 +640,30 @@ io.on('connection', (socket) => {
       }
     } catch (err: any) {
       socket.emit('game-error', { code: err.message, message: err.message });
+    }
+  });
+
+  // proxy-ante 핸들러 — 학교 대납 설정 (SCHOOL-PROXY 서버 측)
+  socket.on('proxy-ante', ({ roomId, beneficiaryIds }) => {
+    const engine = gameEngines.get(roomId);
+    const room = roomManager.getRoom(roomId);
+    if (!engine || !room) return;
+
+    // schoolProxyBeneficiaryIds와 sponsorId 저장 — 다음 판 attend-school에서 소비
+    const state = engine.getState() as any;
+    state.schoolProxyBeneficiaryIds = beneficiaryIds;
+    state.schoolProxySponsorId = socket.data.playerId;
+
+    // proxy-ante-applied broadcast (토스트용)
+    const sponsorNickname = socket.data.nickname;
+    for (const bid of beneficiaryIds) {
+      const beneficiary = room.players.find(p => p.id === bid);
+      if (beneficiary) {
+        io.to(roomId).emit('proxy-ante-applied', {
+          sponsorNickname,
+          beneficiaryNickname: beneficiary.nickname,
+        } as any);
+      }
     }
   });
 
