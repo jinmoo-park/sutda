@@ -776,7 +776,7 @@ io.on('connection', (socket) => {
           clearTimeout(gameDisconnectTimers.get(timerKey)!);
         }
 
-        // 30초 후 강제 퇴장 처리 (D-17)
+        // 5초 후 강제 퇴장 처리 (D-17)
         const timer = setTimeout(async () => {
           gameDisconnectTimers.delete(timerKey);
           const currentRoom = roomManager.getRoom(roomId);
@@ -819,7 +819,7 @@ io.on('connection', (socket) => {
               io.to(roomId).emit('room-state', remainingRoom);
             }
           }
-        }, 30_000); // D-17: 30초
+        }, 5_000); // D-17: 5초
 
         gameDisconnectTimers.set(timerKey, timer);
       } else if (room) {
