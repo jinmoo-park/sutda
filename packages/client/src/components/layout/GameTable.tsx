@@ -1,7 +1,8 @@
-import type { PlayerState, Card, GameMode } from '@sutda/shared';
+import type { PlayerState, Card, GameMode, RoomState } from '@sutda/shared';
 import { PlayerSeat } from '@/components/game/PlayerSeat';
 import { SharedCardDisplay } from '@/components/game/SharedCardDisplay';
 import { computeSlotIndices } from '@/lib/cardImageUtils';
+import { Badge } from '@/components/ui/badge';
 
 interface GameTableProps {
   players: PlayerState[];
@@ -13,9 +14,15 @@ interface GameTableProps {
   mode?: GameMode;
   dealingComplete?: boolean;
   myFlippedCardIndices?: Set<number>;
+  roomState?: RoomState | null;
 }
 
-export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibleCardCounts, sharedCard, mode, dealingComplete = true, myFlippedCardIndices }: GameTableProps) {
+export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibleCardCounts, sharedCard, mode, dealingComplete = true, myFlippedCardIndices, roomState }: GameTableProps) {
+  // Observer 목록
+  const observers = roomState?.players.filter(p => p.isObserver) ?? [];
+  // 올인 플레이어 존재 여부
+  const hasAllIn = players.some(p => p.isAllIn);
+
   // 전역 slot 계산: 모든 플레이어 카드를 flat하게 합산해 rank 충돌 방지
   const globalSlots = computeSlotIndices(players.flatMap(p => p.cards));
   let offset = 0;
@@ -47,6 +54,9 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
           <div className="text-center bg-background/60 border border-border rounded-2xl px-5 py-3 shadow-inner">
             <p className="text-xs text-muted-foreground tracking-widest uppercase">판돈</p>
             <p className="text-[26px] font-semibold tabular-nums">{pot.toLocaleString()}원</p>
+            {hasAllIn && (
+              <span className="text-[10px] text-muted-foreground">올인 포함</span>
+            )}
             {mode === 'shared-card' && sharedCard && (
               <div className="mt-2">
                 <SharedCardDisplay card={sharedCard} />
@@ -54,6 +64,18 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
             )}
           </div>
         </div>
+
+        {/* Observer 목록 */}
+        {observers.length > 0 && (
+          <div className="absolute bottom-2 right-2 flex flex-col gap-1 z-10">
+            {observers.map(obs => (
+              <div key={obs.id} className="bg-card/80 rounded px-2 py-1 text-xs flex items-center gap-1.5">
+                <span>{obs.nickname}</span>
+                <Badge variant="outline" className="border-primary text-primary text-xs px-1 py-0">관람 중</Badge>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* 플레이어 원형 배치 */}
         {players.map((p, i) => (

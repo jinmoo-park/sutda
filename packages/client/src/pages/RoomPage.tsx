@@ -516,6 +516,7 @@ export function RoomPage() {
       mode={gameState.mode}
       dealingComplete={dealingComplete}
       myFlippedCardIndices={myFlippedIndices}
+      roomState={roomState}
     />
   );
 

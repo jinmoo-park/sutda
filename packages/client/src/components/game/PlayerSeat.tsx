@@ -18,6 +18,10 @@ interface PlayerSeatProps {
   flippedCardIndices?: Set<number>;
   /** 전역 slot 계산 결과 (GameTable에서 주입, 없으면 로컬 계산) */
   cardSlotIndices?: number[];
+  /** Observer 모드 여부 */
+  isObserver?: boolean;
+  /** 소켓 연결 상태 (재접속 대기 중 표시) */
+  isConnected?: boolean;
 }
 
 export function PlayerSeat({
@@ -31,6 +35,8 @@ export function PlayerSeat({
   dealingComplete = true,
   flippedCardIndices,
   cardSlotIndices,
+  isObserver,
+  isConnected = true,
 }: PlayerSeatProps) {
   const style = {
     '--angle': `calc(360deg / ${totalPlayers} * ${seatIndex})`,
@@ -53,7 +59,8 @@ export function PlayerSeat({
       className={cn(
         'w-auto min-w-[7rem] p-2 space-y-1 transition-shadow duration-300',
         isCurrentTurn && 'ring-2 ring-primary shadow-[0_0_14px_3px] shadow-primary/50',
-        !player.isAlive && 'opacity-50'
+        !player.isAlive && 'opacity-50',
+        !isConnected && 'opacity-50'
       )}
     >
       <div className="flex items-center gap-1">
@@ -76,7 +83,25 @@ export function PlayerSeat({
             다이
           </Badge>
         )}
+        {player.isAllIn && (
+          <Badge variant="outline" className="border-primary text-primary text-xs px-1 py-0 shrink-0">
+            올인
+          </Badge>
+        )}
       </div>
+
+      {isObserver && (
+        <div className="flex flex-col items-center gap-0.5">
+          <Badge variant="outline" className="border-primary text-primary text-xs px-1 py-0">
+            관람 중
+          </Badge>
+          <span className="text-[10px] text-muted-foreground">다음 판 자동 합류</span>
+        </div>
+      )}
+
+      {!isConnected && (
+        <span className="text-[10px] text-muted-foreground">재접속 대기 중</span>
+      )}
 
       {player.cards.length > 0 && (() => {
         const cardSlots = cardSlotIndices ?? computeSlotIndices(player.cards);

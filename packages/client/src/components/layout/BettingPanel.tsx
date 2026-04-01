@@ -31,6 +31,9 @@ export function BettingPanel({
   isEffectiveSen,
 }: BettingPanelProps) {
   const [raiseAmount, setRaiseAmount] = useState(0);
+  const { gameState, myPlayerId } = useGameStore();
+  const me = gameState?.players.find(p => p.id === myPlayerId);
+  const isMyAllIn = me?.isAllIn ?? false;
 
   const emitAction = (action: BetAction) => {
     const socket = useGameStore.getState().socket;
@@ -48,8 +51,12 @@ export function BettingPanel({
   return (
     <div className={cn(
       'p-3 rounded-lg space-y-2 transition-all duration-200',
-      isMyTurn && "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-[0_0_12px_hsl(var(--primary)/0.5)] bg-primary/10"
+      isMyTurn && !isMyAllIn && "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-[0_0_12px_hsl(var(--primary)/0.5)] bg-primary/10",
+      isMyAllIn && 'opacity-50 pointer-events-none'
     )}>
+      {isMyAllIn && (
+        <p className="text-sm text-muted-foreground text-center">올인 — 베팅 종료</p>
+      )}
       {/* 상태 표시 */}
       <div className="flex items-center justify-between">
         <p className={cn('text-xs font-semibold', isMyTurn ? 'text-primary' : 'text-muted-foreground')}>
