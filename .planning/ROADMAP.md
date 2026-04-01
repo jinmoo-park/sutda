@@ -19,7 +19,8 @@
 - [ ] **Phase 7: 세장섯다 + 한장공유 모드** - 세장섯다/한장공유 Strategy 구현 및 UI 확장
 - [x] **Phase 8: 골라골라 + 인디언섯다 모드** - 골라골라 카드 선택 UI, 인디언 카드 가시성 반전 로직 (completed 2026-03-30)
 - [x] **Phase 9: 특수 규칙 (땡값 + 94재경기)** - 땡값 자동 정산, 구사/멍텅구리구사 재경기 상태 머신 (completed 2026-03-30)
-- [x] **Phase 10: 시각/UX 완성** - 카드 이미지, 배분 애니메이션, 뒤집기 인터랙션, 셔플/기리 고도화, 패널 레이아웃 재설계, 베팅 강조 (completed 2026-03-31)
+- [x] **Phase 10: 시각/UX 완성** - 카드 이미지, 배분 애니메이션, 뒤집기 인터랙션, 셔플/기리 고도화, 패널 레이아웃 재설계, 베팅 강조 (completed 2026-03-31)
+- [ ] **Phase 10.1: Stitch 연계 UI 고도화 (INSERTED)** - Google Stitch MCP 활용 전체 UI D-09 군용담요 컨셉 개선
 - [ ] **Phase 11: 소셜/기능 완성** - 채팅, 게임 이력, 학교 대신 가주기, 뒤늦게 입장(Observer), 세션종료 표시, 올인 POT
 - [ ] **Phase 12: 통합 테스트 + 배포** - E2E 검증, Railway/Render 배포, 모바일 브라우저 대응
 
@@ -205,13 +206,25 @@ Plans:
 
 ### Phase 10.1: Stitch 연계 UI 고도화 (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
-**Requirements**: TBD
+**Goal:** Google Stitch MCP를 활용하여 전체 UI를 D-09 군용담요 컨셉("공장에서 군용담요 깔아놓고 하는 느낌")으로 프로페셔널하게 개선한다 — 메인화면, 대기실, 게임테이블, 패널, 모달 16개, 공통 UI 전체.
+**Requirements**: STITCH-SETUP, STITCH-DESIGN-SYSTEM, STITCH-MAINPAGE, STITCH-WAITINGROOM, STITCH-GAMETABLE, STITCH-PLAYERSEAT, STITCH-BETTINGPANEL, STITCH-HANDPANEL, STITCH-INFOPANEL, STITCH-MODAL-HIGH, STITCH-MODAL-REST, STITCH-COMMON-UI, STITCH-RESULTSCREEN
 **Depends on:** Phase 10
-**Plans:** 0 plans
+**Plans:** 7 plans
+**Success Criteria** (완료 시 참이어야 하는 것):
+  1. 모든 주요 화면과 모달이 D-09 군용담요 컨셉으로 시각적으로 개선되어 있다
+  2. 기존 게임 로직(소켓 통신, 상태 관리)이 변경 없이 동작한다
+  3. ShuffleModal/CutModal의 rAF 애니메이션/드래그 로직이 완전히 보존되어 있다
+  4. HwatuCard 3D flip 인터랙션이 모든 v2 컴포넌트에서 정상 동작한다
+  5. pnpm test 통과 (리그레션 없음)
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 10.1 to break down)
+- [ ] 10.1-01-PLAN.md — Stitch MCP 환경 설정 + DESIGN.md 작성 + 디자인 시스템 등록
+- [ ] 10.1-02-PLAN.md — MainPage + WaitingRoom UI 고도화
+- [ ] 10.1-03-PLAN.md — GameTable + PlayerSeat UI 고도화
+- [ ] 10.1-04-PLAN.md — BettingPanel + HandPanel + InfoPanel UI 고도화
+- [ ] 10.1-05-PLAN.md — 고우선순위 모달 4개 UI 고도화 (ModeSelect, AttendSchool, DealerSelect, DealerResult)
+- [ ] 10.1-06-PLAN.md — 나머지 모달 12개 UI 고도화 (Shuffle, Cut 외관만 + 나머지 10개)
+- [ ] 10.1-07-PLAN.md — shadcn/ui 공통 UI 커스터마이징 + ResultScreen + 전체 리그레션
 
 ### Phase 11: 소셜/기능 완성
 
@@ -255,7 +268,7 @@ Plans:
 ## Progress
 
 **실행 순서:**
-Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12
+Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 10.1 -> 11 -> 12
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -269,5 +282,6 @@ Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12
 | 8. 골라골라 + 인디언섯다 모드 | 3/3 | Complete   | 2026-03-30 |
 | 9. 특수 규칙 (땡값 + 94재경기) | 2/2 | Complete   | 2026-03-30 |
 | 10. 시각/UX 완성 | 4/4 | Complete    | 2026-03-31 |
+| 10.1 Stitch UI 고도화 | 0/7 | Planning    | - |
 | 11. 소셜/기능 완성 | 0/TBD | Not started | - |
 | 12. 통합 테스트 + 배포 | 0/TBD | Not started | - |
