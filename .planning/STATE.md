@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 11 UI-SPEC approved
-last_updated: "2026-04-01T15:23:51.394Z"
-last_activity: 2026-04-01 -- Phase 11 execution started
+stopped_at: Completed 11-03-PLAN.md
+last_updated: "2026-04-01T15:44:43.206Z"
+last_activity: 2026-04-01
 progress:
   total_phases: 13
   completed_phases: 10
   total_plans: 29
-  completed_plans: 25
+  completed_plans: 27
   percent: 44
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 ## Current Position
 
 Phase: 11 (social-features) — EXECUTING
-Plan: 1 of 4
-Status: Executing Phase 11
-Last activity: 2026-04-01 -- Phase 11 execution started
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-04-01
 
 Progress: [████░░░░░░] 44%
 
@@ -82,6 +82,7 @@ Progress: [████░░░░░░] 44%
 | Phase 10.1-stitch-ui P01 | 4 | 1 tasks | 1 files |
 | Phase 10.1-stitch-ui P03 | 15 | 2 tasks | 2 files |
 | Phase 10.1-stitch-ui P02 | 40min | 2 tasks | 2 files |
+| Phase 11-social-features P03 | 15 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -165,6 +166,8 @@ Recent decisions affecting current work:
 - [Phase 10.1-stitch-ui]: Stitch generate_screen_from_text 미지원으로 타원형 게임판 felt + 코너 마커 + 3단 PlayerSeat 구조를 D-09 토큰으로 직접 구현
 - [Phase 10.1-stitch-ui]: Stitch HTML 레이아웃 구조를 React primary skeleton으로 사용 — 색상 적용이 아닌 레이아웃 채용 방식
 - [Phase 10.1-stitch-ui]: wool-texture CSS: radial-gradient dot-grain + backgroundColor 조합으로 캔버스 텍스처 구현
+- [Phase 11-social-features]: Observer 입장 시 roomManager 우회하여 index.ts에서 직접 RoomPlayer 생성 (GAME_IN_PROGRESS 에러 회피)
+- [Phase 11-social-features]: GameEngine 재생성(방법 A): nextRound() 이후 Observer 합류 시 새 GameEngine 인스턴스 생성
 
 ### Pending Todos
 
@@ -183,6 +186,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T14:41:43.112Z
-Stopped at: Phase 11 UI-SPEC approved
-Resume file: .planning/phases/11-social-features/11-UI-SPEC.md
+Last session: 2026-04-01T15:44:43.200Z
+Stopped at: Completed 11-03-PLAN.md
+Resume file: None
