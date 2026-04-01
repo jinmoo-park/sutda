@@ -7,15 +7,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <div id="debug-msg" style="color:black;padding:16px;font-size:14px">HTML 로딩됨. JS 실행 대기중...</div>
-    <script>document.getElementById('debug-msg').textContent = 'HTML+JS(일반) 실행됨';</script>
-    <script type="module">
-      document.getElementById('debug-msg').textContent = 'ESM 모듈 실행됨. React 로딩중...';
-      window.addEventListener('error', (e) => {
-        document.getElementById('debug-msg').style.color = 'red';
-        document.getElementById('debug-msg').textContent = '[모듈 에러] ' + e.message + ' @ ' + e.filename + ':' + e.lineno;
-      });
-    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

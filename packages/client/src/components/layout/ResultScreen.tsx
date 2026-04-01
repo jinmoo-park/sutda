@@ -1,47 +1,12 @@
 import { useState, useEffect } from 'react';
-import type { GameState, HandResult } from '@sutda/shared';
+import type { GameState } from '@sutda/shared';
 import { evaluateHand } from '@sutda/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { HwatuCard } from '@/components/game/HwatuCard';
 import { computeSlotIndices } from '@/lib/cardImageUtils';
 import { useGameStore } from '@/store/gameStore';
-
-const HAND_TYPE_KOREAN: Record<string, string> = {
-  'sam-pal-gwang-ttaeng': '삼팔광땡',
-  'il-pal-gwang-ttaeng': '일팔광땡',
-  'il-sam-gwang-ttaeng': '일삼광땡',
-  'jang-ttaeng': '장땡',
-  'gu-ttaeng': '구땡',
-  'pal-ttaeng': '팔땡',
-  'chil-ttaeng': '칠땡',
-  'yuk-ttaeng': '육땡',
-  'o-ttaeng': '오땡',
-  'sa-ttaeng': '사땡',
-  'sam-ttaeng': '삼땡',
-  'i-ttaeng': '이땡',
-  'il-ttaeng': '일땡',
-  ali: '알리',
-  'dok-sa': '독사',
-  'gu-bbing': '구삥',
-  'jang-bbing': '장삥',
-  'jang-sa': '장사',
-  'sae-ryuk': '새륙',
-  kkut: '끗',
-};
-
-function getHandLabel(result: HandResult): string {
-  if (result.handType !== 'kkut') {
-    return HAND_TYPE_KOREAN[result.handType] ?? result.handType;
-  }
-  if (result.isMeongtteongguriGusa) return '멍텅구리구사';
-  if (result.isGusa) return '구사';
-  if (result.isSpecialBeater && result.score === 1) return '암행어사';
-  if (result.isSpecialBeater && result.score === 0) return '땡잡이';
-  if (result.score === 0) return '망통';
-  if (result.score === 9) return '갑오';
-  return `${result.score}끗`;
-}
+import { getHandLabel } from '@/lib/handLabels';
 
 interface ResultScreenProps {
   gameState: GameState;
