@@ -2435,19 +2435,19 @@ describe('attendSchoolProxy + 이력 생성', () => {
   });
 
   it('Test 4: RoundHistoryEntry.playerChipChanges에 chipDelta가 정확히 계산됨', () => {
-    const ps = Array.from({ length: 3 }, (_, i) => ({
+    const ps = Array.from({ length: 2 }, (_, i) => ({
       id: `player-${i}`, nickname: `P${i}`, chips: 100000, seatIndex: i, isConnected: true,
     }));
+    // 2인 게임 - 땡값 없는 상황 (다이한 플레이어 없음)
     const engine = new GameEngine('room1', ps, 'original', 2);
     const state = engine.getState() as GameState;
     state.players[0].isDealer = true;
     state.phase = 'showdown';
-    state.pot = 6000; // player-0: -3000, player-1: -3000 투자 → 승자는 +3000 net
+    state.pot = 6000; // player-0: -3000, player-1: -3000 투자 → 승자는 +6000 net
 
     // 정산 전 chips 설정
     state.players[0].chips = 97000; // 100000 - 3000 베팅
     state.players[1].chips = 97000;
-    state.players[2].chips = 100000;
 
     state.players[0].cards = [{ rank: 10, attribute: 'normal' }, { rank: 10, attribute: 'yeolkkeut' }]; // 장땡
     state.players[0].isAlive = true;
@@ -2455,7 +2455,6 @@ describe('attendSchoolProxy + 이력 생성', () => {
     state.players[1].cards = [{ rank: 9, attribute: 'normal' }, { rank: 9, attribute: 'normal' }]; // 구땡
     state.players[1].isAlive = true;
     state.players[1].isRevealed = false;
-    state.players[2].isAlive = false;
 
     engine.revealCard('player-0');
     engine.revealCard('player-1');
@@ -2465,6 +2464,7 @@ describe('attendSchoolProxy + 이력 생성', () => {
     const p0Change = history.playerChipChanges.find((c: any) => c.playerId === 'player-0');
     expect(p0Change).toBeDefined();
     // player-0 wins pot(6000): chips went from 97000 to 103000, delta = +6000
+    // 다이한 플레이어 없으므로 땡값 없음
     expect(p0Change.chipDelta).toBe(6000);
   });
 });

@@ -1,5 +1,5 @@
 import { createDeck, evaluateHand, compareHands, checkGusaTrigger } from '@sutda/shared';
-import type { Card, GameState, GameMode, PlayerState, RoomPlayer, BetAction, ChipBreakdown } from '@sutda/shared';
+import type { Card, GameState, GameMode, PlayerState, RoomPlayer, BetAction, ChipBreakdown, RoundHistoryEntry } from '@sutda/shared';
 import type { HandResult } from '@sutda/shared';
 
 /**
@@ -79,6 +79,9 @@ class IndianModeStrategy implements GameModeStrategy {
 export class GameEngine {
   private state: GameState;
   private cutterPlayerId: string | null = null;
+
+  /** 마지막 판 이력 — 각 showdown 완료 후 자동 생성 */
+  public lastRoundHistory: RoundHistoryEntry | null = null;
 
   /** 베팅이 유효한 phase 목록 */
   private static readonly BETTING_PHASES: GameState['phase'][] = ['betting', 'betting-1', 'betting-2'];
@@ -272,6 +275,34 @@ export class GameEngine {
     }
 
     this._updateChipBreakdowns();
+  }
+
+  /**
+   * 판별 이력 생성 — 각 showdown 메서드에서 정산 후 호출
+   * @param chipsBeforeSettle 정산 전 플레이어별 chips 스냅샷
+   */
+  private _generateRoundHistory(chipsBeforeSettle: Map<string, number>): void {
+    if (!this.state.winnerId) return;
+    const winner = this.state.players.find(p => p.id === this.state.winnerId);
+    if (!winner) return;
+
+    const winnerHand = winner.cards[0] && winner.cards[1]
+      ? evaluateHand(winner.cards[0], winner.cards[1])
+      : null;
+
+    this.lastRoundHistory = {
+      roundNumber: this.state.roundNumber,
+      winnerId: this.state.winnerId,
+      winnerNickname: winner.nickname,
+      winnerHandLabel: winnerHand ? winnerHand.handType : 'unknown',
+      pot: this.state.pot,
+      hasTtaengPayment: !!this.state.ttaengPayments && this.state.ttaengPayments.length > 0,
+      playerChipChanges: this.state.players.map(p => ({
+        playerId: p.id,
+        nickname: p.nickname,
+        chipDelta: p.chips - (chipsBeforeSettle.get(p.id) ?? p.chips),
+      })),
+    };
   }
 
   /**
@@ -1360,8 +1391,10 @@ export class GameEngine {
     // 생존자가 1명(상대 전원 다이) → 공개 선택 완료, 즉시 정산
     if (alivePlayers.length === 1) {
       this.state.winnerId = alivePlayers[0].id;
+      const chipsSnapshot1 = new Map(this.state.players.map(p => [p.id, p.chips]));
       this.settleChipsWithAllIn();
       this._settleTtaengValue();  // 오리지날 모드: 땡값 정산 (상대 전원 다이 후 공개)
+      this._generateRoundHistory(chipsSnapshot1);
       this.state.phase = 'result';
       return;
     }
@@ -1391,7 +1424,9 @@ export class GameEngine {
     }
 
     // 공개 없이 정산
+    const chipsSnapshotMuck = new Map(this.state.players.map(p => [p.id, p.chips]));
     this.settleChipsWithAllIn();
+    this._generateRoundHistory(chipsSnapshotMuck);
     this.state.phase = 'result';
   }
 
@@ -1462,8 +1497,10 @@ export class GameEngine {
 
     // 승자 결정
     this.state.winnerId = best.player.id;
+    const chipsSnapshotOrig = new Map(this.state.players.map(p => [p.id, p.chips]));
     this.settleChipsWithAllIn();  // 올인 여부에 따라 분기 정산
     this._settleTtaengValue();  // 오리지날 모드: 땡값 정산 (Phase 09-01)
+    this._generateRoundHistory(chipsSnapshotOrig);
     this.state.phase = 'result';
   }
 
@@ -1527,7 +1564,9 @@ export class GameEngine {
     }
 
     this.state.winnerId = best.player.id;
+    const chipsSnapshotSejang = new Map(this.state.players.map(p => [p.id, p.chips]));
     this.settleChipsWithAllIn();
+    this._generateRoundHistory(chipsSnapshotSejang);
     this.state.phase = 'result';
   }
 
@@ -1586,7 +1625,9 @@ export class GameEngine {
     }
 
     this.state.winnerId = best.player.id;
+    const chipsSnapshotHanjang = new Map(this.state.players.map(p => [p.id, p.chips]));
     this.settleChipsWithAllIn();
+    this._generateRoundHistory(chipsSnapshotHanjang);
     this.state.phase = 'result';
   }
 
@@ -1812,6 +1853,7 @@ export class GameEngine {
    * 등교 대납 (D-15: 학교 대신 가주기)
    * - sponsorId 플레이어가 beneficiaryId 플레이어 대신 앤티 500원 납부
    * - phase가 'attend-school'인지 검증
+   * - 후원자 잔액 < 500 시 fallback으로 수혜자가 직접 납부 (Pitfall 5 예방)
    */
   attendSchoolProxy(beneficiaryId: string, sponsorId: string): void {
     this.assertPhase('attend-school');
@@ -1822,16 +1864,25 @@ export class GameEngine {
 
     const beneficiary = this.state.players.find(p => p.id === beneficiaryId);
     const sponsor = this.state.players.find(p => p.id === sponsorId);
-    if (!beneficiary || !sponsor) return;
+    if (!beneficiary || !sponsor) throw new Error('INVALID_ACTION');
 
-    // 후원자가 앤티 납부
+    // 후원자 잔액 부족 시 fallback — 수혜자가 직접 납부 (Pitfall 5 예방)
+    if (sponsor.chips < 500) {
+      this.attendSchool(beneficiaryId);
+      return;
+    }
+
+    // 후원자 칩 차감
     sponsor.chips -= 500;
+    sponsor.totalCommitted = (sponsor.totalCommitted ?? 0) + 500;
+
+    // 수혜자는 무료 참여 (chips 차감 없음)
     this.state.pot += 500;
     this.state.attendedPlayerIds.push(beneficiaryId);
 
     this._updateChipBreakdowns();
 
-    // 모든 플레이어 등교 완료 여부 확인
+    // 전원 등교 완료 체크
     if (this.state.attendedPlayerIds.length === this.state.players.length) {
       this.completeAttendSchool();
     }
