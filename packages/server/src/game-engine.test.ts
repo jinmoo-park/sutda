@@ -2114,9 +2114,11 @@ describe('allIn: 올인 POT 정산', () => {
   }
 
   it('Test 1: betAction call 후 플레이어 잔액이 0이 되면 isAllIn===true, chips===0', () => {
+    // 3인 게임으로 설정: player-0 올인 후 betting이 계속되어 isAllIn 상태 확인 가능
     const ps = [
       { id: 'player-0', nickname: 'P0', chips: 1000, seatIndex: 0, isConnected: true },
       { id: 'player-1', nickname: 'P1', chips: 100000, seatIndex: 1, isConnected: true },
+      { id: 'player-2', nickname: 'P2', chips: 100000, seatIndex: 2, isConnected: true },
     ];
     const engine = new GameEngine('room1', ps, 'original', 2);
     const state = engine.getState() as GameState;
@@ -2125,11 +2127,14 @@ describe('allIn: 올인 POT 정산', () => {
     state.currentBetAmount = 5000;
     state.players[0].currentBet = 0;
     state.players[1].currentBet = 5000;
+    state.players[2].currentBet = 0; // player-2 hasn't acted yet
+    // player-1 already acted, player-2 has NOT acted yet → betting won't terminate after player-0 acts
     (engine as any)._bettingActed = new Set(['player-1']);
 
     engine.processBetAction('player-0', { type: 'call' });
 
     const p0 = engine.getState().players.find(p => p.id === 'player-0')!;
+    // player-0 should have gone allIn (chips depleted)
     expect(p0.chips).toBe(0);
     expect(p0.isAllIn).toBe(true);
   });
@@ -2146,8 +2151,11 @@ describe('allIn: 올인 POT 정산', () => {
     state.phase = 'betting';
     state.currentBetAmount = 5000;
     state.players[0].currentBet = 0;
+    state.players[0].cards = [{ rank: 1, attribute: 'gwang' }, { rank: 2, attribute: 'normal' }];
     state.players[1].currentBet = 5000;
+    state.players[1].cards = [{ rank: 3, attribute: 'normal' }, { rank: 4, attribute: 'normal' }];
     state.players[2].currentBet = 5000;
+    state.players[2].cards = [{ rank: 5, attribute: 'normal' }, { rank: 6, attribute: 'normal' }];
     (engine as any)._bettingActed = new Set(['player-1', 'player-2']);
 
     // player-0 올인 콜 후 베팅이 종료되어 showdown으로
@@ -2295,9 +2303,11 @@ describe('allIn: 올인 POT 정산', () => {
   });
 
   it('Test 7: betAction call에서 totalCommitted += actualAmount 추적', () => {
+    // 3인 게임으로 설정: player-0 콜 후 betting이 계속되어 totalCommitted 상태 확인 가능
     const ps = [
       { id: 'player-0', nickname: 'P0', chips: 10000, seatIndex: 0, isConnected: true },
       { id: 'player-1', nickname: 'P1', chips: 100000, seatIndex: 1, isConnected: true },
+      { id: 'player-2', nickname: 'P2', chips: 100000, seatIndex: 2, isConnected: true },
     ];
     const engine = new GameEngine('room1', ps, 'original', 2);
     const state = engine.getState() as GameState;
@@ -2306,6 +2316,7 @@ describe('allIn: 올인 POT 정산', () => {
     state.currentBetAmount = 3000;
     state.players[0].currentBet = 0;
     state.players[1].currentBet = 3000;
+    state.players[2].currentBet = 0; // player-2 hasn't acted yet
     (engine as any)._bettingActed = new Set(['player-1']);
 
     engine.processBetAction('player-0', { type: 'call' });

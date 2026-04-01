@@ -214,6 +214,67 @@ export class GameEngine {
   }
 
   /**
+   * 올인 플레이어 유무에 따라 분기 정산
+   * - 올인 플레이어 없으면 기존 settleChips() 호출
+   * - 올인 플레이어 있으면 레벨별 사이드팟 분리 정산
+   *
+   * 알고리즘: totalCommitted 기준 고유 레벨 오름차순 정렬 →
+   *   각 레벨의 증분(increment) × 해당 레벨에 기여한 플레이어 수 = 해당 레벨 팟
+   *   그 팟은 해당 레벨에 기여한 isAlive(폴드 안 함) 플레이어 중 best hand가 수령
+   */
+  private settleChipsWithAllIn(): void {
+    const hasAllIn = this.state.players.some(p => p.isAllIn);
+    if (!hasAllIn) {
+      this.settleChips();
+      return;
+    }
+
+    // 각 플레이어의 족보를 미리 계산 (isAlive = 폴드하지 않은 플레이어)
+    const handCache = new Map<string, ReturnType<typeof evaluateHand>>();
+    for (const p of this.state.players) {
+      if (p.isAlive && p.cards.length === 2 && p.cards[0] && p.cards[1]) {
+        handCache.set(p.id, evaluateHand(p.cards[0]!, p.cards[1]!));
+      }
+    }
+
+    // totalCommitted 기준으로 고유 레벨 수집 후 오름차순 정렬
+    const levels = [...new Set(
+      this.state.players.map(p => p.totalCommitted ?? p.totalBet)
+    )].filter(v => v > 0).sort((a, b) => a - b);
+
+    let prevLevel = 0;
+    for (const level of levels) {
+      const increment = level - prevLevel;
+      if (increment <= 0) { prevLevel = level; continue; }
+
+      // 이 레벨에 기여한 플레이어 수 (폴드 포함 — 기여한 칩은 팟에 있음)
+      const contributorsCount = this.state.players.filter(
+        p => (p.totalCommitted ?? p.totalBet) >= level
+      ).length;
+      const potAtLevel = increment * contributorsCount;
+
+      // 이 레벨을 이길 수 있는 생존자: isAlive(폴드 안함) + 해당 레벨에 기여함
+      const candidates = this.state.players.filter(
+        p => p.isAlive && (p.totalCommitted ?? p.totalBet) >= level && handCache.has(p.id)
+      );
+
+      if (candidates.length > 0) {
+        const potWinner = candidates.reduce((best, p) => {
+          const result = compareHands(handCache.get(best.id)!, handCache.get(p.id)!);
+          // 'b'이면 p가 더 강한 족보
+          return result === 'b' ? p : best;
+        });
+        potWinner.chips += potAtLevel;
+      }
+      // candidates가 0이면(모두 폴드, 실제로는 발생 불가) 팟 무효화
+
+      prevLevel = level;
+    }
+
+    this._updateChipBreakdowns();
+  }
+
+  /**
    * 오리지날 모드 전용: 승자가 땡으로 이겼을 때 다이한 플레이어가 땡값을 납부 (RULE-03, D-01~D-04)
    * - mode !== 'original' → 무시 (D-01)
    * - 승자가 isSpecialBeater(땡잡이/암행어사) → 면제 (RULE-04, D-03)
@@ -395,6 +456,7 @@ export class GameEngine {
     if (player) {
       player.chips -= 500;
       player.totalBet += 500;  // 앤티 누적
+      player.totalCommitted = (player.totalCommitted ?? 0) + 500;  // 올인 정산용 기여액 추적
     }
     this.state.pot += 500;
     this.state.attendedPlayerIds.push(playerId);
@@ -1118,11 +1180,15 @@ export class GameEngine {
 
     switch (action.type) {
       case 'call': {
-        const callAmount = this.state.currentBetAmount - player.currentBet;
+        const callAmount = Math.min(player.chips, this.state.currentBetAmount - player.currentBet);
         player.chips -= callAmount;
         player.currentBet += callAmount;
         player.totalBet += callAmount;
+        player.totalCommitted = (player.totalCommitted ?? 0) + callAmount;
         this.state.pot += callAmount;
+        if (player.chips === 0) {
+          player.isAllIn = true;
+        }
         player.lastBetAction = { type: 'call' };
         break;
       }
@@ -1135,8 +1201,12 @@ export class GameEngine {
         player.chips -= totalDeducted;
         player.currentBet += callAmount + action.amount;
         player.totalBet += callAmount + action.amount;
+        player.totalCommitted = (player.totalCommitted ?? 0) + totalDeducted;
         this.state.pot += callAmount + action.amount;
         this.state.currentBetAmount = player.currentBet;
+        if (player.chips === 0) {
+          player.isAllIn = true;
+        }
         player.lastBetAction = { type: 'raise', amount: action.amount };
 
         // 레이즈 발생 시 선 권한 소멸 + 다른 플레이어 액션 플래그 초기화
@@ -1229,14 +1299,14 @@ export class GameEngine {
       return;
     }
 
-    // 다음 생존 플레이어 찾기 (반시계)
+    // 다음 생존 플레이어 찾기 (반시계) — 올인 플레이어 스킵
     const totalPlayers = this.state.players.length;
     const currentSeatIndex = this.state.currentPlayerIndex;
 
     for (let i = 1; i <= totalPlayers; i++) {
       const nextSeatIndex = (currentSeatIndex - i + totalPlayers) % totalPlayers;
       const nextPlayer = this.state.players.find(p => p.seatIndex === nextSeatIndex);
-      if (nextPlayer && nextPlayer.isAlive) {
+      if (nextPlayer && nextPlayer.isAlive && !nextPlayer.isAllIn) {
         this.state.currentPlayerIndex = nextSeatIndex;
         this._updateEffectiveMaxBet();
         return;
@@ -1246,18 +1316,23 @@ export class GameEngine {
 
   /**
    * 베팅 종료 조건 확인
-   * - 모든 생존자가 액션을 완료했고 currentBet === currentBetAmount
+   * - 올인이 아닌 모든 생존자가 액션을 완료했고 currentBet === currentBetAmount
+   * - 올인 플레이어는 이미 완료로 간주
    */
   private _isBettingComplete(): boolean {
     const alivePlayers = this.state.players.filter(p => p.isAlive);
     if (alivePlayers.length <= 1) return true;
 
-    // 모든 생존자가 액션을 완료했는지 확인
-    const allActed = alivePlayers.every(p => this._bettingActed.has(p.id));
+    // 올인이 아닌 생존자만 베팅 참여 대상
+    const activeBettors = alivePlayers.filter(p => !p.isAllIn);
+    if (activeBettors.length === 0) return true;  // 전원 올인이면 베팅 종료
+
+    // 모든 활성 베터가 액션을 완료했는지 확인
+    const allActed = activeBettors.every(p => this._bettingActed.has(p.id));
     if (!allActed) return false;
 
-    // 모든 생존자의 currentBet이 currentBetAmount와 동일한지 확인
-    return alivePlayers.every(p => p.currentBet === this.state.currentBetAmount);
+    // 모든 활성 베터의 currentBet이 currentBetAmount와 동일한지 확인
+    return activeBettors.every(p => p.currentBet === this.state.currentBetAmount);
   }
 
   // =====================================================================
@@ -1284,7 +1359,8 @@ export class GameEngine {
 
     // 생존자가 1명(상대 전원 다이) → 공개 선택 완료, 즉시 정산
     if (alivePlayers.length === 1) {
-      this.settleChips();
+      this.state.winnerId = alivePlayers[0].id;
+      this.settleChipsWithAllIn();
       this._settleTtaengValue();  // 오리지날 모드: 땡값 정산 (상대 전원 다이 후 공개)
       this.state.phase = 'result';
       return;
@@ -1315,7 +1391,7 @@ export class GameEngine {
     }
 
     // 공개 없이 정산
-    this.settleChips();
+    this.settleChipsWithAllIn();
     this.state.phase = 'result';
   }
 
@@ -1386,7 +1462,7 @@ export class GameEngine {
 
     // 승자 결정
     this.state.winnerId = best.player.id;
-    this.settleChips();  // pot을 승자에게 합산 (per D-01)
+    this.settleChipsWithAllIn();  // 올인 여부에 따라 분기 정산
     this._settleTtaengValue();  // 오리지날 모드: 땡값 정산 (Phase 09-01)
     this.state.phase = 'result';
   }
@@ -1451,7 +1527,7 @@ export class GameEngine {
     }
 
     this.state.winnerId = best.player.id;
-    this.settleChips();
+    this.settleChipsWithAllIn();
     this.state.phase = 'result';
   }
 
@@ -1510,7 +1586,7 @@ export class GameEngine {
     }
 
     this.state.winnerId = best.player.id;
-    this.settleChips();
+    this.settleChipsWithAllIn();
     this.state.phase = 'result';
   }
 
@@ -1800,10 +1876,13 @@ export class GameEngine {
       p.totalBet = 0;
       p.lastBetAction = undefined;
       p.isDealer = false;
+      p.isAllIn = false;
+      p.totalCommitted = 0;
       (p as any).selectedCards = undefined;  // 세장섯다: 선택 카드 초기화
       p.openedCardIndex = undefined;  // 세장섯다: 오픈 카드 인덱스 초기화
     });
     (this.state as any).sharedCard = undefined;  // 한장공유: 공유 카드 초기화
+    this.state.schoolProxyBeneficiaryIds = undefined;  // 학교 대납 수혜자 리셋
 
     // 이전 승자가 dealer
     if (prevWinnerId) {
