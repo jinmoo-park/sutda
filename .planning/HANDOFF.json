@@ -1,32 +1,28 @@
 {
   "version": "1.0",
-  "timestamp": "2026-04-01T17:04:45.736Z",
-  "phase": "11",
-  "phase_name": "social-features",
-  "phase_dir": ".planning/phases/11-social-features",
-  "plan": 4,
-  "task": 3,
-  "total_tasks": 9,
+  "timestamp": "2026-04-01T17:24:34.335Z",
+  "phase": "12",
+  "phase_name": "통합 테스트 + 배포",
+  "phase_dir": ".planning/phases/12-deploy",
+  "plan": 0,
+  "task": 0,
+  "total_tasks": 0,
   "status": "paused",
-  "completed_tasks": [
-    {"id": "11-01", "name": "공유 타입/프로토콜 계약 + 채팅 풀스택", "status": "done", "commits": ["43ea1dc", "63c0e52", "5213c4b"]},
-    {"id": "11-02", "name": "GameEngine 확장 (올인 POT 정산/앤티 대납/판별 이력)", "status": "done", "commits": ["498879b", "fc90c85", "d02d7b8", "1d1b994"]},
-    {"id": "11-03", "name": "Observer 모드 + 세션 종료 처리", "status": "done", "commits": ["1dd6922", "a8e94ec", "d95ba08"]},
-    {"id": "11-04", "name": "클라이언트 UI 완성 (checkpoint 포함)", "status": "done", "commits": ["d9ecad1", "7b03a93", "49c33f6", "229f219", "e445fc8", "5315145"]}
-  ],
+  "completed_tasks": [],
   "remaining_tasks": [],
   "blockers": [],
-  "human_actions_pending": [
-    {"action": "브라우저에서 Phase 11 전체 기능 재검증", "context": "Observer isDealer 버그 수정 후 재테스트 필요", "blocking": false}
-  ],
+  "human_actions_pending": [],
   "decisions": [
-    {"decision": "InfoPanel 제거 → 내 잔액 PlayerSeat에 골드색 표시", "rationale": "사용자 요청: 플레이어카드에 잔액 이미 표시되어 중복", "phase": "11"},
-    {"decision": "모바일 채팅 패널: 반투명 오버레이 (opacity 5%→50%→5%)", "rationale": "공간 부족으로 오버레이 방식, 이벤트 시만 가시성 높임", "phase": "11"},
-    {"decision": "disconnect 타이머 30초→5초", "rationale": "사용자 요청: 30초는 너무 길다", "phase": "11"},
-    {"decision": "proxy-ante 데이터를 nextRound() 전에 보존", "rationale": "nextRound()가 schoolProxyBeneficiaryIds를 초기화하여 proxy 기능 미작동", "phase": "11"},
-    {"decision": "Observer 엔진 재생성 후 setDealerFromPreviousWinner() 호출", "rationale": "새 GameEngine 생성자가 isDealer를 false로 리셋하여 모드 선택 불가", "phase": "11"}
+    {
+      "decision": "Google Cloud Run + Docker 배포 가능 확인",
+      "rationale": "WebSocket 지원됨, 인스턴스 1개 고정 필요(인메모리 상태), 소규모 친구들 용도에 적합. 타임아웃 최대 60분, 콜드 스타트 min-instances=1로 방지 가능.",
+      "phase": "12"
+    }
   ],
-  "uncommitted_files": [".planning/phases/11-social-features/11-02-SUMMARY.md"],
-  "next_action": "Phase 11 재검증 후 Phase 12(통합 테스트 + 배포) 진행",
-  "context_notes": "Phase 11 전체 실행 완료. 4개 플랜 모두 커밋됨. Verification에서 isConnected prop 누락 갭 1건 발견→즉시 수정. 사용자 checkpoint 피드백으로 대규모 UI 개선(InfoPanel 삭제, 모바일 레이아웃 2×3, 채팅 오버레이 등) 반영. 이후 추가 버그 2건(Observer isDealer 소실, proxy-ante 데이터 조기 삭제) 진단 및 수정."
+  "uncommitted_files": [
+    ".planning/STATE.md",
+    ".planning/phases/10.1-stitch-ui/.continue-here.md"
+  ],
+  "next_action": "/gsd:discuss-phase 12 로 재시작하여 gray area 논의 완료 → CONTEXT.md 생성",
+  "context_notes": "discuss-phase 초기 단계. 사용자가 Cloud Run 배포 가능 여부 질문 → 분석 완료 (가능, 주의사항 있음). Gray area 선택 전에 일시정지. 내일 계속."
 }
