@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { io, Socket } from 'socket.io-client';
-import type { GameState, RoomState, ServerToClientEvents, ClientToServerEvents } from '@sutda/shared';
+import { toast } from 'sonner';
+import type { GameState, RoomState, ServerToClientEvents, ClientToServerEvents, RoundHistoryEntry } from '@sutda/shared';
 
 type AppSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
@@ -26,6 +27,7 @@ interface GameStore {
   error: string | null;
   rechargeRequest: RechargeRequest | null;
   chatMessages: ChatMessage[];
+  roundHistory: RoundHistoryEntry[];
 
   // 액션
   connect: (serverUrl: string) => void;
@@ -42,6 +44,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   error: null,
   rechargeRequest: null,
   chatMessages: [],
+  roundHistory: [],
 
   connect: (serverUrl: string) => {
     const existing = get().socket;
@@ -93,6 +96,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ chatMessages: messages });
     });
 
+    socket.on('game-history', ({ entries }) => {
+      set({ roundHistory: entries });
+    });
+
+    socket.on('proxy-ante-applied', ({ sponsorNickname, beneficiaryNickname }) => {
+      toast(`${sponsorNickname}님이 ${beneficiaryNickname}의 학교를 대신 가줬습니다`);
+    });
+
+    socket.on('player-left', ({ nickname }) => {
+      if (nickname) {
+        toast.error(`${nickname}님 연결이 끊어졌습니다`);
+      }
+    });
+
     socket.on('disconnect', () => {
       set({ error: '서버 연결이 끊겼어요. 페이지를 새로 고침해 주세요.' });
     });
@@ -102,7 +119,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   disconnect: () => {
     get().socket?.disconnect();
-    set({ socket: null, gameState: null, roomState: null, myPlayerId: null, rechargeRequest: null, chatMessages: [] });
+    set({ socket: null, gameState: null, roomState: null, myPlayerId: null, rechargeRequest: null, chatMessages: [], roundHistory: [] });
   },
 
   clearError: () => set({ error: null }),

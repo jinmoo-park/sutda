@@ -245,7 +245,75 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch }: Resul
             )}
           </div>
         )}
+
+        <ProxyAnteSection gameState={gameState} myPlayerId={myPlayerId} socket={socket} />
       </div>
+    </div>
+  );
+}
+
+// 학교 대신 가주기 섹션 (승자에게만 렌더)
+function ProxyAnteSection({
+  gameState,
+  myPlayerId,
+  socket,
+}: {
+  gameState: GameState;
+  myPlayerId: string | null;
+  socket: ReturnType<typeof useGameStore>['socket'];
+}) {
+  const [proxyOpen, setProxyOpen] = useState(false);
+  const [selectedBeneficiaries, setSelectedBeneficiaries] = useState<string[]>([]);
+
+  if (gameState.winnerId !== myPlayerId) return null;
+
+  const otherPlayers = gameState.players.filter(p => p.id !== myPlayerId);
+
+  const handleProxyConfirm = () => {
+    if (selectedBeneficiaries.length === 0) return;
+    socket?.emit('proxy-ante', { roomId: gameState.roomId, beneficiaryIds: selectedBeneficiaries });
+    setProxyOpen(false);
+    setSelectedBeneficiaries([]);
+  };
+
+  const toggleBeneficiary = (id: string) => {
+    setSelectedBeneficiaries(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  return (
+    <div className="mt-4">
+      <button
+        onClick={() => setProxyOpen(!proxyOpen)}
+        className="text-sm text-muted-foreground hover:text-foreground"
+      >
+        학교 대신 가주기 {proxyOpen ? '▲' : '▼'}
+      </button>
+      {proxyOpen && (
+        <div className="mt-2 space-y-2">
+          {otherPlayers.map(p => (
+            <label key={p.id} className="flex items-center gap-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={selectedBeneficiaries.includes(p.id)}
+                onChange={() => toggleBeneficiary(p.id)}
+                className="accent-primary"
+              />
+              <span className={selectedBeneficiaries.includes(p.id) ? 'font-semibold' : ''}>
+                {p.nickname}
+              </span>
+            </label>
+          ))}
+          <button
+            onClick={handleProxyConfirm}
+            disabled={selectedBeneficiaries.length === 0}
+            className="px-4 py-1.5 text-sm rounded bg-primary text-primary-foreground disabled:opacity-50"
+          >
+            대신 내주기
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,9 @@
+import { useState } from 'react';
 import type { PlayerState } from '@sutda/shared';
 import { Separator } from '@/components/ui/separator';
+import { Clock } from 'lucide-react';
+import { HistoryModal } from '../modals/HistoryModal';
+import { useGameStore } from '../../store/gameStore';
 
 interface InfoPanelProps {
   myChips: number;
@@ -10,6 +14,8 @@ interface InfoPanelProps {
 
 export function InfoPanel({ myChips, players, myPlayerId, compact }: InfoPanelProps) {
   const others = players.filter((p) => p.id !== myPlayerId);
+  const { roundHistory } = useGameStore();
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   if (compact) {
     return (
@@ -34,9 +40,20 @@ export function InfoPanel({ myChips, players, myPlayerId, compact }: InfoPanelPr
 
   return (
     <div className="p-4 space-y-2 min-w-[160px]">
-      <div>
-        <p className="text-xs text-muted-foreground">내 잔액</p>
-        <p className="font-semibold tabular-nums text-yellow-500">{myChips.toLocaleString()}원</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs text-muted-foreground">내 잔액</p>
+          <p className="font-semibold tabular-nums text-yellow-500">{myChips.toLocaleString()}원</p>
+        </div>
+        <button
+          onClick={() => setHistoryOpen(true)}
+          disabled={roundHistory.length === 0}
+          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
+          aria-label={roundHistory.length === 0 ? '이력 없음' : '게임 이력'}
+        >
+          <Clock className="h-3.5 w-3.5" />
+          이력
+        </button>
       </div>
 
       {others.length > 0 && (
@@ -55,6 +72,8 @@ export function InfoPanel({ myChips, players, myPlayerId, compact }: InfoPanelPr
           </div>
         </>
       )}
+
+      <HistoryModal entries={roundHistory} open={historyOpen} onOpenChange={setHistoryOpen} />
     </div>
   );
 }
