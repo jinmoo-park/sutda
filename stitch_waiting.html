@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sutda Command - Waiting Room</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Work+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-bright": "#383a35",
+                        "tertiary-fixed": "#ffdad5",
+                        "on-surface-variant": "#c6c7bd",
+                        "outline-variant": "#454840",
+                        "primary": "#e4c379",
+                        "surface-container-lowest": "#0d0f0b",
+                        "outline": "#909288",
+                        "on-primary-fixed": "#251a00",
+                        "on-primary-fixed-variant": "#5a4304",
+                        "on-tertiary-fixed": "#410001",
+                        "surface-container": "#1e201c",
+                        "primary-fixed-dim": "#e4c379",
+                        "on-tertiary-container": "#ed796a",
+                        "tertiary-fixed-dim": "#ffb4a9",
+                        "surface-tint": "#e4c379",
+                        "surface": "#121410",
+                        "surface-dim": "#121410",
+                        "surface-container-low": "#1a1c18",
+                        "surface-container-highest": "#333531",
+                        "on-background": "#e3e3dc",
+                        "on-error": "#690005",
+                        "on-surface": "#e3e3dc",
+                        "error": "#ffb4ab",
+                        "inverse-surface": "#e3e3dc",
+                        "on-secondary-fixed": "#171e08",
+                        "on-secondary-container": "#b4bc9b",
+                        "inverse-primary": "#745b1c",
+                        "secondary-container": "#444c32",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-high": "#292b26",
+                        "on-tertiary-fixed-variant": "#81281f",
+                        "on-primary-container": "#b69853",
+                        "on-primary": "#3f2e00",
+                        "on-tertiary": "#62110b",
+                        "surface-variant": "#333531",
+                        "secondary-fixed-dim": "#c2caa8",
+                        "tertiary": "#ffb4a9",
+                        "tertiary-container": "#65140d",
+                        "on-secondary-fixed-variant": "#424a30",
+                        "error-container": "#93000a",
+                        "secondary-fixed": "#dee7c3",
+                        "on-secondary": "#2c331b",
+                        "secondary": "#c2caa8",
+                        "primary-fixed": "#ffdf9b",
+                        "background": "#121410",
+                        "primary-container": "#423000",
+                        "inverse-on-surface": "#2f312d"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Work Sans"],
+                        "label": ["Space Grotesk"]
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                },
+            },
+        }
+    </script>
+<style>
+        .wool-texture {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            background-blend-mode: overlay;
+            opacity: 0.15;
+        }
+        .tactical-dashed {
+            background-image: repeating-linear-gradient(0deg, transparent, transparent 4px, #454840 4px, #454840 8px), repeating-linear-gradient(90deg, transparent, transparent 4px, #454840 4px, #454840 8px), repeating-linear-gradient(180deg, transparent, transparent 4px, #454840 4px, #454840 8px), repeating-linear-gradient(270deg, transparent, transparent 4px, #454840 4px, #454840 8px);
+            background-size: 1px 100%, 100% 1px, 1px 100% , 100% 1px;
+            background-position: 0 0, 0 0, 100% 0, 0 100%;
+            background-repeat: no-repeat;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body min-h-screen relative overflow-x-hidden selection:bg-primary selection:text-on-primary">
+<!-- Texture Overlay -->
+<div class="fixed inset-0 pointer-events-none wool-texture z-0"></div>
+<!-- Top Navigation Shell (TopAppBar) -->
+<header class="fixed top-0 w-full z-50 bg-[#121410] border-b border-[#454840]/20 flex items-center justify-between px-6 h-16">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#e4c379]">menu</span>
+<h1 class="font-['Space_Grotesk'] font-bold text-[#e4c379] tracking-tighter uppercase text-sm">SUTDA COMMAND</h1>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#454840] hover:text-[#e4c379] transition-colors cursor-pointer">settings</span>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="relative z-10 pt-24 pb-32 px-6 max-w-2xl mx-auto">
+<!-- Room Code Section -->
+<section class="mb-10 text-center flex flex-col items-center">
+<span class="font-label text-outline text-[10px] uppercase tracking-[0.2em] mb-2">Operation Channel</span>
+<div class="flex items-center gap-3 bg-surface-container-low px-6 py-4 rounded shadow-inner border border-outline-variant/10">
+<span class="font-headline font-bold text-3xl md:text-4xl text-on-background tracking-widest">HQ-7729</span>
+<button class="flex items-center justify-center w-10 h-10 rounded bg-primary-container text-primary hover:opacity-80 transition-opacity active:translate-y-px duration-75">
+<span class="material-symbols-outlined text-xl">content_copy</span>
+</button>
+</div>
+<p class="mt-4 font-label text-primary/60 text-[11px] uppercase tracking-wider">Awaiting authorization from high command...</p>
+</section>
+<!-- Participants List -->
+<section class="space-y-4">
+<div class="flex items-center justify-between mb-2">
+<h2 class="font-label text-outline text-xs uppercase tracking-widest">Personnel Check-in</h2>
+<span class="font-label text-primary text-xs uppercase">4 / 8 SLOTS</span>
+</div>
+<!-- Participant 1: Commander -->
+<div class="group flex items-center justify-between p-4 bg-surface-container border-l-4 border-primary/40 relative">
+<div class="flex items-center gap-4">
+<div class="relative">
+<img alt="COMMANDER_ACE" class="w-12 h-12 rounded bg-surface-container-highest" data-alt="Digital avatar of a military commander with an authoritative expression wearing a dark olive beret" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbp2fccFTxNA4s_ToBv8DDOa8yCh4Fu1mjk8emr30_MkK1eGqjU3rtHa-FY-9Esukiib3UWZMmATvsyXqNV_bBam6gsyyOCtQa0pyMMG9-GuzndRXXugBjFmsKTlbXt3J-q1vwZXiQlOBBK_5H9cfX_Fub5zChJboQ8Sw2cfhFMZE0qdNUl5JXPwpUFjfHeAVYmyhWJcAZwBJnLt5NMqEy8hnSksKDHXtbgoei3Evn47lPmoDO__VQ3oFnY1vfhKBBUZO_aziUTIsY"/>
+<div class="absolute -top-1 -left-1 bg-primary text-on-primary p-0.5 rounded-sm">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">stars</span>
+</div>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline font-bold text-on-background text-sm tracking-tight">COMMANDER_ACE</span>
+<span class="bg-primary/10 text-primary text-[9px] px-1.5 py-0.5 rounded border border-primary/20 uppercase font-bold">Host</span>
+</div>
+<div class="flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[12px] text-primary">payments</span>
+<span class="text-xs font-label text-on-primary-container">5.2M GOLD</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-1 opacity-40">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+<span class="font-label text-[10px] uppercase">Ready</span>
+</div>
+</div>
+<!-- Participant 2: Me -->
+<div class="group flex items-center justify-between p-4 bg-surface-container-high border-l-4 border-on-surface-variant/40 relative ring-1 ring-primary/20">
+<div class="flex items-center gap-4">
+<div class="relative">
+<img alt="SGT_PEPPER" class="w-12 h-12 rounded bg-surface-container-highest" data-alt="Digital avatar of a soldier with a focused look wearing tactical gear and a headset" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-y7ssf_X8bAJucfZSxueoMkcvWd2sfrBDoIcurdysoOyfOmKSYrGVs038j76bGxh6jRUkMZyKJkyO_rFHqEP3zBp2hMvrKra7QwXvqaX44fB_vWjTl60ZtNP9mIs6X7lOZKHnFfbt_1fBy5oW_SO8mET30fFBcP4-VUF4M9jvIO9hwm3Mitie7AKBffHMzqSj0EP7fCH-1hChrOIhqKplFzCsqC_lMcNgpJnhsiQ8etJAfbtLmgrljslASul13s_6nfFxbBE_k7jz"/>
+<div class="absolute -bottom-1 -right-1 bg-surface-bright text-on-surface p-0.5 rounded-sm">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">person</span>
+</div>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline font-bold text-on-background text-sm tracking-tight">SGT_PEPPER</span>
+<span class="bg-surface-bright text-on-surface text-[9px] px-1.5 py-0.5 rounded border border-outline-variant/50 uppercase font-bold">You</span>
+</div>
+<div class="flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[12px] text-primary">payments</span>
+<span class="text-xs font-label text-on-primary-container">1.2M GOLD</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="font-label text-[10px] text-primary uppercase">Ready</span>
+</div>
+</div>
+<!-- Participant 3 -->
+<div class="group flex items-center justify-between p-4 bg-surface-container border-l-4 border-transparent hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-4">
+<img alt="RECRUIT_X" class="w-12 h-12 rounded bg-surface-container-highest" data-alt="Digital avatar of a young recruit with a neutral expression and simple green clothing" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAr4fIi3iruOQNLzMQQ9TubZQz3CBLjsx2PVnB-r7D-4r3xPj7D5NRAI8jddwgsX2QNX7EJFonnsPb9ZftYN3OSChiNldj43dxfWAdARdxvETQhkc5rrto4T-z4KP1F_3G0KAq3jtEwij8_uWfeipYWi6QSvcpz3-gqr3PpiqQkfbeGUCWhwObiYpn2RX6pWk_ef-AxMAKc8vebF6Ul8lPzsU1ngLgHlHejORClsLddvtAqcWfelkcVPOdGLiJ2s2KV_y7bLtmm-D9a"/>
+<div>
+<span class="font-headline font-bold text-on-background text-sm tracking-tight">RECRUIT_X</span>
+<div class="flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[12px] text-primary">payments</span>
+<span class="text-xs font-label text-on-primary-container">450K GOLD</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-1 opacity-20">
+<span class="w-1.5 h-1.5 rounded-full bg-on-surface"></span>
+<span class="font-label text-[10px] uppercase">Standby</span>
+</div>
+</div>
+<!-- Participant 4 -->
+<div class="group flex items-center justify-between p-4 bg-surface-container border-l-4 border-transparent hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-4">
+<img alt="IRON_WOLF" class="w-12 h-12 rounded bg-surface-container-highest" data-alt="Digital avatar of a weathered veteran with a scar and graying hair wearing a tactical vest" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPTwGhhw7kszSt60Ft0dKX8YsOFs3O7jgHAox9G3K0FW8LHmDbAVK6nxIyhIcu9CGgIFCLvFDKWD0OO_RKcBec12fdwQyMMl850uEi3b8nmp5LD-PjjR9yQQOqNYwwlcUEgt4208kUIoFrQF01wxa0eZqbefcIybhQnIFcDVd2Hk8M2NhOMjGQIl1O9JSL6Wi0r8UJWVlFj_UWol0rJDRrYqi2evwIaVN6jnBqwUcmETPrOKu6YNeO4k2AEX-myo9OT1xUd0hcnkDq"/>
+<div>
+<span class="font-headline font-bold text-on-background text-sm tracking-tight">IRON_WOLF</span>
+<div class="flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[12px] text-primary">payments</span>
+<span class="text-xs font-label text-on-primary-container">2.8M GOLD</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-1 opacity-40">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="font-label text-[10px] uppercase">Ready</span>
+</div>
+</div>
+<!-- Empty Slot with Tactical dashed border -->
+<div class="p-4 rounded border border-dashed border-outline-variant/30 bg-surface/50 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-outline text-sm">add_circle</span>
+<span class="font-label text-outline text-[10px] uppercase tracking-widest">Inviting reinforcements...</span>
+</div>
+</section>
+<!-- Decorative Map/Tactical Area -->
+<div class="mt-8 rounded-lg overflow-hidden border border-outline-variant/20 h-32 relative group">
+<div class="absolute inset-0 bg-gradient-to-t from-background to-transparent z-10"></div>
+<div class="absolute top-2 left-2 z-20 bg-primary/80 text-on-primary px-2 py-0.5 rounded-xs text-[9px] font-bold uppercase tracking-tighter">Mission Briefing: Seoul Back-Alley</div>
+<img class="w-full h-full object-cover grayscale opacity-50 contrast-125 scale-110" data-alt="Grayscale top-down satellite view of a complex urban grid with tactical overlays and glowing coordinate lines" data-location="Seoul" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6DW6Jyq7n5TCgyUmBYdMwTN1d3A3S5uWsJt4pebCWK6dWtS5Tzu2fxle4EwFY_7do4oZL6faOpp8dBo-eEh6_CqGO0ZskMLKG-cFEanw1W2r_NUVUpCH52DR6ewXuYpwrdIU4Zy3HP8pjMBYHkdSf08YaJIG1tAiiP16cNPyMU_PzwQPy_gXPnkUzYAZ3hy_dwhe7jGcC88J8dgnl5MhozCP5cmWeLnG_m2PEeR5BMUXVq2sor6uHH2ohEKCaQDvqBAVaMM-_0QM5"/>
+</div>
+</main>
+<!-- Bottom Navigation Shell (Persistent) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 bg-[#121410]/90 backdrop-blur-xl border-t border-[#454840]/30 px-4 pb-6 pt-3 flex justify-around items-center">
+<button class="flex flex-col items-center justify-center bg-[#e4c379] text-[#3f2e00] rounded-sm py-1 px-4 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-xl">grid_view</span>
+<span class="font-['Work_Sans'] font-bold text-[10px] uppercase mt-1">BARRACKS</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#454840] py-1 px-4 hover:text-[#e4c379] transition-colors active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-xl">shield</span>
+<span class="font-['Work_Sans'] font-bold text-[10px] uppercase mt-1">ARMORY</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#454840] py-1 px-4 hover:text-[#e4c379] transition-colors active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-xl">military_tech</span>
+<span class="font-['Work_Sans'] font-bold text-[10px] uppercase mt-1">ORDERS</span>
+</button>
+</nav>
+<!-- Contextual FAB / Start Button Area -->
+<div class="fixed bottom-24 left-0 w-full px-6 z-40">
+<div class="max-w-2xl mx-auto">
+<button class="w-full bg-primary text-on-primary font-headline font-bold py-5 rounded shadow-2xl flex items-center justify-center gap-3 active:translate-y-1 transition-all border-b-4 border-on-primary-container/30 relative group overflow-hidden">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">rocket_launch</span>
+<span class="tracking-[0.3em] text-lg uppercase">START MISSION</span>
+<!-- Tactical Scan Line Effect (Decorative) -->
+<div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+</button>
+<p class="text-center text-[10px] font-label text-outline uppercase tracking-widest mt-3">Only Commander Ace can initiate the sortie</p>
+</div>
+</div>
+</body></html>
