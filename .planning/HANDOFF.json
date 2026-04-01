@@ -1,76 +1,32 @@
 {
   "version": "1.0",
-  "timestamp": "2026-04-01T11:55:27.990Z",
-  "phase": "10.1",
-  "phase_name": "stitch-ui",
-  "phase_dir": ".planning/phases/10.1-stitch-ui",
-  "plan": 3,
-  "task": 0,
-  "total_tasks": 7,
+  "timestamp": "2026-04-01T17:04:45.736Z",
+  "phase": "11",
+  "phase_name": "social-features",
+  "phase_dir": ".planning/phases/11-social-features",
+  "plan": 4,
+  "task": 3,
+  "total_tasks": 9,
   "status": "paused",
   "completed_tasks": [
-    {"id": "10.1-01", "name": "Stitch MCP 환경설정 + DESIGN.md + 디자인 시스템 등록", "status": "done", "commit": "00b0ab8"},
-    {"id": "10.1-02", "name": "MainPage.v2 + WaitingRoom.v2 (2차 재작성)", "status": "done_needs_rework", "commit": "9a59af0", "note": "Stitch HTML 구조 실제 미반영 — 재작업 필요"},
-    {"id": "10.1-03", "name": "GameTable.v2 + PlayerSeat.v2 (재생성)", "status": "done_needs_rework", "commit": "7b2f5f1", "note": "Stitch HTML 구조 실제 미반영 — 재작업 필요"}
+    {"id": "11-01", "name": "공유 타입/프로토콜 계약 + 채팅 풀스택", "status": "done", "commits": ["43ea1dc", "63c0e52", "5213c4b"]},
+    {"id": "11-02", "name": "GameEngine 확장 (올인 POT 정산/앤티 대납/판별 이력)", "status": "done", "commits": ["498879b", "fc90c85", "d02d7b8", "1d1b994"]},
+    {"id": "11-03", "name": "Observer 모드 + 세션 종료 처리", "status": "done", "commits": ["1dd6922", "a8e94ec", "d95ba08"]},
+    {"id": "11-04", "name": "클라이언트 UI 완성 (checkpoint 포함)", "status": "done", "commits": ["d9ecad1", "7b03a93", "49c33f6", "229f219", "e445fc8", "5315145"]}
   ],
-  "remaining_tasks": [
-    {"id": "10.1-02-rework", "name": "WaitingRoom.v2 — stitch_waiting.html 구조 기반 재작성", "status": "not_started"},
-    {"id": "10.1-03-rework", "name": "GameTable.v2 — stitch_main.html 구조 기반 재작성", "status": "not_started"},
-    {"id": "10.1-mainpage", "name": "MainPage.v2 — Stitch 신규 생성 후 변환", "status": "not_started"},
-    {"id": "10.1-04", "name": "BettingPanel + HandPanel + InfoPanel v2", "status": "not_started"},
-    {"id": "10.1-05", "name": "고우선순위 모달 4개 v2", "status": "not_started"},
-    {"id": "10.1-06", "name": "나머지 모달 12개 v2", "status": "not_started"},
-    {"id": "10.1-07", "name": "공통 UI + ResultScreen + 리그레션", "status": "not_started"}
+  "remaining_tasks": [],
+  "blockers": [],
+  "human_actions_pending": [
+    {"action": "브라우저에서 Phase 11 전체 기능 재검증", "context": "Observer isDealer 버그 수정 후 재테스트 필요", "blocking": false}
   ],
-  "blockers": [
-    {
-      "description": "현재 v2 파일들(02, 03)이 Stitch HTML 구조를 실제로 반영하지 못함 — 색상만 패치한 수준",
-      "type": "quality",
-      "workaround": "stitch_*.html을 직접 스켈레톤으로 사용하는 재구현 필요"
-    },
-    {
-      "description": "입장화면(MainPage) Stitch 화면 없음",
-      "type": "missing_asset",
-      "workaround": "generate_screen_from_text로 신규 생성"
-    }
-  ],
-  "human_actions_pending": [],
   "decisions": [
-    {
-      "decision": "Stitch 디자인 시스템 — Space Grotesk + Work Sans 사용 (KimjungchulMyungjo 아님)",
-      "rationale": "Stitch 내장 폰트 목록에 KimjungchulMyungjo 없음. 실제 HTML에서 Space Grotesk 사용.",
-      "phase": "10.1"
-    },
-    {
-      "decision": "데스크탑 레이아웃 — 와이드 재구성 (모바일 center-align 아님)",
-      "rationale": "사용자 명시적 요청. GameTable은 3열 레이아웃(InfoPanel | 게임판 | BettingPanel+HandPanel).",
-      "phase": "10.1"
-    },
-    {
-      "decision": ".v2.tsx 병렬 파일 전략 유지 — 최종 승인 후 swap",
-      "rationale": "원본 기능 보존 + 점진적 교체를 위해",
-      "phase": "10.1"
-    }
+    {"decision": "InfoPanel 제거 → 내 잔액 PlayerSeat에 골드색 표시", "rationale": "사용자 요청: 플레이어카드에 잔액 이미 표시되어 중복", "phase": "11"},
+    {"decision": "모바일 채팅 패널: 반투명 오버레이 (opacity 5%→50%→5%)", "rationale": "공간 부족으로 오버레이 방식, 이벤트 시만 가시성 높임", "phase": "11"},
+    {"decision": "disconnect 타이머 30초→5초", "rationale": "사용자 요청: 30초는 너무 길다", "phase": "11"},
+    {"decision": "proxy-ante 데이터를 nextRound() 전에 보존", "rationale": "nextRound()가 schoolProxyBeneficiaryIds를 초기화하여 proxy 기능 미작동", "phase": "11"},
+    {"decision": "Observer 엔진 재생성 후 setDealerFromPreviousWinner() 호출", "rationale": "새 GameEngine 생성자가 isDealer를 false로 리셋하여 모드 선택 불가", "phase": "11"}
   ],
-  "stitch_assets": {
-    "projectId": "15932366942382004219",
-    "designSystemId": "3261306653240047912",
-    "local_html_files": ["stitch_main.html", "stitch_waiting.html", "stitch_lobby.html", "stitch_game.html"],
-    "screens": {
-      "Sutda Main Screen": "projects/15932366942382004219/screens/493c0353b2ff4680a1cabf32d283ea1a",
-      "Sutda Waiting Room": "projects/15932366942382004219/screens/daa86584e37f4660871b50eb9534681f",
-      "Sutda Lobby Command": "projects/15932366942382004219/screens/e50578d52c844cb7b4229cc6cec70c6f",
-      "Sutda Tactical Command": "projects/15932366942382004219/screens/cdf4cc22e2864efa985777a04a63b791"
-    }
-  },
-  "uncommitted_files": [
-    "stitch_main.html", "stitch_waiting.html", "stitch_lobby.html", "stitch_game.html",
-    ".planning/UI-TREE.md", ".planning/config.json",
-    "packages/client/src/pages/MainPage.tsx (modified)",
-    "packages/client/src/components/layout/WaitingRoom.tsx (modified)",
-    "packages/client/src/components/layout/GameTable.tsx (modified)",
-    "packages/client/src/components/game/PlayerSeat.tsx (modified)"
-  ],
-  "next_action": "새 세션: (1) stitch_waiting.html body → WaitingRoom.v2 스켈레톤, (2) Stitch MainPage 신규 생성, (3) 데스크탑 breakpoint 추가",
-  "context_notes": "핵심 문제: 에이전트가 Stitch HTML을 참고한다면서 원본 React 구조 유지 + 색상 패치만 함. 올바른 방법: stitch_*.html DOM 구조를 TSX로 직접 변환 후 React 로직 주입. UI-TREE.md로 컴포넌트 명칭 체계 정리 완료."
+  "uncommitted_files": [".planning/phases/11-social-features/11-02-SUMMARY.md"],
+  "next_action": "Phase 11 재검증 후 Phase 12(통합 테스트 + 배포) 진행",
+  "context_notes": "Phase 11 전체 실행 완료. 4개 플랜 모두 커밋됨. Verification에서 isConnected prop 누락 갭 1건 발견→즉시 수정. 사용자 checkpoint 피드백으로 대규모 UI 개선(InfoPanel 삭제, 모바일 레이아웃 2×3, 채팅 오버레이 등) 반영. 이후 추가 버그 2건(Observer isDealer 소실, proxy-ante 데이터 조기 삭제) 진단 및 수정."
 }
