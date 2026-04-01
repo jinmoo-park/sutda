@@ -2,7 +2,8 @@ import { useState } from 'react';
 import type { RoomState } from '@sutda/shared';
 import { useGameStore } from '@/store/gameStore';
 
-// D-09 군용담요 컨셉 — 올리브 드랩 팔레트, 명조 폰트, 각진 군용 UI
+// D-09 군용담요 컨셉 — Stitch "Tactical Heritage" 레이아웃 기반
+// 구조: TopAppBar(ROOM_ID + COPY), player list(rank/chip/badge cards), START GAME 3D brass button
 interface WaitingRoomProps {
   roomState: RoomState;
   myPlayerId: string | null;
@@ -34,103 +35,97 @@ export function WaitingRoom({ roomState, myPlayerId, roomId }: WaitingRoomProps)
 
   return (
     <div
-      className="flex flex-col items-center justify-center min-h-screen p-6"
+      className="min-h-screen flex flex-col overflow-hidden"
       style={{
-        backgroundColor: 'hsl(70 15% 8%)',
         fontFamily: "'KimjungchulMyungjo', serif",
+        /* Stitch wool-texture: radial dot-grain + dark olive */
+        backgroundColor: '#121410',
+        backgroundImage: 'radial-gradient(#252a22 0.5px, transparent 0.5px)',
+        backgroundSize: '4px 4px',
+        position: 'relative',
       }}
     >
-      {/* 배경 텍스처 오버레이 */}
+      {/* Stitch: 화면 상하단 vignette 오버레이 */}
       <div
-        className="absolute inset-0 pointer-events-none"
+        className="fixed inset-0 pointer-events-none"
         style={{
-          backgroundImage:
-            'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.015) 2px, rgba(255,255,255,0.015) 4px)',
-          zIndex: 0,
+          background: 'linear-gradient(180deg, rgba(18,20,16,0.4) 0%, rgba(18,20,16,0) 20%, rgba(18,20,16,0) 75%, rgba(18,20,16,0.5) 100%)',
+          zIndex: 1,
         }}
       />
 
-      <div className="relative z-10 flex flex-col items-center w-full max-w-sm gap-6">
-        {/* 타이틀 이미지 */}
-        <img
-          src="/img/main_tilte.jpg"
-          alt="섯다"
-          style={{
-            width: '100%',
-            maxWidth: '320px',
-            height: 'auto',
-            objectFit: 'contain',
-            filter: 'sepia(20%) brightness(0.9)',
-          }}
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = '/img/main_title_alt.jpg';
-          }}
-        />
-
-        {/* 구분선 */}
-        <div
-          className="w-full h-px"
-          style={{ backgroundColor: 'hsl(75 55% 42%)', opacity: 0.6 }}
-        />
-
-        {/* 방 링크 섹션 */}
-        <div className="w-full space-y-2">
-          <label
-            className="text-xs tracking-widest uppercase"
-            style={{ color: 'hsl(70 10% 55%)' }}
-          >
-            대기실 링크
-          </label>
-          <div
-            className="w-full px-3 py-2 text-xs break-all"
+      {/* TopAppBar — Stitch: ROOM_ID 헤더 + COPY 버튼 */}
+      <header
+        className="flex justify-between items-center px-6 h-16 w-full fixed top-0 z-50"
+        style={{
+          backgroundColor: '#121410',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <span
             style={{
-              backgroundColor: 'hsl(72 12% 13%)',
-              border: '1px solid hsl(72 12% 20%)',
-              borderRadius: '2px',
-              color: 'hsl(70 10% 55%)',
-              fontFamily: 'monospace',
+              fontSize: '18px',
+              color: '#e4c379',
+              lineHeight: 1,
             }}
           >
-            {roomUrl}
-          </div>
-          <button
-            onClick={handleCopyUrl}
-            className="w-full py-2 text-sm tracking-widest transition-all"
-            style={{
-              backgroundColor: copied ? 'hsl(75 55% 30%)' : 'transparent',
-              color: copied ? 'hsl(75 55% 70%)' : 'hsl(60 20% 92%)',
-              border: `1px solid ${copied ? 'hsl(75 55% 42%)' : 'hsl(72 12% 20%)'}`,
-              borderRadius: '2px',
-              cursor: 'pointer',
-              fontFamily: "'KimjungchulMyungjo', serif",
-              letterSpacing: '0.05em',
-            }}
+            ◆
+          </span>
+          <h1
+            className="font-bold text-base tracking-widest uppercase"
+            style={{ color: '#e4c379', fontFamily: "'KimjungchulMyungjo', serif" }}
           >
-            {copied ? '복사 완료!' : '링크 복사'}
-          </button>
+            ROOM_ID: {roomId.toUpperCase()}
+          </h1>
         </div>
+        <button
+          onClick={handleCopyUrl}
+          className="font-bold text-sm px-4 py-1 uppercase tracking-widest transition-all active:translate-y-px"
+          style={{
+            color: copied ? '#121410' : '#e4c379',
+            border: `1px solid ${copied ? '#e4c379' : 'rgba(228,195,121,0.3)'}`,
+            backgroundColor: copied ? '#e4c379' : 'transparent',
+            borderRadius: '0.125rem',
+            cursor: 'pointer',
+            fontFamily: "'KimjungchulMyungjo', serif",
+          }}
+          onMouseEnter={(e) => {
+            if (!copied) {
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(228,195,121,0.1)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!copied) {
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent';
+            }
+          }}
+        >
+          {copied ? '복사됨!' : 'COPY'}
+        </button>
+      </header>
 
-        {/* 구분선 */}
-        <div
-          className="w-full h-px"
-          style={{ backgroundColor: 'hsl(72 12% 20%)' }}
-        />
+      {/* Main Content — Stitch: field desk tabletop */}
+      <main
+        className="flex-1 mt-16 mb-24 overflow-y-auto px-4 py-6 relative"
+        style={{ zIndex: 2 }}
+      >
+        <div className="max-w-sm mx-auto space-y-5">
 
-        {/* 참가자 목록 */}
-        <div className="w-full space-y-3">
-          <div className="flex items-center justify-between">
-            <label
-              className="text-xs tracking-widest uppercase"
-              style={{ color: 'hsl(70 10% 55%)' }}
-            >
-              참가자
-            </label>
+          {/* 섹션 헤더 — Stitch: stamped label style */}
+          <div className="flex items-center gap-2 px-1">
             <span
-              className="text-xs px-2 py-0.5"
+              className="text-xs font-bold tracking-[0.2em] uppercase"
+              style={{ color: '#e4c379', fontFamily: "'KimjungchulMyungjo', serif" }}
+            >
+              ▸ MANIFEST // ACTIVE_PERSONNEL
+            </span>
+            <span
+              className="ml-auto text-xs px-2 py-0.5 font-bold"
               style={{
-                backgroundColor: 'hsl(75 55% 42%)',
-                color: 'hsl(70 15% 8%)',
-                borderRadius: '2px',
+                backgroundColor: '#e4c379',
+                color: '#3f2e00',
+                borderRadius: '0.125rem',
                 fontFamily: "'KimjungchulMyungjo', serif",
               }}
             >
@@ -138,132 +133,285 @@ export function WaitingRoom({ roomState, myPlayerId, roomId }: WaitingRoomProps)
             </span>
           </div>
 
-          {roomState.players.length === 0 ? (
-            <div
-              className="w-full py-6 text-center"
-              style={{
-                border: '1px dashed hsl(72 12% 20%)',
-                borderRadius: '2px',
-              }}
-            >
-              <p className="text-sm" style={{ color: 'hsl(70 10% 55%)' }}>
-                아직 아무도 없어요
-              </p>
-              <p className="text-xs mt-1" style={{ color: 'hsl(70 10% 40%)' }}>
-                친구에게 링크를 공유해 보세요
-              </p>
-            </div>
-          ) : (
-            <div className="w-full space-y-1">
-              {roomState.players.map((p, idx) => (
-                <div
-                  key={p.id}
-                  className="flex justify-between items-center px-3 py-2"
-                  style={{
-                    backgroundColor:
-                      p.id === myPlayerId
-                        ? 'hsl(75 55% 10%)'
-                        : 'hsl(72 12% 11%)',
-                    border: `1px solid ${p.id === myPlayerId ? 'hsl(75 55% 25%)' : 'hsl(72 12% 17%)'}`,
-                    borderRadius: '2px',
-                  }}
+          {/* 플레이어 목록 — Stitch: asymmetric player cards */}
+          <div className="space-y-3">
+            {roomState.players.length === 0 ? (
+              <div
+                className="flex flex-col items-center justify-center py-10"
+                style={{
+                  border: '2px dashed rgba(69,72,64,0.3)',
+                  borderRadius: '0.125rem',
+                  backgroundColor: 'rgba(13,15,11,0.5)',
+                }}
+              >
+                <span
+                  className="text-2xl mb-2"
+                  style={{ color: '#454840' }}
                 >
-                  <div className="flex items-center gap-2">
-                    {/* 순서 번호 */}
-                    <span
-                      className="text-xs w-4 text-center"
-                      style={{ color: 'hsl(70 10% 40%)' }}
-                    >
-                      {idx + 1}
-                    </span>
-                    <span
-                      className="text-sm font-semibold"
-                      style={{
-                        color:
-                          p.id === myPlayerId
-                            ? 'hsl(75 55% 65%)'
-                            : 'hsl(60 20% 92%)',
-                      }}
-                    >
-                      {p.nickname}
-                    </span>
-                    {p.id === roomState.hostId && (
-                      <span
-                        className="text-xs px-1"
-                        style={{
-                          backgroundColor: 'hsl(75 55% 20%)',
-                          color: 'hsl(75 55% 60%)',
-                          borderRadius: '2px',
-                          border: '1px solid hsl(75 55% 30%)',
-                        }}
-                      >
-                        방장
-                      </span>
-                    )}
-                    {p.id === myPlayerId && (
-                      <span
-                        className="text-xs"
-                        style={{ color: 'hsl(70 10% 50%)' }}
-                      >
-                        (나)
-                      </span>
-                    )}
-                  </div>
-                  <span
-                    className="text-sm tabular-nums"
-                    style={{ color: 'hsl(70 10% 55%)' }}
+                  +
+                </span>
+                <span
+                  className="text-xs font-bold tracking-widest uppercase"
+                  style={{ color: '#454840', fontFamily: "'KimjungchulMyungjo', serif" }}
+                >
+                  Awaiting Personnel
+                </span>
+                <span
+                  className="text-xs mt-1"
+                  style={{ color: '#333531', fontFamily: "'KimjungchulMyungjo', serif" }}
+                >
+                  친구에게 링크를 공유하세요
+                </span>
+              </div>
+            ) : (
+              roomState.players.map((p, idx) => {
+                const isMe = p.id === myPlayerId;
+                const isPlayerHost = p.id === roomState.hostId;
+
+                return (
+                  <div
+                    key={p.id}
+                    className="relative transition-all duration-300"
+                    style={{
+                      backgroundColor: isMe ? '#1a1c18' : '#1e201c',
+                      borderLeft: `4px solid ${isMe ? '#e4c379' : isPlayerHost ? '#b69853' : '#454840'}`,
+                      padding: '16px 20px',
+                      boxShadow: isMe ? '0 4px 20px rgba(0,0,0,0.4)' : '0 2px 10px rgba(0,0,0,0.3)',
+                    }}
                   >
-                    {p.chips.toLocaleString()}원
+                    <div className="flex justify-between items-start">
+                      <div className="flex gap-3">
+                        {/* 순번 아이콘 — Stitch: military rank icon area */}
+                        <div
+                          className="w-10 h-10 flex items-center justify-center flex-shrink-0"
+                          style={{
+                            backgroundColor: isMe ? '#423000' : '#292b26',
+                            borderRadius: '0.125rem',
+                          }}
+                        >
+                          <span
+                            className="text-sm font-bold"
+                            style={{
+                              color: isMe ? '#e4c379' : '#909288',
+                              fontFamily: "'KimjungchulMyungjo', serif",
+                            }}
+                          >
+                            {String(idx + 1).padStart(2, '0')}
+                          </span>
+                        </div>
+
+                        <div>
+                          <h3
+                            className="font-bold text-base leading-tight"
+                            style={{
+                              color: isMe ? '#e4c379' : '#e3e3dc',
+                              fontFamily: "'KimjungchulMyungjo', serif",
+                              opacity: isMe ? 1 : 0.85,
+                            }}
+                          >
+                            {p.nickname}
+                          </h3>
+                          <div className="flex items-center gap-1 mt-1">
+                            <span
+                              className="text-xs font-bold"
+                              style={{
+                                color: isMe ? '#b69853' : '#909288',
+                                fontFamily: "'KimjungchulMyungjo', serif',",
+                              }}
+                            >
+                              {p.chips.toLocaleString()}원
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 배지 영역 — Stitch: HOST/ME status badges */}
+                      <div className="flex flex-col items-end gap-1.5">
+                        {isPlayerHost && (
+                          <span
+                            className="text-xs font-bold px-2 py-0.5 tracking-tight uppercase"
+                            style={{
+                              backgroundColor: '#e4c379',
+                              color: '#3f2e00',
+                              borderRadius: '0.125rem',
+                              fontFamily: "'KimjungchulMyungjo', serif",
+                            }}
+                          >
+                            HOST
+                          </span>
+                        )}
+                        {isMe && !isPlayerHost && (
+                          <span
+                            className="text-xs font-bold px-2 py-0.5 tracking-tight uppercase"
+                            style={{
+                              backgroundColor: '#444c32',
+                              color: '#b4bc9b',
+                              borderRadius: '0.125rem',
+                              fontFamily: "'KimjungchulMyungjo', serif",
+                            }}
+                          >
+                            ME
+                          </span>
+                        )}
+                        {isMe && isPlayerHost && (
+                          <span
+                            className="text-xs font-bold px-2 py-0.5 tracking-tight uppercase"
+                            style={{
+                              backgroundColor: '#444c32',
+                              color: '#b4bc9b',
+                              borderRadius: '0.125rem',
+                              fontFamily: "'KimjungchulMyungjo', serif",
+                            }}
+                          >
+                            ME
+                          </span>
+                        )}
+                        {/* 진행 바 — Stitch: 플레이어 준비 상태 인디케이터 */}
+                        <div
+                          className="h-1 rounded-full overflow-hidden"
+                          style={{
+                            width: '48px',
+                            backgroundColor: isMe ? 'rgba(228,195,121,0.2)' : 'rgba(69,72,64,0.2)',
+                          }}
+                        >
+                          <div
+                            className="h-full"
+                            style={{
+                              width: '100%',
+                              backgroundColor: isMe ? '#e4c379' : '#454840',
+                              boxShadow: isMe ? '0 0 8px #e4c379' : 'none',
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+
+            {/* 빈 슬롯 — Stitch: dashed placeholder */}
+            {roomState.players.length > 0 && roomState.players.length < 6 && (
+              <div
+                className="flex flex-col items-center justify-center py-4 opacity-30"
+                style={{
+                  border: '2px dashed rgba(69,72,64,0.3)',
+                  borderRadius: '0.125rem',
+                  backgroundColor: 'rgba(13,15,11,0.5)',
+                }}
+              >
+                <span
+                  className="text-xs font-bold tracking-widest uppercase"
+                  style={{ color: '#454840', fontFamily: "'KimjungchulMyungjo', serif" }}
+                >
+                  + Awaiting Reinf.
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* 전술 정보 섹션 — Stitch: ambient tactical decor */}
+          <div
+            className="mt-6 flex justify-between items-center px-2 py-3"
+            style={{
+              borderTop: '1px solid rgba(69,72,64,0.2)',
+            }}
+          >
+            <div className="flex flex-col">
+              <span
+                className="text-xs font-bold tracking-widest uppercase mb-0.5"
+                style={{ color: '#454840', fontFamily: "'KimjungchulMyungjo', serif" }}
+              >
+                PERSONNEL
+              </span>
+              <span
+                className="text-base font-bold"
+                style={{ color: '#909288', fontFamily: "'KimjungchulMyungjo', serif" }}
+              >
+                {roomState.players.length} / 6 인원
+              </span>
+            </div>
+            <span
+              className="text-xs tracking-widest"
+              style={{ color: '#333531', fontFamily: "'KimjungchulMyungjo', serif" }}
+            >
+              ◆ ◆ ◆
+            </span>
+          </div>
+        </div>
+      </main>
+
+      {/* 하단 고정 — 방장: START GAME / 참여자: 대기 메시지 */}
+      <div
+        className="fixed bottom-0 left-0 right-0 px-4 py-4 z-50"
+        style={{
+          backgroundColor: 'rgba(18,20,16,0.92)',
+          backdropFilter: 'blur(20px)',
+          borderTop: '1px solid rgba(69,72,64,0.2)',
+          boxShadow: '0 -10px 30px rgba(0,0,0,0.4)',
+        }}
+      >
+        {isHost ? (
+          <div className="max-w-sm mx-auto space-y-2">
+            {/* START GAME — Stitch: brass primary CTA with 3D shadow offset */}
+            <div className="relative">
+              <div
+                className="absolute inset-0"
+                style={{
+                  backgroundColor: '#3f2e00',
+                  transform: 'translate(3px, 3px)',
+                  borderRadius: '0.125rem',
+                }}
+              />
+              <button
+                onClick={handleStartGame}
+                disabled={!canStart}
+                className="relative w-full flex items-center justify-between px-6 py-5 transition-all active:translate-x-0.5 active:translate-y-0.5"
+                style={{
+                  background: canStart
+                    ? 'linear-gradient(135deg, #e4c379 0%, #b69853 100%)'
+                    : '#292b26',
+                  borderTop: '1px solid rgba(255,255,255,0.15)',
+                  borderLeft: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: '0.125rem',
+                  cursor: canStart ? 'pointer' : 'not-allowed',
+                  fontFamily: "'KimjungchulMyungjo', serif",
+                }}
+              >
+                <div className="flex flex-col items-start">
+                  <span
+                    className="text-xs font-bold tracking-[0.3em] uppercase mb-0.5"
+                    style={{
+                      color: canStart ? 'rgba(63,46,0,0.6)' : '#454840',
+                      fontFamily: "'KimjungchulMyungjo', serif",
+                    }}
+                  >
+                    Initialize Engagement
+                  </span>
+                  <span
+                    className="text-xl font-black tracking-tight uppercase"
+                    style={{
+                      color: canStart ? '#3f2e00' : '#454840',
+                      fontFamily: "'KimjungchulMyungjo', serif",
+                    }}
+                  >
+                    게임 시작
                   </span>
                 </div>
-              ))}
+                <span
+                  style={{
+                    color: canStart ? '#3f2e00' : '#454840',
+                    fontSize: '28px',
+                  }}
+                >
+                  ▶▶
+                </span>
+              </button>
             </div>
-          )}
-        </div>
-
-        {/* 구분선 */}
-        <div
-          className="w-full h-px"
-          style={{ backgroundColor: 'hsl(72 12% 20%)' }}
-        />
-
-        {/* 게임 시작 / 대기 메시지 */}
-        {isHost ? (
-          <div className="w-full space-y-2">
-            <button
-              onClick={handleStartGame}
-              disabled={!canStart}
-              className="w-full py-3 text-sm font-semibold tracking-widest uppercase transition-all"
-              style={{
-                backgroundColor: canStart
-                  ? 'hsl(75 55% 42%)'
-                  : 'hsl(72 12% 18%)',
-                color: canStart ? 'hsl(70 15% 8%)' : 'hsl(70 10% 40%)',
-                border: 'none',
-                borderRadius: '2px',
-                cursor: canStart ? 'pointer' : 'not-allowed',
-                fontFamily: "'KimjungchulMyungjo', serif",
-                letterSpacing: '0.1em',
-              }}
-              onMouseEnter={(e) => {
-                if (canStart) {
-                  (e.target as HTMLButtonElement).style.backgroundColor =
-                    'hsl(75 55% 50%)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (canStart) {
-                  (e.target as HTMLButtonElement).style.backgroundColor =
-                    'hsl(75 55% 42%)';
-                }
-              }}
-            >
-              게임 시작
-            </button>
             {!canStart && (
               <p
-                className="text-xs text-center tracking-wide"
-                style={{ color: 'hsl(70 10% 45%)' }}
+                className="text-center text-xs tracking-wide"
+                style={{ color: '#454840', fontFamily: "'KimjungchulMyungjo', serif" }}
               >
                 2명 이상 모이면 시작할 수 있어요
               </p>
@@ -271,26 +419,21 @@ export function WaitingRoom({ roomState, myPlayerId, roomId }: WaitingRoomProps)
           </div>
         ) : (
           <div
-            className="w-full py-3 text-sm text-center"
+            className="max-w-sm mx-auto py-4 text-center"
             style={{
-              border: '1px solid hsl(72 12% 20%)',
-              borderRadius: '2px',
-              color: 'hsl(70 10% 55%)',
-              letterSpacing: '0.05em',
+              border: '1px solid rgba(69,72,64,0.3)',
+              borderRadius: '0.125rem',
+              backgroundColor: '#1a1c18',
             }}
           >
-            방장이 게임을 시작할 때까지 대기 중...
+            <span
+              className="text-xs font-bold tracking-[0.2em] uppercase"
+              style={{ color: '#909288', fontFamily: "'KimjungchulMyungjo', serif" }}
+            >
+              ▸ PROTOCOL ALPHA-9 // 방장 대기 중...
+            </span>
           </div>
         )}
-
-        {/* 하단 장식 라인 */}
-        <div className="w-full flex items-center gap-3">
-          <div className="flex-1 h-px" style={{ backgroundColor: 'hsl(72 12% 20%)' }} />
-          <span className="text-xs tracking-widest" style={{ color: 'hsl(70 10% 35%)' }}>
-            ◆
-          </span>
-          <div className="flex-1 h-px" style={{ backgroundColor: 'hsl(72 12% 20%)' }} />
-        </div>
       </div>
     </div>
   );
