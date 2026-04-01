@@ -203,6 +203,16 @@ Plans:
 - [x] 10-03-PLAN.md — 카드 flip 인터랙션 + CardFace/CardBack 전면 교체 + 배분 애니메이션 (UX-03, UX-05, UX-06)
 - [x] 10-04-PLAN.md — 셔플 rAF 애니메이션 + 기리 드래그/탭 UX 재설계 (UX-07, UX-08)
 
+### Phase 10.1: Stitch 연계 UI 고도화 (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 10
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 10.1 to break down)
+
 ### Phase 11: 소셜/기능 완성
 
 **Goal**: 게임의 소셜 기능과 추가 게임 기능을 완성한다 — 텍스트 채팅, 게임 이력, 학교 대신 가주기, 뒤늦게 입장(Observer), 세션 종료 표시, 올인 POT 처리가 완성된다.

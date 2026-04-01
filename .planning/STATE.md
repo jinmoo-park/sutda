@@ -164,6 +164,7 @@ None yet.
 ### Roadmap Evolution
 
 - Phase 10 (구 09.1) inserted after Phase 9: 향상된 UX 및 이미지 적용 통합 페이즈 — 배포 전 필수 UX 완성 작업 (카드 이미지, 뒤집기, 채팅, 베팅 강조, 올인 POT, 이력). 기존 Phase 10(통합 테스트+배포)은 Phase 11로 번호 변경.
+- Phase 10.1 inserted after Phase 10: Stitch 연계 UI 고도화 (INSERTED) — Anthropic Stitch 툴을 활용한 UI 디자인 고도화 작업.
 
 ### Blockers/Concerns
 
