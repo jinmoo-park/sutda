@@ -91,6 +91,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
             dealingComplete={dealingComplete}
             flippedCardIndices={p.id === myPlayerId ? myFlippedCardIndices : undefined}
             cardSlotIndices={playerCardSlots[i]}
+            isConnected={roomState?.players.find(rp => rp.id === p.id)?.isConnected ?? true}
           />
         ))}
       </div>
@@ -136,6 +137,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
                   visibleCardCount={visibleCardCounts?.[p.id]}
                   dealingComplete={dealingComplete}
                   cardSlotIndices={playerCardSlots[i]}
+                  isConnected={roomState?.players.find(rp => rp.id === p.id)?.isConnected ?? true}
                   compact
                 />
               ))}
