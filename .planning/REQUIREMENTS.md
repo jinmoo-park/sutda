@@ -248,13 +248,13 @@
 | IMG-02 | Phase 10 | Complete |
 | IMG-03 | Phase 10 | Complete |
 | BET-HIGHLIGHT | Phase 10 | Complete |
-| UX-02 | Phase 11 | Pending |
-| HIST-01 | Phase 11 | Pending |
-| HIST-02 | Phase 11 | Pending |
-| SCHOOL-PROXY | Phase 11 | Pending |
+| UX-02 | Phase 11 | Complete |
+| HIST-01 | Phase 11 | Complete |
+| HIST-02 | Phase 11 | Complete |
+| SCHOOL-PROXY | Phase 11 | Complete |
 | LATE-JOIN | Phase 11 | Complete |
 | SESSION-END | Phase 11 | Complete |
-| ALLIN-POT | Phase 11 | Pending |
+| ALLIN-POT | Phase 11 | Complete |
 
 ---
 *Requirements defined: 2026-03-29*

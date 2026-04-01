@@ -2,34 +2,40 @@
 phase: 11-social-features
 plan: "04"
 subsystem: client-ui
-tags: [history-modal, proxy-ante, observer, allin, session-end, social-features]
+tags: [history-modal, proxy-ante, observer, allin, session-end, social-features, mobile-layout, chat-overlay]
 dependency_graph:
   requires: ["11-02", "11-03"]
-  provides: [history-modal, proxy-ante-ui, observer-badge, allin-badge, session-toast]
-  affects: [InfoPanel, ResultScreen, GameTable, BettingPanel, PlayerSeat, gameStore]
+  provides: [history-modal, proxy-ante-ui, observer-badge, allin-badge, session-toast, mobile-chat-overlay, hand-labels-util]
+  affects: [ResultScreen, GameTable, BettingPanel, PlayerSeat, gameStore, ChatPanel, RoomPage]
 tech_stack:
-  added: []
-  patterns: [shadcn-dialog, zustand-socket-listeners, sonner-toast]
+  added: [lib/handLabels.ts]
+  patterns: [shadcn-dialog, zustand-socket-listeners, sonner-toast, opacity-fade-overlay]
 key_files:
   created:
     - packages/client/src/components/modals/HistoryModal.tsx
+    - packages/client/src/lib/handLabels.ts
   modified:
     - packages/client/src/store/gameStore.ts
-    - packages/client/src/components/layout/InfoPanel.tsx
     - packages/client/src/components/layout/ResultScreen.tsx
     - packages/client/src/components/game/PlayerSeat.tsx
     - packages/client/src/components/layout/BettingPanel.tsx
     - packages/client/src/components/layout/GameTable.tsx
+    - packages/client/src/components/layout/ChatPanel.tsx
     - packages/client/src/pages/RoomPage.tsx
+    - packages/client/index.html
+    - packages/server/src/index.ts
 decisions:
   - "ProxyAnteSection을 ResultScreen 내부 별도 함수 컴포넌트로 분리 — 로컬 상태(proxyOpen, selectedBeneficiaries) 격리"
   - "BettingPanel에서 gameStore.myPlayerId + players.find로 올인 상태 직접 감지 — props 추가 없이 self-contained"
   - "GameTable에 roomState prop 추가 — Observer는 RoomPlayer에 있어 PlayerState와 별도 전달 필요"
+  - "InfoPanel 완전 제거 — 이력 버튼은 RoomPage에서 직접 관리, 잔액은 PlayerSeat에서 isMe 골드 강조"
+  - "ChatPanel mobile prop: opacity 0.05/0.5/0.8 + pointer-events-none 패턴으로 오버레이 구현"
+  - "handLabels.ts 공유 유틸 — ResultScreen/HistoryModal 중복 제거, 한국어 변환 단일 진실 출처"
 metrics:
-  duration: "~25min"
+  duration: "~45min"
   completed_date: "2026-04-02"
-  tasks: 2
-  files: 7
+  tasks: 3
+  files: 11
 ---
 
 # Phase 11 Plan 04: 소셜/기능 UI 통합 Summary
@@ -94,9 +100,45 @@ metrics:
 
 ---
 
-## Checkpoint (미완료)
+---
 
-**Checkpoint: Phase 11 전체 기능 시각적/기능적 검증** — 사용자 브라우저 검증 대기 중
+### Checkpoint 이후 추가 수정 (브라우저 검증 피드백 반영)
+
+**커밋:** `49c33f6`, `229f219`, `e445fc8`
+
+**버그 수정 — proxy-ante 후 게임모드 선택 안 되는 버그:**
+- 서버 `next-round`/`take-break` 핸들러의 자동 앤티 루프에서 `schoolProxyBeneficiaryIds` 무시 버그
+- 수혜자 플레이어가 `attendSchool` 대신 `attendSchoolProxy`로 처리되지 않아 `attendedPlayerIds` 미추가 → `completeAttendSchool` 미호출 → `mode-select` 전환 실패
+- **수정:** 자동 앤티 루프에서 proxy 분기 처리 + 앤티 완료 후 proxy 상태 초기화
+
+**ESM 로딩 메시지 삭제:**
+- `index.html`에서 `#debug-msg` div, 일반 JS 스크립트, ESM 로딩 메시지 블록 전체 제거
+
+**이력 족보 한국어화:**
+- `lib/handLabels.ts` 공유 유틸 신규 생성 (`HAND_TYPE_KOREAN` 매핑, `getHandLabel`, `handLabelToKorean`)
+- `HistoryModal.tsx`: `handLabelToKorean(entry.winnerHandLabel)` 적용
+- `ResultScreen.tsx`: 중복 정의 제거, 공유 `getHandLabel` 사용
+
+**InfoPanel 완전 제거 + 이력 버튼 이동:**
+- `RoomPage.tsx`: `InfoPanel` import/사용 제거
+- 이력 버튼 — 데스크탑 우사이드 상단, 모바일 GameTable 우상단 `bg-black/50 backdrop-blur-sm` 배지로 이동
+- `PlayerSeat.tsx`: `isMe` 시 잔액 `text-yellow-400 font-semibold` 강조
+
+**데스크탑 스크롤 정리:**
+- 우사이드 최상위 `flex flex-col overflow-hidden`, ChatPanel만 `flex-1 min-h-0`
+- 중첩 스크롤바 제거 — `ChatPanel` 내부 `flex-1 overflow-y-auto`만 스크롤
+
+**모바일 레이아웃 재구성:**
+- HandPanel + BettingPanel → `flex-row` 한 줄 배치 (`flex-1 min-w-0` 각각)
+- GameTable 모바일: 판돈 표시 `pt-2 pb-1 px-2 shrink-0` + `overflow-hidden` 수정
+- PlayerSeat: `compact` prop 추가 — 패딩 `p-1`, 텍스트 `text-[10px]`, 6명 2x3 배치 지원
+
+**모바일 채팅 오버레이:**
+- `ChatPanel mobile` prop 추가
+- 평시 `opacity: 0.05` + `pointer-events: none` (클릭 통과)
+- 새 메시지 감지 시 `opacity: 0.5` → 3초 후 `opacity: 0.05` fade (ease-in-out)
+- 포커스 시 `opacity: 0.8` + 입력 가능
+- 최근 3개 메시지만 표시 (compact view)
 
 ---
 
@@ -122,22 +164,26 @@ metrics:
 
 ## Known Stubs
 
-없음 — 모든 UI 기능이 실제 소켓 이벤트/상태에 연결됨. GameTable Observer 목록은 roomState.players.isObserver 기반이며 PlayerSeat isConnected는 RoomPlayer.isConnected를 호출자(GameTable/RoomPage)가 전달해야 하는 stub이 남아있음.
-
-**PlayerSeat `isConnected` prop:** 현재 RoomPage에서 PlayerSeat에 isConnected를 전달하는 코드가 없음. GameTable → PlayerSeat 체인에서 roomState.players의 isConnected를 매핑하는 로직이 필요하나, GameTable의 players prop은 PlayerState(게임 상태) 기반이고 roomState.players는 RoomPlayer 타입으로 별도임. 현재 isConnected 기본값 true로 동작 — 재접속 대기 표시는 완전히 동작하지 않음. 기능적으로는 UI가 표시되지 않을 뿐 crash는 없음.
+**PlayerSeat `isConnected` prop:** 현재 RoomPage/GameTable에서 PlayerSeat에 isConnected를 전달하는 코드가 없음. GameTable의 players prop은 PlayerState(게임 상태) 기반이고 roomState.players는 RoomPlayer 타입으로 별도임. 현재 isConnected 기본값 true로 동작 — 재접속 대기 표시는 완전히 동작하지 않음. Crash는 없으나 표시 미작동.
 
 ## Self-Check: PASSED
 
 파일 존재 확인:
 - HistoryModal.tsx: 존재
-- InfoPanel.tsx: 수정됨
+- lib/handLabels.ts: 신규 존재
 - ResultScreen.tsx: 수정됨
 - gameStore.ts: 수정됨
 - PlayerSeat.tsx: 수정됨
 - BettingPanel.tsx: 수정됨
 - GameTable.tsx: 수정됨
+- ChatPanel.tsx: 수정됨
 - RoomPage.tsx: 수정됨
+- index.html: 수정됨
+- server/index.ts: 수정됨
 
 커밋 확인:
 - d9ecad1: feat(11-04): HistoryModal + InfoPanel 이력 버튼 + ResultScreen 학교 대신 가주기 + gameStore 이력 상태
 - 7b03a93: feat(11-04): Observer 배지/인디케이터 + 올인 배지/패널 비활성화 + GameTable Observer 목록
+- 49c33f6: fix(11-04): proxy-ante 자동 앤티에서 수혜자 대납 처리 누락 버그 수정
+- 229f219: feat(11-04): ESM 로딩 메시지 삭제 + 이력/결과 족보 한국어화
+- e445fc8: feat(11-04): InfoPanel 제거 + 모바일 레이아웃 재구성 + 채팅 오버레이

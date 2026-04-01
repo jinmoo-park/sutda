@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 11-03-PLAN.md
-last_updated: "2026-04-01T15:56:14.806Z"
+stopped_at: Completed 11-04-PLAN.md (Phase 11 완료)
+last_updated: "2026-04-01T16:40:13.298Z"
 last_activity: 2026-04-01
 progress:
   total_phases: 13
-  completed_phases: 10
+  completed_phases: 11
   total_plans: 29
-  completed_plans: 28
+  completed_plans: 29
   percent: 44
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 ## Current Position
 
 Phase: 11 (social-features) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-04-01
 
@@ -83,6 +83,7 @@ Progress: [████░░░░░░] 44%
 | Phase 10.1-stitch-ui P03 | 15 | 2 tasks | 2 files |
 | Phase 10.1-stitch-ui P02 | 40min | 2 tasks | 2 files |
 | Phase 11-social-features P03 | 15 | 2 tasks | 3 files |
+| Phase 11-social-features P04 | 45 | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -168,6 +169,9 @@ Recent decisions affecting current work:
 - [Phase 10.1-stitch-ui]: wool-texture CSS: radial-gradient dot-grain + backgroundColor 조합으로 캔버스 텍스처 구현
 - [Phase 11-social-features]: Observer 입장 시 roomManager 우회하여 index.ts에서 직접 RoomPlayer 생성 (GAME_IN_PROGRESS 에러 회피)
 - [Phase 11-social-features]: GameEngine 재생성(방법 A): nextRound() 이후 Observer 합류 시 새 GameEngine 인스턴스 생성
+- [Phase 11-social-features]: InfoPanel 완전 제거 — 이력 버튼은 RoomPage 직접 관리, 잔액은 PlayerSeat isMe 골드 강조로 대체
+- [Phase 11-social-features]: ChatPanel mobile prop: opacity 0.05/0.5/0.8 + pointer-events-none 패턴으로 게임 위 오버레이 구현
+- [Phase 11-social-features]: handLabels.ts 공유 유틸 — HAND_TYPE_KOREAN 매핑 단일 진실 출처, ResultScreen/HistoryModal 중복 제거
 
 ### Pending Todos
 
@@ -186,6 +190,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T15:44:43.200Z
-Stopped at: Completed 11-03-PLAN.md
+Last session: 2026-04-01T16:40:13.292Z
+Stopped at: Completed 11-04-PLAN.md (Phase 11 완료)
 Resume file: None
