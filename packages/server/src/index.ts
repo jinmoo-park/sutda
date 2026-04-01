@@ -1,4 +1,6 @@
-import { createServer } from 'http';
+import { createServer, IncomingMessage, ServerResponse } from 'http';
+import { readFile } from 'fs';
+import { join, extname } from 'path';
 import { Server } from 'socket.io';
 import type {
   ClientToServerEvents,
@@ -13,7 +15,33 @@ import { GameEngine } from './game-engine.js';
 
 const PORT = Number(process.env.PORT) || 3001;
 
-const httpServer = createServer();
+const STATIC_DIR = join(process.cwd(), '../../packages/client/dist');
+const MIME: Record<string, string> = {
+  '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css',
+  '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.woff': 'font/woff',
+};
+
+const httpServer = createServer((req: IncomingMessage, res: ServerResponse) => {
+  // socket.io는 자체 처리
+  if (req.url?.startsWith('/socket.io')) return;
+
+  const url = req.url?.split('?')[0] ?? '/';
+  const filePath = url === '/' || !extname(url) ? join(STATIC_DIR, 'index.html') : join(STATIC_DIR, url);
+
+  readFile(filePath, (err, data) => {
+    if (err) {
+      readFile(join(STATIC_DIR, 'index.html'), (err2, data2) => {
+        if (err2) { res.writeHead(404); res.end('Not found'); return; }
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(data2);
+      });
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': MIME[extname(filePath)] ?? 'application/octet-stream' });
+    res.end(data);
+  });
+});
 const io = new Server<
   ClientToServerEvents,
   ServerToClientEvents,
@@ -21,7 +49,7 @@ const io = new Server<
   SocketData
 >(httpServer, {
   cors: {
-    origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+    origin: process.env.CLIENT_ORIGIN || true,
     methods: ['GET', 'POST'],
   },
 });

@@ -23,6 +23,7 @@ import { SejangOpenCardModal } from '@/components/modals/SejangOpenCardModal';
 import { MuckChoiceModal } from '@/components/modals/MuckChoiceModal';
 import { DealerResultOverlay } from '@/components/modals/DealerResultOverlay';
 import type { DealerSelectResult } from '@/components/modals/DealerResultOverlay';
+import { computeSlotIndices } from '@/lib/cardImageUtils';
 import { HwatuCard } from '@/components/game/HwatuCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -286,6 +287,18 @@ export function RoomPage() {
 
   const phase = gameState?.phase ?? roomState?.gamePhase ?? 'waiting';
   const myPlayer = gameState?.players.find((p) => p.id === myPlayerId) ?? null;
+
+  // 전역 slot 계산: 모든 플레이어 카드를 flat해서 rank 충돌 방지
+  const _allCards = gameState?.players.flatMap(p => p.cards) ?? [];
+  const _globalSlots = computeSlotIndices(_allCards);
+  let _offset = 0;
+  const _playerCardSlots = (gameState?.players ?? []).map(p => {
+    const slots = _globalSlots.slice(_offset, _offset + p.cards.length);
+    _offset += p.cards.length;
+    return slots;
+  });
+  const myPlayerIndex = gameState?.players.findIndex(p => p.id === myPlayerId) ?? -1;
+  const myCardSlotIndices = myPlayerIndex >= 0 ? _playerCardSlots[myPlayerIndex] : undefined;
   const isMyTurn =
     gameState !== null &&
     gameState.players[gameState.currentPlayerIndex]?.id === myPlayerId;
@@ -475,6 +488,7 @@ export function RoomPage() {
       flippedIndices={myFlippedIndices}
       onFlip={(idx) => setMyFlippedIndices(prev => { const n = new Set(prev); n.add(idx); return n; })}
       dealingComplete={dealingComplete}
+      cardSlotIndices={myCardSlotIndices}
     />
   );
 
@@ -524,23 +538,23 @@ export function RoomPage() {
 
   return (
     <div className="bg-background text-foreground">
-      {/* 데스크탑: 3열 그리드 */}
-      <div className="hidden md:grid grid-cols-[256px_1fr_clamp(256px,calc(100vw-768px),512px)] h-dvh overflow-hidden">
-        {/* 좌사이드: InfoPanel + ChatPanel */}
-        <div className="flex flex-col border-r border-border overflow-y-auto">
-          {infoPanelNode}
-          <ChatPanel />
-        </div>
-
+      {/* 데스크탑: 2열 그리드 */}
+      <div className="hidden md:grid grid-cols-[1fr_clamp(256px,calc(100vw-1408px),512px)] h-dvh overflow-hidden">
         {/* 중앙: GameTable — 배경이미지가 이 영역 전체를 채움 */}
         <div className="relative overflow-hidden">
           {gameTableNode}
         </div>
 
-        {/* 우사이드: BettingPanel + HandPanel — 하단정렬 */}
-        <div className="flex flex-col justify-end border-l border-border overflow-y-auto p-2 gap-2">
-          {bettingPanelNode}
-          {handPanelNode}
+        {/* 우사이드: InfoPanel + ChatPanel (상단) + BettingPanel + HandPanel (하단) */}
+        <div className="flex flex-col border-l border-border overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
+            {infoPanelNode}
+            <ChatPanel />
+          </div>
+          <div className="shrink-0 p-2 space-y-2">
+            {bettingPanelNode}
+            {handPanelNode}
+          </div>
         </div>
       </div>
 

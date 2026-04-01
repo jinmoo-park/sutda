@@ -1,6 +1,7 @@
 import type { PlayerState, Card, GameMode } from '@sutda/shared';
 import { PlayerSeat } from '@/components/game/PlayerSeat';
 import { SharedCardDisplay } from '@/components/game/SharedCardDisplay';
+import { computeSlotIndices } from '@/lib/cardImageUtils';
 
 interface GameTableProps {
   players: PlayerState[];
@@ -15,6 +16,15 @@ interface GameTableProps {
 }
 
 export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibleCardCounts, sharedCard, mode, dealingComplete = true, myFlippedCardIndices }: GameTableProps) {
+  // 전역 slot 계산: 모든 플레이어 카드를 flat하게 합산해 rank 충돌 방지
+  const globalSlots = computeSlotIndices(players.flatMap(p => p.cards));
+  let offset = 0;
+  const playerCardSlots = players.map(p => {
+    const slots = globalSlots.slice(offset, offset + p.cards.length);
+    offset += p.cards.length;
+    return slots;
+  });
+
   return (
     <>
       {/* 데스크톱: 중앙패널 전체 채움 — 배경이미지 + 원형 플레이어 배치 */}
@@ -58,6 +68,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
             mode={mode}
             dealingComplete={dealingComplete}
             flippedCardIndices={p.id === myPlayerId ? myFlippedCardIndices : undefined}
+            cardSlotIndices={playerCardSlots[i]}
           />
         ))}
       </div>
@@ -100,6 +111,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
                 isCurrentTurn={i === currentPlayerIndex}
                 visibleCardCount={visibleCardCounts?.[p.id]}
                 dealingComplete={dealingComplete}
+                cardSlotIndices={playerCardSlots[i]}
               />
             ))}
           </div>

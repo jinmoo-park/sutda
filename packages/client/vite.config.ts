@@ -11,7 +11,11 @@ export default defineConfig({
     },
   },
   server: {
+    host: true,
     allowedHosts: true,
+    headers: {
+      'ngrok-skip-browser-warning': 'true',
+    },
     proxy: {
       '/socket.io': {
         target: 'http://localhost:3001',

@@ -18,6 +18,8 @@ interface HandPanelProps {
   /** 외부 제어 모드: RoomPage에서 flip 상태를 관리할 때 사용 */
   flippedIndices?: Set<number>;
   onFlip?: (idx: number) => void;
+  /** 전역 slot 계산 결과 (RoomPage에서 주입, 없으면 로컬 계산) */
+  cardSlotIndices?: number[];
 }
 
 const HAND_TYPE_KOREAN: Record<string, string> = {
@@ -69,6 +71,7 @@ export function HandPanel({
   dealingComplete = true,
   flippedIndices: controlledFlipped,
   onFlip,
+  cardSlotIndices,
 }: HandPanelProps) {
   const [showReference, setShowReference] = useState(false);
   const [internalFlipped, setInternalFlipped] = useState<Set<number>>(new Set());
@@ -132,7 +135,7 @@ export function HandPanel({
     // 카드가 2장 미만이거나 평가 불가한 경우 무시
   }
 
-  const cardSlots = computeSlotIndices(cards);
+  const cardSlots = cardSlotIndices ?? computeSlotIndices(cards);
 
   // 배분 날아오기 애니메이션 스타일
   const getDealAnimStyle = (idx: number): React.CSSProperties => {

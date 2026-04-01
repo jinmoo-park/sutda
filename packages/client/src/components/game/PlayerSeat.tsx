@@ -2,6 +2,7 @@ import type { PlayerState, GameMode } from '@sutda/shared';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { HwatuCard } from './HwatuCard';
+import { computeSlotIndices } from '@/lib/cardImageUtils';
 import { cn } from '@/lib/utils';
 
 interface PlayerSeatProps {
@@ -15,6 +16,8 @@ interface PlayerSeatProps {
   dealingComplete?: boolean;
   /** 내 카드 flip 동기화 (HandPanel과 연동) */
   flippedCardIndices?: Set<number>;
+  /** 전역 slot 계산 결과 (GameTable에서 주입, 없으면 로컬 계산) */
+  cardSlotIndices?: number[];
 }
 
 export function PlayerSeat({
@@ -27,6 +30,7 @@ export function PlayerSeat({
   mode,
   dealingComplete = true,
   flippedCardIndices,
+  cardSlotIndices,
 }: PlayerSeatProps) {
   const style = {
     '--angle': `calc(360deg / ${totalPlayers} * ${seatIndex})`,
@@ -74,7 +78,9 @@ export function PlayerSeat({
         )}
       </div>
 
-      {player.cards.length > 0 && (
+      {player.cards.length > 0 && (() => {
+        const cardSlots = cardSlotIndices ?? computeSlotIndices(player.cards);
+        return (
         <div className="flex gap-1 flex-wrap">
           {Array.from({ length: Math.max(player.cards.length, 2) }, (_, idx) => {
             const visible = idx < showCount;
@@ -101,13 +107,15 @@ export function PlayerSeat({
                   card={card ?? undefined}
                   faceUp={showFace}
                   size="sm"
+                  slotIndex={cardSlots[idx] ?? 0}
                   disabled
                 />
               </div>
             );
           })}
         </div>
-      )}
+        );
+      })()}
 
       <p className="text-xs tabular-nums text-muted-foreground">{player.chips.toLocaleString()}원</p>
 
