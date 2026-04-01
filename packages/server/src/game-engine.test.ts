@@ -2345,3 +2345,126 @@ describe('allIn: 올인 POT 정산', () => {
     expect(engine.getState().players[1].totalCommitted).toBe(0);
   });
 });
+
+// ============================================================
+// 학교 대납 + 이력 생성 (Task 11-02-2)
+// ============================================================
+describe('attendSchoolProxy + 이력 생성', () => {
+  it('Test 1: attendSchoolProxy — 수혜자 chips 미차감, 후원자 chips -= 500, attendedPlayerIds에 수혜자 추가', () => {
+    const ps = [
+      { id: 'beneficiary', nickname: 'B', chips: 100000, seatIndex: 0, isConnected: true },
+      { id: 'sponsor', nickname: 'S', chips: 100000, seatIndex: 1, isConnected: true },
+      { id: 'other', nickname: 'O', chips: 100000, seatIndex: 2, isConnected: true },
+    ];
+    const engine = new GameEngine('room1', ps, 'original', 2);
+    engine.setDealerFromPreviousWinner('beneficiary');
+
+    const beforeSponsor = engine.getState().players.find(p => p.id === 'sponsor')!.chips;
+    const beforeBeneficiary = engine.getState().players.find(p => p.id === 'beneficiary')!.chips;
+
+    engine.attendSchoolProxy('beneficiary', 'sponsor');
+
+    const state = engine.getState();
+    const sponsor = state.players.find(p => p.id === 'sponsor')!;
+    const beneficiary = state.players.find(p => p.id === 'beneficiary')!;
+
+    expect(sponsor.chips).toBe(beforeSponsor - 500);
+    expect(beneficiary.chips).toBe(beforeBeneficiary); // 미차감
+    expect(state.attendedPlayerIds).toContain('beneficiary');
+    expect(state.pot).toBe(500);
+  });
+
+  it('Test 2: attendSchoolProxy — 후원자 잔액 < 500일 때 수혜자가 직접 납부', () => {
+    const ps = [
+      { id: 'beneficiary', nickname: 'B', chips: 100000, seatIndex: 0, isConnected: true },
+      { id: 'sponsor', nickname: 'S', chips: 100, seatIndex: 1, isConnected: true }, // 잔액 부족
+      { id: 'other', nickname: 'O', chips: 100000, seatIndex: 2, isConnected: true },
+    ];
+    const engine = new GameEngine('room1', ps, 'original', 2);
+    engine.setDealerFromPreviousWinner('beneficiary');
+
+    const beforeBeneficiary = engine.getState().players.find(p => p.id === 'beneficiary')!.chips;
+    const beforeSponsor = engine.getState().players.find(p => p.id === 'sponsor')!.chips;
+
+    engine.attendSchoolProxy('beneficiary', 'sponsor');
+
+    const state = engine.getState();
+    const sponsor = state.players.find(p => p.id === 'sponsor')!;
+    const beneficiary = state.players.find(p => p.id === 'beneficiary')!;
+
+    // fallback: 수혜자가 직접 납부
+    expect(beneficiary.chips).toBe(beforeBeneficiary - 500);
+    expect(sponsor.chips).toBe(beforeSponsor); // 변화 없음
+    expect(state.attendedPlayerIds).toContain('beneficiary');
+  });
+
+  it('Test 3: showdown 완료 후 lastRoundHistory에 RoundHistoryEntry 생성됨', () => {
+    const ps = Array.from({ length: 3 }, (_, i) => ({
+      id: `player-${i}`, nickname: `P${i}`, chips: 100000, seatIndex: i, isConnected: true,
+    }));
+    const engine = new GameEngine('room1', ps, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.players[0].isDealer = true;
+    state.phase = 'showdown';
+    state.pot = 6000;
+    state.roundNumber = 3;
+
+    // player-0: 장땡(10+10 yeolkkeut)
+    state.players[0].cards = [{ rank: 10, attribute: 'normal' }, { rank: 10, attribute: 'yeolkkeut' }];
+    state.players[0].isAlive = true;
+    state.players[0].isRevealed = false;
+    state.players[0].chips = 94000;
+    // player-1: 구땡
+    state.players[1].cards = [{ rank: 9, attribute: 'normal' }, { rank: 9, attribute: 'normal' }];
+    state.players[1].isAlive = true;
+    state.players[1].isRevealed = false;
+    state.players[1].chips = 98000;
+    // player-2: 다이
+    state.players[2].cards = [{ rank: 1, attribute: 'gwang' }, { rank: 2, attribute: 'normal' }];
+    state.players[2].isAlive = false;
+    state.players[2].chips = 97000;
+
+    engine.revealCard('player-0');
+    engine.revealCard('player-1');
+
+    const history = (engine as any).lastRoundHistory;
+    expect(history).not.toBeNull();
+    expect(history.roundNumber).toBe(3);
+    expect(history.winnerId).toBe('player-0');
+    expect(history.pot).toBe(6000);
+  });
+
+  it('Test 4: RoundHistoryEntry.playerChipChanges에 chipDelta가 정확히 계산됨', () => {
+    const ps = Array.from({ length: 3 }, (_, i) => ({
+      id: `player-${i}`, nickname: `P${i}`, chips: 100000, seatIndex: i, isConnected: true,
+    }));
+    const engine = new GameEngine('room1', ps, 'original', 2);
+    const state = engine.getState() as GameState;
+    state.players[0].isDealer = true;
+    state.phase = 'showdown';
+    state.pot = 6000; // player-0: -3000, player-1: -3000 투자 → 승자는 +3000 net
+
+    // 정산 전 chips 설정
+    state.players[0].chips = 97000; // 100000 - 3000 베팅
+    state.players[1].chips = 97000;
+    state.players[2].chips = 100000;
+
+    state.players[0].cards = [{ rank: 10, attribute: 'normal' }, { rank: 10, attribute: 'yeolkkeut' }]; // 장땡
+    state.players[0].isAlive = true;
+    state.players[0].isRevealed = false;
+    state.players[1].cards = [{ rank: 9, attribute: 'normal' }, { rank: 9, attribute: 'normal' }]; // 구땡
+    state.players[1].isAlive = true;
+    state.players[1].isRevealed = false;
+    state.players[2].isAlive = false;
+
+    engine.revealCard('player-0');
+    engine.revealCard('player-1');
+
+    const history = (engine as any).lastRoundHistory;
+    expect(history).not.toBeNull();
+    const p0Change = history.playerChipChanges.find((c: any) => c.playerId === 'player-0');
+    expect(p0Change).toBeDefined();
+    // player-0 wins pot(6000): chips went from 97000 to 103000, delta = +6000
+    expect(p0Change.chipDelta).toBe(6000);
+  });
+});
