@@ -822,8 +822,8 @@ export class GameEngine {
     }
     this.state.deck = shuffled;
 
-    // 구사 재경기: 기리(cutting) 건너뛰고 바로 dealing
-    if (this.state.skipCutting) {
+    // 기리 스킵: 구사/동점 재경기, 한장공유, 인디안섯다
+    if (this.state.skipCutting || this.state.mode === 'shared-card' || this.state.mode === 'indian') {
       this.state.skipCutting = undefined;
       this.state.phase = 'dealing';
       this._dealCards();

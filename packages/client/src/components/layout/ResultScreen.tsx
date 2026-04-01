@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useSyncExternalStore } from 'react';
 import type { GameState } from '@sutda/shared';
 import { evaluateHand } from '@sutda/shared';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,11 @@ import { HwatuCard } from '@/components/game/HwatuCard';
 import { computeSlotIndices } from '@/lib/cardImageUtils';
 import { useGameStore } from '@/store/gameStore';
 import { getHandLabel } from '@/lib/handLabels';
+
+const mdQuery = typeof window !== 'undefined' ? window.matchMedia('(min-width: 768px)') : null;
+const subscribe = (cb: () => void) => { mdQuery?.addEventListener('change', cb); return () => mdQuery?.removeEventListener('change', cb); };
+const getSnapshot = () => mdQuery?.matches ?? false;
+function useIsMd() { return useSyncExternalStore(subscribe, getSnapshot, () => false); }
 
 interface ResultScreenProps {
   gameState: GameState;
@@ -66,6 +71,9 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch }: Resul
     if (amAbsent) setCountdown(AUTO_NEXT_SECONDS);
   }, [amAbsent]);
 
+  const isMd = useIsMd();
+  const cardSize = isMd ? 'md' : 'sm';
+
   const allPlayers = gameState.players.filter((p) => !p.isAbsent);
 
   // 전체 플레이어 표시 카드를 평탄화하여 글로벌 슬롯 인덱스 계산
@@ -82,7 +90,7 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch }: Resul
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center bg-background text-foreground gap-6 p-6">
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-background text-foreground gap-4 p-3 md:gap-6 md:p-6">
       {isRematch && (
         <div
           className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center"
@@ -98,7 +106,7 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch }: Resul
       )}
       <h2 className="text-xl font-semibold">{winnerNickname} 승리!</h2>
 
-      <div className="flex flex-wrap gap-6 justify-center">
+      <div className="grid grid-cols-3 gap-2 justify-items-center md:flex md:flex-wrap md:gap-6 md:justify-center">
         {allPlayers.map((player, pi) => {
           const isDied = !player.isAlive;
 
@@ -136,46 +144,46 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch }: Resul
           return (
             <div
               key={player.id}
-              className={`flex flex-col items-center gap-2 p-4 rounded-lg border bg-card ${isDied ? 'border-border opacity-70' : 'border-border'}`}
+              className={`flex flex-col items-center gap-1 p-2 rounded-lg border bg-card md:gap-2 md:p-4 ${isDied ? 'border-border opacity-70' : 'border-border'}`}
             >
-              <p className="text-sm font-semibold">{player.nickname}</p>
-              <div className="flex gap-2">
+              <p className="text-xs font-semibold md:text-sm">{player.nickname}</p>
+              <div className="flex gap-1 md:gap-2">
                 {isDied
-                  ? player.cards.map((_, idx) => <HwatuCard key={idx} faceUp={false} size="md" />)
+                  ? player.cards.map((_, idx) => <HwatuCard key={idx} faceUp={false} size={cardSize} />)
                   : displayCards.map((card, idx) =>
                       player.isRevealed ? (
-                        <HwatuCard key={idx} card={card!} faceUp={true} size="md" slotIndex={playerSlotIndices[pi]?.[idx] ?? 0} />
+                        <HwatuCard key={idx} card={card!} faceUp={true} size={cardSize} slotIndex={playerSlotIndices[pi]?.[idx] ?? 0} />
                       ) : (
-                        <HwatuCard key={idx} faceUp={false} size="md" />
+                        <HwatuCard key={idx} faceUp={false} size={cardSize} />
                       )
                     )}
               </div>
               {isDied ? (
-                <Badge variant="destructive">다이</Badge>
+                <Badge variant="destructive" className="text-[10px] md:text-xs">다이</Badge>
               ) : (
                 player.isRevealed && handLabel && (
-                  <Badge variant="secondary">{handLabel}</Badge>
+                  <Badge variant="secondary" className="text-[10px] md:text-xs">{handLabel}</Badge>
                 )
               )}
               <Badge
-                className={
+                className={`text-[10px] md:text-xs ${
                   chipDelta > 0
                     ? 'bg-green-600 text-white'
                     : chipDelta < 0
                     ? 'bg-red-600 text-white'
                     : ''
-                }
+                }`}
               >
                 {chipDelta > 0 ? '+' : ''}
                 {chipDelta.toLocaleString()}원
               </Badge>
               {isWinner && totalTtaengReceived > 0 && (
-                <p className="text-xs text-green-400">
+                <p className="text-[10px] text-green-400 md:text-xs">
                   땡값 +{totalTtaengReceived.toLocaleString()}원
                 </p>
               )}
               {!isWinner && myTtaengPayment && (
-                <p className="text-xs text-red-400">
+                <p className="text-[10px] text-red-400 md:text-xs">
                   땡값 -{myTtaengPayment.amount.toLocaleString()}원
                 </p>
               )}

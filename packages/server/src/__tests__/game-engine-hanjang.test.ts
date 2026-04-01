@@ -1,7 +1,8 @@
 /**
  * 한장공유 모드 단위 테스트
  * Phase 전환: mode-select -> shared-card-select -> setSharedCard -> shuffling
- *             -> cutting -> dealing(1장) -> betting -> showdown -> result
+ *             -> dealing(1장) -> betting -> showdown -> result
+ * (한장공유는 기리 없음 — shuffle 후 바로 dealing)
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GameEngine } from '../game-engine.js';
@@ -61,14 +62,12 @@ describe('한장공유 모드 - GameEngine', () => {
     expect(() => engine.setSharedCard('p2', 0)).toThrow('NOT_YOUR_TURN');
   });
 
-  it('Test 5: 한장공유 딜링 후 각 플레이어 cards.length === 1', () => {
+  it('Test 5: 한장공유 딜링 후 각 플레이어 cards.length === 1 (기리 없음)', () => {
     engine.selectMode('p1', 'shared-card');
     engine.setSharedCard('p1', 0);
     // phase === 'shuffling'
     engine.shuffle('p1');
-    // phase === 'cutting'
-    engine.cut('p2', [], [0]);
-    // dealing 후 phase === 'betting'
+    // 한장공유는 기리 스킵 → 바로 dealing → betting
     const state = engine.getState();
     expect(state.phase).toBe('betting');
     const alivePlayers = state.players.filter((p: any) => p.isAlive);
@@ -79,8 +78,7 @@ describe('한장공유 모드 - GameEngine', () => {
     engine.selectMode('p1', 'shared-card');
     engine.setSharedCard('p1', 0);
     engine.shuffle('p1');
-    engine.cut('p2', [], [0]);
-    // phase === 'betting'
+    // 기리 스킵 → 바로 betting
     // 두 플레이어 체크/콜
     engine.processBetAction('p1', { type: 'check' });
     engine.processBetAction('p2', { type: 'call' });

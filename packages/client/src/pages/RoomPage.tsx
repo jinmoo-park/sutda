@@ -27,11 +27,50 @@ import { HwatuCard } from '@/components/game/HwatuCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { HistoryModal } from '@/components/modals/HistoryModal';
-import { Clock } from 'lucide-react';
+import { Clock, Send } from 'lucide-react';
 
 // sessionStorage 키 헬퍼 (roomId별로 입장 정보 저장)
 function getRoomSessionKey(roomId: string) { return `sutda_room_${roomId}`; }
 interface RoomSession { nickname: string; initialChips: number; isHost: boolean }
+
+/** 모바일 전용 채팅 입력 바 — 손패/베팅 패널 바로 위에 항상 표시 */
+function MobileChatInput() {
+  const { socket, roomState } = useGameStore();
+  const [input, setInput] = useState('');
+  const [sendDisabled, setSendDisabled] = useState(false);
+  const isConnected = socket?.connected ?? false;
+
+  const handleSend = () => {
+    const trimmed = input.trim();
+    if (!trimmed || !roomState?.roomId || sendDisabled) return;
+    socket?.emit('send-chat', { roomId: roomState.roomId, text: trimmed });
+    setInput('');
+    setSendDisabled(true);
+    setTimeout(() => setSendDisabled(false), 500);
+  };
+
+  return (
+    <div className="flex items-center gap-1 px-2 py-1 border-b border-border bg-background/80">
+      <input
+        type="text"
+        value={input}
+        onChange={e => setInput(e.target.value.slice(0, 200))}
+        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+        placeholder="채팅"
+        disabled={!isConnected}
+        className="flex-1 h-7 px-2 rounded border border-input bg-background text-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50"
+        maxLength={200}
+      />
+      <button
+        onClick={handleSend}
+        disabled={!input.trim() || sendDisabled || !isConnected}
+        className="h-7 w-7 flex items-center justify-center rounded text-primary hover:bg-accent disabled:opacity-50"
+      >
+        <Send className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
 
 export function RoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -583,16 +622,19 @@ export function RoomPage() {
           </div>
         </div>
 
-        {/* 하단: HandPanel + BettingPanel 한 줄 flex */}
-        <div className="shrink-0 border-t border-border flex flex-row items-start gap-1 p-1">
-          <div className="flex-1 min-w-0">
-            {handPanelNode}
-          </div>
-          {bettingPanelNode && (
+        {/* 하단: 채팅 입력 + HandPanel + BettingPanel */}
+        <div className="shrink-0 border-t border-border">
+          <MobileChatInput />
+          <div className="flex flex-row items-start gap-1 p-1">
             <div className="flex-1 min-w-0">
-              {bettingPanelNode}
+              {handPanelNode}
             </div>
-          )}
+            {bettingPanelNode && (
+              <div className="flex-1 min-w-0">
+                {bettingPanelNode}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
