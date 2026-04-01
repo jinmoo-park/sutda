@@ -209,7 +209,7 @@ Plans:
 **Goal:** Google Stitch MCP를 활용하여 전체 UI를 D-09 군용담요 컨셉("공장에서 군용담요 깔아놓고 하는 느낌")으로 프로페셔널하게 개선한다 — 메인화면, 대기실, 게임테이블, 패널, 모달 16개, 공통 UI 전체.
 **Requirements**: STITCH-SETUP, STITCH-DESIGN-SYSTEM, STITCH-MAINPAGE, STITCH-WAITINGROOM, STITCH-GAMETABLE, STITCH-PLAYERSEAT, STITCH-BETTINGPANEL, STITCH-HANDPANEL, STITCH-INFOPANEL, STITCH-MODAL-HIGH, STITCH-MODAL-REST, STITCH-COMMON-UI, STITCH-RESULTSCREEN
 **Depends on:** Phase 10
-**Plans:** 1/7 plans executed
+**Plans:** 2/7 plans executed
 **Success Criteria** (완료 시 참이어야 하는 것):
   1. 모든 주요 화면과 모달이 D-09 군용담요 컨셉으로 시각적으로 개선되어 있다
   2. 기존 게임 로직(소켓 통신, 상태 관리)이 변경 없이 동작한다
@@ -220,7 +220,7 @@ Plans:
 Plans:
 - [x] 10.1-01-PLAN.md — Stitch MCP 환경 설정 + DESIGN.md 작성 + 디자인 시스템 등록
 - [ ] 10.1-02-PLAN.md — MainPage + WaitingRoom UI 고도화
-- [ ] 10.1-03-PLAN.md — GameTable + PlayerSeat UI 고도화
+- [x] 10.1-03-PLAN.md — GameTable + PlayerSeat UI 고도화
 - [ ] 10.1-04-PLAN.md — BettingPanel + HandPanel + InfoPanel UI 고도화
 - [ ] 10.1-05-PLAN.md — 고우선순위 모달 4개 UI 고도화 (ModeSelect, AttendSchool, DealerSelect, DealerResult)
 - [ ] 10.1-06-PLAN.md — 나머지 모달 12개 UI 고도화 (Shuffle, Cut 외관만 + 나머지 10개)
@@ -282,6 +282,6 @@ Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 10.1 -> 1
 | 8. 골라골라 + 인디언섯다 모드 | 3/3 | Complete   | 2026-03-30 |
 | 9. 특수 규칙 (땡값 + 94재경기) | 2/2 | Complete   | 2026-03-30 |
 | 10. 시각/UX 완성 | 4/4 | Complete    | 2026-03-31 |
-| 10.1 Stitch UI 고도화 | 1/7 | In Progress|  |
+| 10.1 Stitch UI 고도화 | 2/7 | In Progress|  |
 | 11. 소셜/기능 완성 | 0/TBD | Not started | - |
 | 12. 통합 테스트 + 배포 | 0/TBD | Not started | - |
