@@ -57,6 +57,9 @@ const io = new Server<
 const roomManager = new RoomManager();
 const gameEngines: Map<string, GameEngine> = new Map();
 
+// 채팅 이력 (roomId → 최대 50개 메시지)
+const chatHistories = new Map<string, Array<{ playerId: string; nickname: string; text: string; timestamp: number }>>();
+
 // 등교 응답 추적 (roomId → Set<playerId>) — 등교 + 잠시쉬기 모두 포함
 const schoolResponded: Map<string, Set<string>> = new Map();
 // 다음 판 투표 추적 (roomId → Set<playerId>)
@@ -156,6 +159,11 @@ io.on('connection', (socket) => {
       socket.emit('set-player-id', { playerId: socket.id });
       // 방 전체에 갱신된 상태 브로드캐스트 (방장 포함 모든 클라이언트 갱신)
       io.to(roomId).emit('room-state', room);
+      // 채팅 이력 전송 (입장 시 기존 채팅 복원)
+      const chatHistory = chatHistories.get(roomId);
+      if (chatHistory && chatHistory.length > 0) {
+        socket.emit('chat-history', { messages: chatHistory });
+      }
       // 게임 진행 중이면 현재 게임 상태도 전송 (재접속 / 뒤늦게 합류한 플레이어 대응)
       if (room.gamePhase === 'playing') {
         const engine = gameEngines.get(roomId);
@@ -177,7 +185,28 @@ io.on('connection', (socket) => {
         playerId: result.removedPlayerId,
         newHostId: result.newHostId,
       });
+      // 방이 비었으면 채팅 이력 정리
+      const room = roomManager.getRoom(roomId);
+      if (!room || room.players.length === 0) {
+        chatHistories.delete(roomId);
+      }
     }
+  });
+
+  // send-chat 핸들러
+  socket.on('send-chat', ({ roomId, text }) => {
+    if (!text || text.trim().length === 0) return;
+    const msg = {
+      playerId: socket.data.playerId,
+      nickname: socket.data.nickname,
+      text: text.trim().slice(0, 200),
+      timestamp: Date.now(),
+    };
+    if (!chatHistories.has(roomId)) chatHistories.set(roomId, []);
+    const history = chatHistories.get(roomId)!;
+    history.push(msg);
+    if (history.length > 50) history.shift();
+    io.to(roomId).emit('chat-message', msg);
   });
 
   // start-game 핸들러
@@ -572,6 +601,11 @@ io.on('connection', (socket) => {
               playerId: result.removedPlayerId,
               newHostId: result.newHostId,
             });
+            // 방이 비었으면 채팅 이력 정리
+            const remainingRoom = roomManager.getRoom(roomId);
+            if (!remainingRoom || remainingRoom.players.length === 0) {
+              chatHistories.delete(roomId);
+            }
           }
         }, 15_000);
         waitingDisconnectTimers.set(timerKey, timer);

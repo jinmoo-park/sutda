@@ -10,6 +10,13 @@ interface RechargeRequest {
   amount: number;
 }
 
+interface ChatMessage {
+  playerId: string;
+  nickname: string;
+  text: string;
+  timestamp: number;
+}
+
 interface GameStore {
   // 상태
   socket: AppSocket | null;
@@ -18,11 +25,13 @@ interface GameStore {
   myPlayerId: string | null;
   error: string | null;
   rechargeRequest: RechargeRequest | null;
+  chatMessages: ChatMessage[];
 
   // 액션
   connect: (serverUrl: string) => void;
   disconnect: () => void;
   clearError: () => void;
+  sendChat: (roomId: string, text: string) => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -32,6 +41,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   myPlayerId: null,
   error: null,
   rechargeRequest: null,
+  chatMessages: [],
 
   connect: (serverUrl: string) => {
     const existing = get().socket;
@@ -75,6 +85,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ rechargeRequest: null });
     });
 
+    socket.on('chat-message', (msg) => {
+      set(state => ({ chatMessages: [...state.chatMessages, msg] }));
+    });
+
+    socket.on('chat-history', ({ messages }) => {
+      set({ chatMessages: messages });
+    });
+
     socket.on('disconnect', () => {
       set({ error: '서버 연결이 끊겼어요. 페이지를 새로 고침해 주세요.' });
     });
@@ -84,8 +102,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   disconnect: () => {
     get().socket?.disconnect();
-    set({ socket: null, gameState: null, roomState: null, myPlayerId: null, rechargeRequest: null });
+    set({ socket: null, gameState: null, roomState: null, myPlayerId: null, rechargeRequest: null, chatMessages: [] });
   },
 
   clearError: () => set({ error: null }),
+
+  sendChat: (roomId: string, text: string) => {
+    get().socket?.emit('send-chat', { roomId, text });
+  },
 }));
