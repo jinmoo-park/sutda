@@ -70,6 +70,8 @@ export interface PlayerState {
   lastBetAction?: LastBetAction; // 이번 판에서의 마지막 베팅 액션
   selectedCards?: Card[];  // 세장섯다: 3장 중 선택한 2장 (per D-04)
   openedCardIndex?: 0 | 1;  // 세장섯다: 최초 2장 중 오픈한 카드 인덱스 (상대방에게 공개)
+  isAllIn?: boolean;        // 올인 상태 (베팅 패널 비활성화 대상)
+  totalCommitted?: number;  // 이번 판 전체 기여 총액 (앤티 포함, 올인 정산용)
 }
 
 /** 전체 게임 상태 */
@@ -101,4 +103,16 @@ export interface GameState {
   isRematchRound?: boolean;  // 재경기(구사/동점) 라운드 여부 — 땡값 면제
   skipCutting?: boolean;  // 재경기: 기리(cutting) 단계 건너뜀
   rematchConfirmedIds?: string[];  // 동점 재경기 확인한 플레이어 ID 목록
+  schoolProxyBeneficiaryIds?: string[];  // 학교 대신 가주기 수혜자 ID 목록 (다음 판 앤티 면제)
+}
+
+/** 라운드 이력 항목 */
+export interface RoundHistoryEntry {
+  roundNumber: number;
+  winnerId: string;
+  winnerNickname: string;
+  winnerHandLabel: string;
+  pot: number;
+  hasTtaengPayment: boolean;
+  playerChipChanges: { playerId: string; nickname: string; chipDelta: number }[];
 }

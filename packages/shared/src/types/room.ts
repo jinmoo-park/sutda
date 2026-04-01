@@ -5,6 +5,8 @@ export interface RoomPlayer {
   chips: number;        // 초기 칩 금액 (만원 단위, 기본 100000)
   seatIndex: number;    // 자리 번호 (0부터, 입장 순서)
   isConnected: boolean; // 현재 연결 상태 (재접속 처리용)
+  isObserver?: boolean;      // 게임 중 입장한 관람자
+  observerChips?: number;    // 다음 판 참여 시 사용할 초기 칩
 }
 
 /** 방 상태 */

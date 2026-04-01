@@ -1,5 +1,5 @@
 import type { RoomState, RoomPlayer } from './room';
-import type { GameState, GameMode, BetAction } from './game';
+import type { GameState, GameMode, BetAction, RoundHistoryEntry } from './game';
 
 /** 에러 응답 (per UI-SPEC 에러 메시지 계약) */
 export interface ErrorPayload {
@@ -20,7 +20,8 @@ export interface ErrorPayload {
     | 'RECHARGE_NOT_FOUND'
     | 'INSUFFICIENT_CHIPS'
     | 'CARD_ALREADY_TAKEN'
-    | 'SELECTION_COMPLETE';
+    | 'SELECTION_COMPLETE'
+    | 'CHAT_TOO_FAST';
   message: string;
 }
 
@@ -53,6 +54,8 @@ export interface ClientToServerEvents {
   'start-rematch': (data: { roomId: string }) => void;
   'gusa-rejoin': (data: { roomId: string; join: boolean }) => void;
   'confirm-gusa-announce': (data: { roomId: string }) => void;
+  'send-chat': (data: { roomId: string; text: string }) => void;
+  'proxy-ante': (data: { roomId: string; beneficiaryIds: string[] }) => void;
 }
 
 /** 서버 -> 클라이언트 이벤트 */
@@ -60,7 +63,7 @@ export interface ServerToClientEvents {
   'room-created': (data: { roomId: string; roomState: RoomState }) => void;
   'room-state': (data: RoomState) => void;
   'player-joined': (data: RoomPlayer) => void;
-  'player-left': (data: { playerId: string; newHostId?: string }) => void;
+  'player-left': (data: { playerId: string; newHostId?: string; nickname?: string }) => void;
   'error': (data: ErrorPayload) => void;
   'game-state': (data: GameState) => void;
   'game-error': (data: { code: string; message: string }) => void;
@@ -68,6 +71,10 @@ export interface ServerToClientEvents {
   'recharge-vote-update': (data: { votedCount: number; totalNeeded: number; approved: boolean }) => void;
   'recharge-result': (data: { requesterId: string; approved: boolean; newChips?: number }) => void;
   'set-player-id': (data: { playerId: string }) => void;
+  'chat-message': (data: { playerId: string; nickname: string; text: string; timestamp: number }) => void;
+  'chat-history': (data: { messages: Array<{ playerId: string; nickname: string; text: string; timestamp: number }> }) => void;
+  'proxy-ante-applied': (data: { sponsorNickname: string; beneficiaryNickname: string }) => void;
+  'game-history': (data: { entries: RoundHistoryEntry[] }) => void;
 }
 
 /** Socket.IO 서버 간 이벤트 (사용하지 않지만 타입 완전성) */
