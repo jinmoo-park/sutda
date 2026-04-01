@@ -561,7 +561,14 @@ io.on('connection', (socket) => {
           io.to(roomId).emit('game-history', { entries: gameHistories.get(roomId)! });
         }
 
+        // proxy-ante 데이터를 nextRound() 전에 보존 (nextRound가 schoolProxyBeneficiaryIds를 초기화하므로)
+        const savedProxyBeneficiaries: string[] = (engine.getState() as any).schoolProxyBeneficiaryIds ?? [];
+        const savedProxySponsorId: string | undefined = (engine.getState() as any).schoolProxySponsorId;
+
         engine.nextRound();
+
+        // nextRound() 후 winnerId(=dealer) 보존 (Observer 합류 시 엔진 재생성용)
+        const prevDealerId = engine.getState().players.find(p => p.isDealer)?.id;
 
         // Observer → 일반 플레이어 자동 합류 (D-15)
         const room = roomManager.getRoom(roomId)!;
@@ -581,23 +588,22 @@ io.on('connection', (socket) => {
             currentState.mode,
             currentState.roundNumber,
           );
+          // 딜러 복원 — 새 엔진 생성자가 isDealer를 false로 초기화하므로
+          if (prevDealerId) {
+            newEngine.setDealerFromPreviousWinner(prevDealerId);
+          }
           gameEngines.set(roomId, newEngine);
         }
 
         // 모달 없이 자동 앤티: 비-absent 플레이어 전원 자동 등교
         const activeEngine = getEngine(roomId);
         if (activeEngine.getState().phase === 'attend-school') {
-          // proxy-ante 수혜자 목록 및 후원자 ID 읽기 (이전 판 result phase에서 설정됨)
-          const activeState = activeEngine.getState() as any;
-          const proxyBeneficiaries: string[] = activeState.schoolProxyBeneficiaryIds ?? [];
-          const proxySponsorId: string | undefined = activeState.schoolProxySponsorId;
-
           const nonAbsentPlayers = activeEngine.getState().players.filter(p => !p.isAbsent && p.isAlive);
           for (const p of nonAbsentPlayers) {
             try {
               // proxy 수혜자이고 후원자 ID가 있으면 대납 처리
-              if (proxyBeneficiaries.includes(p.id) && proxySponsorId) {
-                activeEngine.attendSchoolProxy(p.id, proxySponsorId);
+              if (savedProxyBeneficiaries.includes(p.id) && savedProxySponsorId) {
+                activeEngine.attendSchoolProxy(p.id, savedProxySponsorId);
               } else {
                 activeEngine.attendSchool(p.id);
               }
@@ -608,9 +614,6 @@ io.on('connection', (socket) => {
           if (activeEngine.getState().phase === 'attend-school') {
             activeEngine.completeAttendSchool();
           }
-          // proxy 상태 초기화 (1판 1회성)
-          (activeEngine.getState() as any).schoolProxyBeneficiaryIds = undefined;
-          (activeEngine.getState() as any).schoolProxySponsorId = undefined;
         }
 
         io.to(roomId).emit('room-state', room);
@@ -636,18 +639,20 @@ io.on('connection', (socket) => {
         if (nonAbsentCount > 0 && votes.size >= nonAbsentCount) {
           nextRoundVotes.delete(roomId);
           schoolResponded.delete(roomId);
+
+          // proxy-ante 데이터를 nextRound() 전에 보존
+          const tbSavedProxyBeneficiaries: string[] = (engine.getState() as any).schoolProxyBeneficiaryIds ?? [];
+          const tbSavedProxySponsorId: string | undefined = (engine.getState() as any).schoolProxySponsorId;
+
           engine.nextRound();
 
           // 자동 앤티
           if (engine.getState().phase === 'attend-school') {
-            const tbState = engine.getState() as any;
-            const tbProxyBeneficiaries: string[] = tbState.schoolProxyBeneficiaryIds ?? [];
-            const tbProxySponsorId: string | undefined = tbState.schoolProxySponsorId;
             const nonAbsentPlayers = engine.getState().players.filter(p => !p.isAbsent && p.isAlive);
             for (const p of nonAbsentPlayers) {
               try {
-                if (tbProxyBeneficiaries.includes(p.id) && tbProxySponsorId) {
-                  engine.attendSchoolProxy(p.id, tbProxySponsorId);
+                if (tbSavedProxyBeneficiaries.includes(p.id) && tbSavedProxySponsorId) {
+                  engine.attendSchoolProxy(p.id, tbSavedProxySponsorId);
                 } else {
                   engine.attendSchool(p.id);
                 }
@@ -657,8 +662,6 @@ io.on('connection', (socket) => {
             if (engine.getState().phase === 'attend-school') {
               engine.completeAttendSchool();
             }
-            (engine.getState() as any).schoolProxyBeneficiaryIds = undefined;
-            (engine.getState() as any).schoolProxySponsorId = undefined;
           }
 
           io.to(roomId).emit('game-state', engine.getState() as GameState);
