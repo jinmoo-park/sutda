@@ -15,6 +15,9 @@ font/
 # 루트 이미지 파일
 img/
 
+# 루트 HTML 파일 (stitch 목업, 예시 파일)
+/*.html
+
 # 루트 MD 파일 (stitch 문서 등)
 /*.md
 
