@@ -18,6 +18,11 @@ interface GiriState {
   // Actions
   initSplit: (x?: number, y?: number) => void;
   addSplitPile: (pileId: number, deductCount: number, newX: number, newY: number) => void;
+  addSplitPileWithLayout: (
+    pileId: number,
+    deductCount: number,
+    layoutFn: (piles: Pile[]) => { id: number; x: number; y: number }[]
+  ) => void;
   tapPile: (pileId: number) => void;
   untapPile: (pileId: number) => void;
   setMerging: () => void;
@@ -52,6 +57,25 @@ export const useGiriStore = create<GiriState>((set) => ({
       const newId = Math.max(...newPiles.map((p) => p.id)) + 1;
       newPiles.push({ id: newId, cardCount: deductCount, x: newX, y: newY });
       return { piles: newPiles };
+    }),
+
+  // 스와이프 컷팅 완료 시: 새 더미 추가 후 layoutFn으로 전체 더미 재배치
+  addSplitPileWithLayout: (pileId, deductCount, layoutFn) =>
+    set((state) => {
+      const idx = state.piles.findIndex((p) => p.id === pileId);
+      if (idx === -1) return state;
+      const pile = state.piles[idx];
+      if (deductCount <= 0 || deductCount >= pile.cardCount) return state;
+      const newPiles = [...state.piles];
+      newPiles[idx] = { ...pile, cardCount: pile.cardCount - deductCount };
+      const newId = Math.max(...newPiles.map((p) => p.id)) + 1;
+      newPiles.push({ id: newId, cardCount: deductCount, x: 0, y: 0 });
+      const positions = layoutFn(newPiles);
+      const finalPiles = newPiles.map((p) => {
+        const pos = positions.find((pos) => pos.id === p.id);
+        return pos ? { ...p, x: pos.x, y: pos.y } : p;
+      });
+      return { piles: finalPiles };
     }),
 
   tapPile: (pileId) =>
