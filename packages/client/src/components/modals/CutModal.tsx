@@ -19,7 +19,7 @@ const CARD_H = 78;
 const GAP = 8;
 const DRAG_THRESHOLD = 8;
 const TABLE_W = 360;
-const TABLE_H = 220;
+const TABLE_H = 180;
 
 function pileH(n: number) { return CARD_H + (n - 1) * GAP; }
 function easeInOut(t: number) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; }

@@ -16,7 +16,7 @@ interface ShuffleModalProps {
 
 // --- 참조 구현 포팅 (sutda-shuffle.html) ---
 const N = 5;
-const BASE_TOP = 10;
+const BASE_TOP = 50;
 const GAP = 13;
 const CYCLE = 300;
 const T = { peek: 0.22, hold: 0.18, rise: 0.35, drop: 0.15, rest: 0.10 };
@@ -193,10 +193,19 @@ export function ShuffleModal({ open, roomId }: ShuffleModalProps) {
           <DialogTitle>패를 섞으세요</DialogTitle>
         </DialogHeader>
 
-        {/* 카드 더미 — perspective로 3D 효과, 누르면 섞기 */}
-        <div className="flex flex-col items-center justify-center py-4">
+        {/* 카드 더미 — 모달 콘텐츠 영역 정중앙 */}
+        <div className="flex flex-col items-center">
+          <p className="text-xs text-muted-foreground mb-4 text-center">
+            {isShuffling ? '섞는 중...' : hasShuffled ? '잘 섞였어요! 확인을 누르세요' : '카드 더미를 꾹 누르면 섞입니다'}
+          </p>
           <div
-            style={{ perspective: '700px', perspectiveOrigin: '50% 30%', cursor: 'pointer', userSelect: 'none' }}
+            style={{
+              perspective: '700px', perspectiveOrigin: '50% 50%',
+              cursor: 'pointer', userSelect: 'none',
+              width: '80px', height: '150px',
+              overflow: 'visible',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
             onPointerDown={startShuffle}
             onPointerUp={stopShuffle}
             onPointerLeave={stopShuffle}
@@ -231,9 +240,6 @@ export function ShuffleModal({ open, roomId }: ShuffleModalProps) {
               ))}
             </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-6 text-center">
-            {isShuffling ? '섞는 중...' : hasShuffled ? '잘 섞였어요! 확인을 누르세요' : '카드 더미를 꾹 누르면 섞입니다'}
-          </p>
         </div>
 
         <DialogFooter>
