@@ -149,7 +149,12 @@ export function HandPanel({
 
   return (
     <div className="space-y-1.5 p-2">
-      <p className="text-xs font-semibold">{nickname ? `${nickname}의 패` : '내 패'}</p>
+      <div className="flex items-center justify-between gap-1">
+        <p className="text-xs font-semibold">{nickname ? `${nickname}의 패` : '내 패'}</p>
+        <Button variant="ghost" size="sm" className="h-5 text-[10px] px-1.5 py-0 shrink-0" onClick={() => setShowReference(true)}>
+          족보 참고표
+        </Button>
+      </div>
 
       {cards.length === 0 ? (
         <p className="text-sm text-muted-foreground">카드가 아직 없어요</p>
@@ -183,10 +188,6 @@ export function HandPanel({
       {flippedIndices.size === 1 && cards.length >= 2 && (
         <p className="text-xs text-muted-foreground">나머지 카드를 탭해서 확인하세요</p>
       )}
-
-      <Button variant="ghost" size="sm" onClick={() => setShowReference(true)}>
-        족보 참고표
-      </Button>
 
       <HandReferenceDialog open={showReference} onOpenChange={setShowReference} />
     </div>
