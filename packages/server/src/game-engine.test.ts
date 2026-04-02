@@ -2106,7 +2106,7 @@ describe('allIn: 올인 POT 정산', () => {
     for (const p of state.players) {
       p.isAlive = true;
       p.cards = playerCards[p.seatIndex]!.map(([rank, attr]) => ({
-        rank, attribute: attr as 'gwang' | 'yeolkkeut' | 'normal',
+        rank: rank as import('@sutda/shared').CardRank, attribute: attr as 'gwang' | 'yeolkkeut' | 'normal',
       }));
       p.isRevealed = true;
     }
