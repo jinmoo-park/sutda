@@ -89,16 +89,12 @@ export function CutModal({ open, roomId }: CutModalProps) {
     const stackCount = Math.min(count, 5);
     for (let i = 0; i < stackCount; i++) {
       const c = document.createElement('div');
-      c.style.cssText = `position:absolute;width:54px;height:${CARD_H}px;border-radius:5px;left:3px;overflow:hidden;`;
+      c.style.cssText = `position:absolute;width:54px;height:${CARD_H}px;border-radius:5px;left:3px;background-image:url(/img/card_back.jpg);background-size:cover;background-position:center;`;
       c.style.top = (count - 1 - i) * GAP + 'px';
       c.style.zIndex = String(i + 1);
       c.style.boxShadow = i === stackCount - 1
         ? '0 14px 28px rgba(0,0,0,0.5), 0 4px 8px rgba(0,0,0,0.3)'
         : `0 ${2 + i}px 0 rgba(0,0,0,${0.12 + i * 0.03})`;
-      const img = document.createElement('img');
-      img.src = '/img/card_back.jpg';
-      img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
-      c.appendChild(img);
       el.appendChild(c);
     }
     el.style.left = (clientX - 30) + 'px';
@@ -265,15 +261,15 @@ export function CutModal({ open, roomId }: CutModalProps) {
                         height: CARD_H,
                         borderRadius: 5,
                         left: 3,
-                        overflow: 'hidden',
                         top: (pile.cardCount - 1 - i) * GAP,
                         zIndex: i + 1,
                         boxShadow: `0 ${2 + i}px 0 rgba(0,0,0,${0.12 + i * 0.03})`,
                         outline: isSelected ? '2px solid rgba(255,255,255,0.5)' : undefined,
+                        backgroundImage: 'url(/img/card_back.jpg)',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
                       }}
-                    >
-                      <img src="/img/card_back.jpg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                    </div>
+                    />
                   ))}
                 </div>
                 <div style={{ textAlign: 'center', fontSize: 10, color: '#888', marginTop: 4 }}>

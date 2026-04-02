@@ -220,14 +220,14 @@ export function ShuffleModal({ open, roomId }: ShuffleModalProps) {
                     left: '50%',
                     marginLeft: '-27px',
                     borderRadius: '5px',
-                    overflow: 'hidden',
                     boxSizing: 'border-box',
                     top: `${BASE_TOP - i * GAP}px`,
                     zIndex: i + 1,
+                    backgroundImage: 'url(/img/card_back.jpg)',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
                   }}
-                >
-                  <img src="/img/card_back.jpg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                </div>
+                />
               ))}
             </div>
           </div>
