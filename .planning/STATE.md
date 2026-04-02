@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 12 context gathered
-last_updated: "2026-04-02T01:57:55.213Z"
+status: executing
+stopped_at: Completed 12-deploy-01-PLAN.md
+last_updated: "2026-04-02T02:38:14.075Z"
 last_activity: 2026-04-02
 progress:
   total_phases: 13
   completed_phases: 11
-  total_plans: 29
-  completed_plans: 29
+  total_plans: 31
+  completed_plans: 30
   percent: 44
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** 아무 설치 없이 링크 하나로 친구들과 실시간으로 섯다를 즐길 수 있어야 한다.
-**Current focus:** Phase 12 — 통합 테스트 + 배포
+**Current focus:** Phase 12 — deploy
 
 ## Current Position
 
-Phase: 12
-Plan: Not started
-Status: Ready to plan
+Phase: 12 (deploy) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-04-02
 
 Progress: [████░░░░░░] 44%
@@ -84,6 +84,7 @@ Progress: [████░░░░░░] 44%
 | Phase 10.1-stitch-ui P02 | 40min | 2 tasks | 2 files |
 | Phase 11-social-features P03 | 15 | 2 tasks | 3 files |
 | Phase 11-social-features P04 | 45 | 3 tasks | 11 files |
+| Phase 12-deploy P01 | 6 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -172,6 +173,8 @@ Recent decisions affecting current work:
 - [Phase 11-social-features]: InfoPanel 완전 제거 — 이력 버튼은 RoomPage 직접 관리, 잔액은 PlayerSeat isMe 골드 강조로 대체
 - [Phase 11-social-features]: ChatPanel mobile prop: opacity 0.05/0.5/0.8 + pointer-events-none 패턴으로 게임 위 오버레이 구현
 - [Phase 11-social-features]: handLabels.ts 공유 유틸 — HAND_TYPE_KOREAN 매핑 단일 진실 출처, ResultScreen/HistoryModal 중복 제거
+- [Phase 12-deploy]: STATIC_DIR를 import.meta.url 기반으로 변경 — PM2 cwd 무관 올바른 경로 보장
+- [Phase 12-deploy]: GitHub 리포지토리 jinmoo-park/sutda 퍼블릭으로 생성, VM git clone 가능
 
 ### Pending Todos
 
@@ -190,6 +193,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-02T01:57:55.208Z
-Stopped at: Phase 12 context gathered
-Resume file: .planning/phases/12-deploy/12-CONTEXT.md
+Last session: 2026-04-02T02:38:14.070Z
+Stopped at: Completed 12-deploy-01-PLAN.md
+Resume file: None
