@@ -23,6 +23,7 @@ interface GiriState {
     deductCount: number,
     layoutFn: (piles: Pile[]) => { id: number; x: number; y: number }[]
   ) => void;
+  splitAll: (newPiles: Pile[]) => void;
   tapPile: (pileId: number) => void;
   untapPile: (pileId: number) => void;
   setMerging: () => void;
@@ -77,6 +78,9 @@ export const useGiriStore = create<GiriState>((set) => ({
       });
       return { piles: finalPiles };
     }),
+
+  splitAll: (newPiles) =>
+    set({ piles: newPiles, tapOrder: [] }),
 
   tapPile: (pileId) =>
     set((state) => {

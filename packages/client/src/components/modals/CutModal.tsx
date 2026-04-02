@@ -14,53 +14,86 @@ interface CutModalProps {
   roomId: string;
 }
 
-// --- 참조 구현 포팅 (sutda-giri.html) ---
 const CARD_H = 78;
 const GAP = 8;
 const DRAG_THRESHOLD = 8;
-const SWIPE_MIN = 15;   // 스와이프로 인식하는 최소 수평 이동 거리 (px)
-const SWIPE_MAX = 220;  // 이 거리 이상 스와이프하면 최대 카드 수 컷팅
-const MAX_SWIPES = 4;   // 모바일: 최대 스와이프(컷팅) 횟수
+const SWIPE_MIN = 30;   // 스와이프 인식 최소 이동 거리 (px)
+const MAX_SWIPES = 3;   // 모바일: 최대 스와이프(컷팅) 횟수
 const TABLE_W = 360;
-const TABLE_H = 180;
+const TABLE_H = 300;
+
+// swipe 횟수별 고정 카드 배분 (20장 기준)
+const CARD_DISTRIBUTIONS: number[][] = [
+  [20],
+  [10, 10],
+  [7, 7, 6],
+  [5, 5, 5, 5],
+];
 
 function pileH(n: number) { return CARD_H + (n - 1) * GAP; }
-function easeInOut(t: number) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; }
 
-/** 터치 모드 전용: N개 더미를 한 줄로 균일하게 배치 */
-function computeRowLayout(
-  piles: Pile[],
+/** 더미 수에 따른 고정 레이아웃 */
+function getFixedLayout(
+  pileCount: number,
   tableW: number,
-  tableH: number
 ): { id: number; x: number; y: number }[] {
-  const N = piles.length;
   const pileW = 60;
-  const maxCards = Math.max(...piles.map((p) => p.cardCount));
-  const h = pileH(maxCards);
-  // 원본과 동일: 세로 중앙 (음수도 허용)
-  const y = (tableH - h) / 2;
-  if (N === 1) {
-    return [{ id: piles[0].id, x: Math.round((tableW - pileW) / 2), y }];
+  const hGap = 40;
+  const vGap = 20;
+  const cx = Math.round((tableW - pileW) / 2);
+  const dist = CARD_DISTRIBUTIONS[pileCount - 1] ?? CARD_DISTRIBUTIONS[0];
+
+  switch (pileCount) {
+    case 1: {
+      return [{ id: 0, x: cx, y: Math.round((TABLE_H - pileH(dist[0])) / 2) }];
+    }
+    case 2: {
+      const totalW = 2 * pileW + hGap;
+      const startX = Math.round((tableW - totalW) / 2);
+      const y = Math.round((TABLE_H - pileH(dist[0])) / 2);
+      return [
+        { id: 0, x: startX, y },
+        { id: 1, x: startX + pileW + hGap, y },
+      ];
+    }
+    case 3: {
+      // 역삼각형: 2개 위, 1개 아래 중앙
+      const totalW = 2 * pileW + hGap;
+      const startX = Math.round((tableW - totalW) / 2);
+      const topY = 20;
+      const bottomY = topY + pileH(dist[0]) + vGap;
+      return [
+        { id: 0, x: startX, y: topY },
+        { id: 1, x: startX + pileW + hGap, y: topY },
+        { id: 2, x: cx, y: bottomY },
+      ];
+    }
+    case 4: {
+      // 2×2 그리드
+      const totalW = 2 * pileW + hGap;
+      const startX = Math.round((tableW - totalW) / 2);
+      const topY = 20;
+      const bottomY = topY + pileH(dist[0]) + vGap;
+      return [
+        { id: 0, x: startX, y: topY },
+        { id: 1, x: startX + pileW + hGap, y: topY },
+        { id: 2, x: startX, y: bottomY },
+        { id: 3, x: startX + pileW + hGap, y: bottomY },
+      ];
+    }
+    default:
+      return [];
   }
-  const totalGap = tableW - N * pileW;
-  const gap = totalGap / (N + 1);
-  return piles.map((p, i) => ({
-    id: p.id,
-    x: Math.round(gap + i * (pileW + gap)),
-    y,
-  }));
 }
 
 export function CutModal({ open, roomId }: CutModalProps) {
   const { socket } = useGameStore();
   const {
     phase, piles, tapOrder, isTtong,
-    initSplit, addSplitPile, addSplitPileWithLayout,
+    initSplit, addSplitPile, splitAll,
     tapPile, untapPile, setMerging, setDone, setTtong,
   } = useGiriStore();
 
-  // pointer: coarse = 터치스크린 기기, pointer: fine = 마우스/트랙패드 기기
-  // 창 크기가 아닌 실제 입력 장치 타입으로 구분
   const isTouchDevice = useMemo(
     () => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches,
     []
@@ -69,9 +102,7 @@ export function CutModal({ open, roomId }: CutModalProps) {
   const tableRef = useRef<HTMLDivElement>(null);
   const ghostRef = useRef<HTMLDivElement | null>(null);
   const mergeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [swipePreviewCount, setSwipePreviewCount] = useState<number | null>(null);
 
-  // 포인터 추적 ref — 렌더링 없이 관리
   const pointerState = useRef<{
     pi: number;
     startX: number;
@@ -80,18 +111,17 @@ export function CutModal({ open, roomId }: CutModalProps) {
     isDragging: boolean;
   } | null>(null);
 
-  // 즉시 차감된 카드 수 — 데스크탑 드래그 중 원본 더미에서 ghost로 이동
+  // 데스크탑 드래그 중 ghost로 이동된 카드 수
   const [deducted, setDeducted] = useState<{ pi: number; count: number } | null>(null);
 
   useEffect(() => {
     if (open) {
-      // 테이블 실제 너비에 맞춰 더미 중앙 배치 (원본과 동일 공식)
       requestAnimationFrame(() => {
         const tw = tableRef.current?.offsetWidth ?? TABLE_W;
-        initSplit((tw - 60) / 2, (TABLE_H - pileH(20)) / 2);
+        const pos = getFixedLayout(1, tw);
+        initSplit(pos[0].x, pos[0].y);
       });
       setDeducted(null);
-      setSwipePreviewCount(null);
     }
     return () => {
       if (mergeTimerRef.current) clearTimeout(mergeTimerRef.current);
@@ -99,7 +129,6 @@ export function CutModal({ open, roomId }: CutModalProps) {
     };
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // merging 단계: 380ms 후 서버 emit
   useEffect(() => {
     if (phase === 'merging') {
       mergeTimerRef.current = setTimeout(() => {
@@ -161,7 +190,7 @@ export function CutModal({ open, roomId }: CutModalProps) {
     }
   }
 
-  // 데스크탑 전용: 개별 더미 위 pointerdown (드래그 컷팅)
+  // 데스크탑 전용: 개별 더미 위 pointerdown
   function onPointerDown(e: React.PointerEvent, pi: number) {
     e.preventDefault();
     if (phase !== 'split') return;
@@ -174,7 +203,6 @@ export function CutModal({ open, roomId }: CutModalProps) {
   }
 
   // 터치 전용: 스와이프 존 전체 영역 pointerdown
-  // 가장 가까운 더미를 x좌표 기준으로 자동 선택
   function onSwipeZoneDown(e: React.PointerEvent) {
     e.preventDefault();
     if (phase !== 'split') return;
@@ -195,19 +223,12 @@ export function CutModal({ open, roomId }: CutModalProps) {
       if (!ps) return;
 
       if (isTouchDevice) {
-        // 터치: 수평 거리로 컷팅 장수 계산 (최대 스와이프 횟수 이하일 때만)
         const dx = Math.abs(e.clientX - ps.startX);
-        if (dx >= SWIPE_MIN && piles.length <= MAX_SWIPES) {
+        const dy = Math.abs(e.clientY - ps.startY);
+        if (Math.max(dx, dy) >= SWIPE_MIN) {
           ps.isDragging = true;
-          const pile = piles[ps.pi];
-          if (!pile) return;
-          const ratio = Math.min(dx / SWIPE_MAX, 1);
-          const cutCount = Math.max(1, Math.min(pile.cardCount - 1, Math.round(ratio * pile.cardCount)));
-          ps.cutCount = cutCount;
-          setSwipePreviewCount(cutCount);
         }
       } else {
-        // 데스크탑: 드래그 거리 임계값 초과 시 ghost 생성
         const dx = e.clientX - ps.startX;
         const dy = e.clientY - ps.startY;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -218,7 +239,6 @@ export function CutModal({ open, roomId }: CutModalProps) {
           setDeducted({ pi: ps.pi, count: ps.cutCount });
           spawnGhost(e.clientX, e.clientY, ps.cutCount);
         }
-
         if (ps.isDragging) {
           moveGhost(e.clientX, e.clientY);
         }
@@ -231,25 +251,28 @@ export function CutModal({ open, roomId }: CutModalProps) {
       pointerState.current = null;
 
       if (isTouchDevice) {
-        setSwipePreviewCount(null);
-        if (ps.isDragging && ps.cutCount > 0 && piles.length <= MAX_SWIPES) {
-          // 스와이프 컷팅: 전체 더미 자동 재배치
+        if (ps.isDragging && piles.length <= MAX_SWIPES) {
+          // 스와이프: 고정 배분으로 전체 더미 교체
+          const newCount = piles.length + 1;
           const tw = tableRef.current?.offsetWidth ?? TABLE_W;
-          addSplitPileWithLayout(piles[ps.pi].id, ps.cutCount, (newPiles) =>
-            computeRowLayout(newPiles, tw, TABLE_H)
-          );
-        } else {
+          const positions = getFixedLayout(newCount, tw);
+          const distributions = CARD_DISTRIBUTIONS[piles.length];
+          const newPiles: Pile[] = distributions.map((count, i) => ({
+            id: i,
+            cardCount: count,
+            x: positions[i]?.x ?? 0,
+            y: positions[i]?.y ?? 0,
+          }));
+          splitAll(newPiles);
+        } else if (!ps.isDragging && piles.length >= 2) {
           // 탭: 순서 지정
-          if (piles.length >= 2) {
-            const pile = piles[ps.pi];
-            if (!pile) return;
-            const isAlreadyTapped = tapOrder.includes(pile.id);
-            if (isAlreadyTapped) untapPile(pile.id);
-            else tapPile(pile.id);
-          }
+          const pile = piles[ps.pi];
+          if (!pile) return;
+          const isAlreadyTapped = tapOrder.includes(pile.id);
+          if (isAlreadyTapped) untapPile(pile.id);
+          else tapPile(pile.id);
         }
       } else {
-        // 데스크탑
         if (ps.isDragging) {
           removeGhost();
           setDeducted(null);
@@ -281,9 +304,7 @@ export function CutModal({ open, roomId }: CutModalProps) {
 
   const allTapped = piles.length > 1 && tapOrder.length === piles.length;
   const canSwipeMore = piles.length <= MAX_SWIPES;
-  const swipesLeft = MAX_SWIPES + 1 - piles.length;
 
-  // 데스크탑 drag 시: 해당 더미 카드 수 임시 감소
   const displayPiles = deducted
     ? piles.map((p, i) => i === deducted.pi ? { ...p, cardCount: p.cardCount - deducted.count } : p)
     : piles;
@@ -292,10 +313,9 @@ export function CutModal({ open, roomId }: CutModalProps) {
     if (phase === 'merging') return '합치는 중...';
     if (phase === 'done') return '완료';
     if (isTouchDevice) {
-      if (piles.length === 1) return `더미를 스와이프해서 나누세요 (최대 ${MAX_SWIPES}번)`;
-      if (!canSwipeMore) return `더미를 탭해서 합칠 순서를 정하세요 (${tapOrder.length}/${piles.length})`;
-      if (tapOrder.length > 0) return `탭한 순서 = 아래부터 위 (${tapOrder.length}/${piles.length} 선택)`;
-      return `계속 스와이프하거나 탭해서 순서를 정하세요`;
+      if (piles.length === 1) return '스와이프해서 카드를 나누세요';
+      if (!canSwipeMore || tapOrder.length > 0) return `탭해서 합칠 순서를 정하세요 (${tapOrder.length}/${piles.length})`;
+      return `스와이프하거나 탭해서 순서를 정하세요`;
     } else {
       if (piles.length === 1) return '더미를 드래그해서 나누세요';
       if (tapOrder.length > 0) return `탭한 순서 = 아래부터 위 (${tapOrder.length}/${piles.length} 선택)`;
@@ -310,31 +330,66 @@ export function CutModal({ open, roomId }: CutModalProps) {
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
+        <style>{`
+          @keyframes giriSwipeGuide {
+            0%, 100% { opacity: 0; }
+            40%, 60% { opacity: 0.9; }
+          }
+          .giri-swipe-guide { animation: giriSwipeGuide 2.5s ease-in-out infinite; }
+        `}</style>
+
         <DialogHeader>
           <DialogTitle>{titleText}</DialogTitle>
         </DialogHeader>
 
-        {/*
-          터치 모드: 스와이프 존을 모달 전체 너비로 확장
-          (더미 위를 정확히 터치하지 않아도 스와이프 인식)
-        */}
         <div
           style={{ width: '100%', touchAction: 'none' }}
           onPointerDown={isTouchDevice ? onSwipeZoneDown : undefined}
         >
-          {/* 기리 테이블 */}
           <div
             ref={tableRef}
             style={{ position: 'relative', width: '100%', maxWidth: TABLE_W, height: TABLE_H, margin: '0 auto' }}
           >
+            {/* 스와이프 안내선 (터치 전용, 스와이프 가능할 때만 표시) */}
+            {isTouchDevice && canSwipeMore && phase === 'split' && (
+              <div
+                className="giri-swipe-guide"
+                style={{
+                  position: 'absolute',
+                  left: '12%',
+                  right: '12%',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  height: 0,
+                  borderTop: '1.5px dashed rgba(255, 200, 80, 0.75)',
+                  pointerEvents: 'none',
+                  zIndex: 1,
+                }}
+              >
+                <div style={{
+                  position: 'absolute',
+                  left: -10,
+                  top: -8,
+                  color: 'rgba(255, 200, 80, 0.75)',
+                  fontSize: 13,
+                  lineHeight: 1,
+                }}>◀</div>
+                <div style={{
+                  position: 'absolute',
+                  right: -10,
+                  top: -8,
+                  color: 'rgba(255, 200, 80, 0.75)',
+                  fontSize: 13,
+                  lineHeight: 1,
+                }}>▶</div>
+              </div>
+            )}
+
             {displayPiles.map((pile, pi) => {
               const orderPos = tapOrder.indexOf(pile.id);
               const isSelected = orderPos !== -1;
               const stackCount = Math.min(pile.cardCount, 5);
               const hPx = pileH(pile.cardCount);
-              const isBeingSwiped = isTouchDevice &&
-                pointerState.current?.pi === pi &&
-                swipePreviewCount !== null;
 
               return (
                 <div
@@ -364,18 +419,6 @@ export function CutModal({ open, roomId }: CutModalProps) {
                       {orderPos + 1}
                     </div>
                   )}
-                  {/* 스와이프 미리보기 배지 (터치 모드) */}
-                  {isBeingSwiped && swipePreviewCount !== null && (
-                    <div style={{
-                      position: 'absolute', top: -22, left: '50%', transform: 'translateX(-50%)',
-                      background: 'rgba(52,152,219,0.92)', color: 'white',
-                      borderRadius: 4, fontSize: 10, fontWeight: 700,
-                      padding: '2px 6px', zIndex: 100, whiteSpace: 'nowrap',
-                      pointerEvents: 'none',
-                    }}>
-                      {swipePreviewCount}장 분리
-                    </div>
-                  )}
                   {/* 카드 스택 */}
                   <div style={{ position: 'relative', width: 60, height: hPx }}>
                     {Array.from({ length: stackCount }, (_, i) => (
@@ -394,7 +437,6 @@ export function CutModal({ open, roomId }: CutModalProps) {
                           backgroundImage: 'url(/img/card_back.jpg)',
                           backgroundSize: 'cover',
                           backgroundPosition: 'center',
-                          filter: isBeingSwiped ? 'brightness(1.15)' : undefined,
                         }}
                       />
                     ))}
@@ -430,11 +472,6 @@ export function CutModal({ open, roomId }: CutModalProps) {
           {piles.length === 1 && phase === 'split' && (
             <p className="text-xs text-muted-foreground self-center">
               {isTouchDevice ? '스와이프로 나누거나 퉁 버튼을 누르세요' : '드래그로 나누거나 퉁 버튼을 누르세요'}
-            </p>
-          )}
-          {isTouchDevice && piles.length > 1 && canSwipeMore && phase === 'split' && (
-            <p className="text-xs text-muted-foreground self-center">
-              {swipesLeft}번 더 나눌 수 있어요
             </p>
           )}
         </div>
