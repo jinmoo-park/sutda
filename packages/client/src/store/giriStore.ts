@@ -28,14 +28,14 @@ interface GiriState {
 
 export const useGiriStore = create<GiriState>((set) => ({
   phase: 'split',
-  piles: [{ id: 0, cardCount: 20, x: 120, y: 20 }],
+  piles: [{ id: 0, cardCount: 20, x: 150, y: 40 }],
   tapOrder: [],
   isTtong: false,
 
   initSplit: () =>
     set({
       phase: 'split',
-      piles: [{ id: 0, cardCount: 20, x: 120, y: 20 }],
+      piles: [{ id: 0, cardCount: 20, x: 150, y: 40 }],
       tapOrder: [],
       isTtong: false,
     }),
@@ -71,7 +71,7 @@ export const useGiriStore = create<GiriState>((set) => ({
   reset: () =>
     set({
       phase: 'split',
-      piles: [{ id: 0, cardCount: 20, x: 120, y: 20 }],
+      piles: [{ id: 0, cardCount: 20, x: 150, y: 40 }],
       tapOrder: [],
       isTtong: false,
     }),

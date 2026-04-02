@@ -18,7 +18,7 @@ interface ShuffleModalProps {
 const N = 5;
 const BASE_TOP = 50;
 const GAP = 13;
-const CYCLE = 820;
+const CYCLE = 300;
 const T = { peek: 0.22, hold: 0.18, rise: 0.35, drop: 0.15, rest: 0.10 };
 
 function rnd(min: number, max: number) { return min + Math.random() * (max - min); }
@@ -194,7 +194,7 @@ export function ShuffleModal({ open, roomId }: ShuffleModalProps) {
         </DialogHeader>
 
         {/* 카드 더미 — perspective로 3D 효과, 누르면 섞기 */}
-        <div className="flex flex-col items-center py-8">
+        <div className="flex flex-col items-center justify-center" style={{ minHeight: '220px' }}>
           <div
             style={{ perspective: '700px', perspectiveOrigin: '50% 30%', cursor: 'pointer', userSelect: 'none' }}
             onPointerDown={startShuffle}
@@ -220,19 +220,18 @@ export function ShuffleModal({ open, roomId }: ShuffleModalProps) {
                     left: '50%',
                     marginLeft: '-27px',
                     borderRadius: '5px',
-                    background: '#c0392b',
+                    overflow: 'hidden',
                     boxSizing: 'border-box',
                     top: `${BASE_TOP - i * GAP}px`,
                     zIndex: i + 1,
                   }}
                 >
-                  <div style={{ position: 'absolute', inset: '5px', borderRadius: '3px', border: '1.5px solid rgba(255,255,255,0.25)' }} />
-                  <div style={{ position: 'absolute', inset: '9px', borderRadius: '2px', border: '1px solid rgba(255,255,255,0.15)' }} />
+                  <img src="/img/card_back.jpg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 </div>
               ))}
             </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-4 text-center">
+          <p className="text-xs text-muted-foreground mt-6 text-center">
             {isShuffling ? '섞는 중...' : hasShuffled ? '잘 섞였어요! 확인을 누르세요' : '카드 더미를 꾹 누르면 섞입니다'}
           </p>
         </div>
