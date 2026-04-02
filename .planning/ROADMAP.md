@@ -248,13 +248,20 @@ Plans:
 
 ### Phase 12.1: 보안 감사 (Security Audit) — OWASP Top 10 코드 점검, npm audit 의존성 스캔, 환경변수/시크릿 노출 점검, 인증/인가 검증, 서버 설정 보안 확인 (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
-**Requirements**: TBD
+**Goal:** 실서비스의 OWASP Top 10 기준 보안 취약점을 감사하고, Critical/High 취약점을 즉시 수정한다
+**Requirements**: D-03, D-04, D-05, D-06, D-07, D-08, A01, A03, A09
 **Depends on:** Phase 12
-**Plans:** 0 plans
+**Plans:** 2 plans
+**Success Criteria** (완료 시 참이어야 하는 것):
+  1. .env가 .gitignore에 포함되어 시크릿 노출이 방지된다
+  2. CORS fallback이 명시적 도메인으로 설정되어 모든 origin 허용이 차단된다
+  3. Socket.IO rate limiting이 소켓당 초당 20개 이벤트로 제한된다
+  4. nginx 보안 헤더 3종이 적용되고 WebSocket 연결이 IP당 5개로 제한된다
+  5. OWASP Top 10 감사 보고서가 전체 항목을 커버한다
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 12.1 to break down)
+- [ ] 12.1-01-PLAN.md — 코드 레벨 보안 수정 (CORS, rate limiting, send-chat 접근 제어) + 통합 테스트
+- [ ] 12.1-02-PLAN.md — nginx 인프라 보안 설정 + OWASP Top 10 감사 보고서
 
 ### Phase 14: 서버 레벨 방 생성 패스워드
 
