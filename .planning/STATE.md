@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: "Checkpoint: Task 3 human-verify at https://sutda.duckdns.org"
+status: complete
+stopped_at: "Phase 12 complete — 배포 후 핫픽스 완료 (이미지 최적화, UI 수정, disconnect 버그 수정)"
 last_updated: "2026-04-02T05:00:53.288Z"
 last_activity: 2026-04-02
 progress:
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** 아무 설치 없이 링크 하나로 친구들과 실시간으로 섯다를 즐길 수 있어야 한다.
-**Current focus:** Phase 12 — deploy
+**Current focus:** Phase 12 complete — 실서비스 운영 중 (https://sutda.duckdns.org)
 
 ## Current Position
 
 Phase: 13
 Plan: Not started
-Status: Phase complete — ready for verification
+Status: Phase 12 complete — 배포 후 핫픽스 완료
 Last activity: 2026-04-02
 
 Progress: [████░░░░░░] 44%
@@ -178,6 +178,9 @@ Recent decisions affecting current work:
 - [Phase 12-deploy]: GitHub 리포지토리 jinmoo-park/sutda 퍼블릭으로 생성, VM git clone 가능
 - [Phase 12-deploy]: iptables 규칙을 REJECT 이전에 삽입해야 함 — Oracle VM 기본 체인의 REJECT 위치 주의
 - [Phase 12-deploy]: shared ESM .js 확장자 필수 — moduleResolution:bundler는 프로덕션 Node.js ESM에서 extensionless import 해결 불가
+- [Phase 12-hotfix]: 모든 게임 이미지를 img 태그 대신 CSS background-image로 적용 — 모바일 롱프레스 다운로드 방지
+- [Phase 12-hotfix]: 셔플/기리 모달 안내문구를 DialogTitle로 이동 — 카드더미 영역 침범 방지
+- [Phase 12-hotfix]: 대기실 disconnect 시 room-state emit 필수 — player-left만으론 클라이언트 목록 갱신 안 됨
 
 ### Pending Todos
 
@@ -196,6 +199,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-02T04:49:40.541Z
-Stopped at: Checkpoint: Task 3 human-verify at https://sutda.duckdns.org
+Last session: 2026-04-02
+Stopped at: Phase 12 complete + 배포 후 핫픽스 (이미지 WebP, img→bg, 셔플/기리 UI, disconnect 수정)
 Resume file: None
