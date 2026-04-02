@@ -860,7 +860,11 @@ io.on('connection', (socket) => {
         // 타이머 만료 후 leaveRoom(old socketId)는 자동으로 no-op
         const disconnectedId = socket.id;
         const timerKey = `${roomId}:${disconnectedId}`;
-        console.log(`[waiting-disconnect] scheduling leave for ${disconnectedId} in room ${roomId}, timer 1s`);
+        const isHost = room.hostId === disconnectedId;
+        const isAlone = room.players.length === 1;
+        // 방장 단독: 1시간 유예 (모바일 앱 전환 대응), 그 외: 1초 후 즉시 제거 및 방장 승계
+        const waitDelay = (isHost && isAlone) ? 3_600_000 : 1_000;
+        console.log(`[waiting-disconnect] scheduling leave for ${disconnectedId} in room ${roomId}, timer ${waitDelay}ms (isHost=${isHost}, isAlone=${isAlone})`);
         const timer = setTimeout(() => {
           waitingDisconnectTimers.delete(timerKey);
           console.log(`[waiting-disconnect] timer fired for ${disconnectedId} in room ${roomId}`);
@@ -881,7 +885,7 @@ io.on('connection', (socket) => {
               chatHistories.delete(roomId);
             }
           }
-        }, 1_000);
+        }, waitDelay);
         waitingDisconnectTimers.set(timerKey, timer);
       }
     }
