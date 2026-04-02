@@ -105,6 +105,9 @@ importers:
       '@sutda/shared':
         specifier: workspace:*
         version: link:../shared
+      rate-limiter-flexible:
+        specifier: ^10.0.1
+        version: 10.0.1
       socket.io:
         specifier: ^4.8.3
         version: 4.8.3
@@ -1725,6 +1728,9 @@ packages:
 
   querystringify@2.2.0:
     resolution: {integrity: sha512-FIqgj2EUvTa7R50u0rGsyTftzjYmv/a3hO345bZNrqabNqjtgiDMgmo4mkUjd+nzU5oF3dClKqFIPUKybUyqoQ==}
+
+  rate-limiter-flexible@10.0.1:
+    resolution: {integrity: sha512-3G6GMFz5Oz5nVnDv9gQ1LLMdExR4B1lOjogPIjehtgyxPMIkY09BGyk2eCYt36/OkV/0t12GEt6J6HpTl6RzZg==}
 
   react-dom@19.2.4:
     resolution: {integrity: sha512-AXJdLo8kgMbimY95O2aKQqsz2iWi9jMgKJhRBAxECE4IFxfcazB2LmzloIoibJI3C12IlY20+KFaLv+71bUJeQ==}
@@ -3544,6 +3550,8 @@ snapshots:
   punycode@2.3.1: {}
 
   querystringify@2.2.0: {}
+
+  rate-limiter-flexible@10.0.1: {}
 
   react-dom@19.2.4(react@19.2.4):
     dependencies:

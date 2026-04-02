@@ -13,6 +13,7 @@ import type {
   RoundHistoryEntry,
   RoomPlayer,
 } from '@sutda/shared';
+import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { RoomManager } from './room-manager.js';
 import { GameEngine } from './game-engine.js';
 
@@ -54,7 +55,7 @@ const io = new Server<
   SocketData
 >(httpServer, {
   cors: {
-    origin: process.env.CLIENT_ORIGIN || true,
+    origin: process.env.CLIENT_ORIGIN || 'https://sutda.duckdns.org',
     methods: ['GET', 'POST'],
   },
 });
@@ -139,7 +140,22 @@ async function handleGameAction(
   }
 }
 
+const socketEventRateLimiter = new RateLimiterMemory({
+  points: 20,
+  duration: 1,
+});
+
 io.on('connection', (socket) => {
+  socket.use(async ([_event, ..._args], next) => {
+    try {
+      await socketEventRateLimiter.consume(socket.id);
+      next();
+    } catch {
+      // rate limit 초과: 이벤트 무시, 연결 유지
+      // next()를 호출하지 않으면 이벤트 핸들러 실행 안 됨
+    }
+  });
+
   // create-room 핸들러
   socket.on('create-room', ({ nickname, initialChips }) => {
     if (!RoomManager.validateChips(initialChips)) {
@@ -279,6 +295,8 @@ io.on('connection', (socket) => {
 
   // send-chat 핸들러
   socket.on('send-chat', ({ roomId, text }) => {
+    // A01: 요청자가 해당 방에 속하는지 검증
+    if (socket.data.roomId !== roomId) return;
     if (!text || text.trim().length === 0) return;
     const msg = {
       playerId: socket.data.playerId,

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@sutda/shared": "workspace:*",
+    "rate-limiter-flexible": "^10.0.1",
     "socket.io": "^4.8.3"
   },
   "devDependencies": {
