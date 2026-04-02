@@ -20,11 +20,14 @@
 ### 프로세스 관리
 - **D-03:** PM2로 Node.js 프로세스 관리. 크래시 자동 재시작, 로그 관리, 부팅 시 자동 시작(pm2 startup + pm2 save).
 
+### GitHub 리포지토리
+- **D-04:** GitHub(https://github.com/jinmoo-park)에 리포지토리 생성 후 코드 push. Oracle VM에서 git clone으로 배포.
+
 ### 테스트 전략
-- **D-04:** 배포 전 기존 단위테스트(pnpm test) 통과만 확인. E2E 자동화 테스트나 Playwright는 이번 페이즈에서 작성하지 않음. 수동 테스트는 배포 후 진행.
+- **D-05:** 배포 전 기존 단위테스트(pnpm test) 통과만 확인. E2E 자동화 테스트나 Playwright는 이번 페이즈에서 작성하지 않음. 수동 테스트는 배포 후 진행.
 
 ### 서버 접속 정보
-- **D-05:** Oracle VM Public IP: 168.107.36.61, Username: ubuntu, SSH 키: ssh-key-2026-04-02.key. 오픈 포트: 22, 80, 443, 3000. iptables 방화벽 규칙 추가 필요.
+- **D-06:** Oracle VM Public IP: 168.107.36.61, Username: ubuntu, SSH 키: ssh-key-2026-04-02.key. 오픈 포트: 22, 80, 443, 3000. iptables 방화벽 규칙 추가 필요.
 
 ### Claude's Discretion
 - nginx 설정 파일 구체적인 내용 (WebSocket proxy_pass, upstream, buffer 등)
