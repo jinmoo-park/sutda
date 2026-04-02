@@ -1,6 +1,7 @@
 import { createServer, IncomingMessage, ServerResponse } from 'http';
 import { readFile } from 'fs';
-import { join, extname } from 'path';
+import { join, extname, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { Server } from 'socket.io';
 import type {
   ClientToServerEvents,
@@ -17,7 +18,9 @@ import { GameEngine } from './game-engine.js';
 
 const PORT = Number(process.env.PORT) || 3001;
 
-const STATIC_DIR = join(process.cwd(), '../../packages/client/dist');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const STATIC_DIR = join(__dirname, '../../../packages/client/dist');
 const MIME: Record<string, string> = {
   '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css',
   '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml',
