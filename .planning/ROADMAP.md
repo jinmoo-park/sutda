@@ -240,11 +240,11 @@ Plans:
   2. 배포된 URL에서 방 생성, 링크 공유, 입장, 5가지 모드 플레이가 모두 작동한다
   3. 모바일 브라우저에서 게임 테이블과 베팅 UI가 사용 가능하다
   4. 게임 중 연결 끊김/재접속이 안정적으로 처리된다
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 12-01: TBD
-- [ ] 12-02: TBD
+- [ ] 12-01-PLAN.md — 코드 수정 (STATIC_DIR fix + ecosystem.config.cjs) + GitHub push
+- [ ] 12-02-PLAN.md — Oracle VM 배포 (Node.js + nginx + SSL + PM2) + 배포 검증
 
 ### Phase 13: Stitch 연계 UI 고도화 (DEFERRED)
 
