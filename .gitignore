@@ -12,6 +12,18 @@ dist/
 background.jpg
 font/
 
+# 루트 이미지 파일
+img/
+
+# 루트 MD 파일 (stitch 문서 등)
+/*.md
+
+# Stitch 관련 파일
+.planning/ui-reviews/
+
+# 디자인 테스트 페이지
+**/design_tests/
+
 # 환경 변수 및 MCP 설정 (API 키 포함)
 .env
 .env.local
