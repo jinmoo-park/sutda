@@ -251,7 +251,7 @@ Plans:
 **Goal:** 실서비스의 OWASP Top 10 기준 보안 취약점을 감사하고, Critical/High 취약점을 즉시 수정한다
 **Requirements**: D-03, D-04, D-05, D-06, D-07, D-08, A01, A03, A09
 **Depends on:** Phase 12
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 **Success Criteria** (완료 시 참이어야 하는 것):
   1. .env가 .gitignore에 포함되어 시크릿 노출이 방지된다
   2. CORS fallback이 명시적 도메인으로 설정되어 모든 origin 허용이 차단된다
@@ -260,8 +260,8 @@ Plans:
   5. OWASP Top 10 감사 보고서가 전체 항목을 커버한다
 
 Plans:
-- [ ] 12.1-01-PLAN.md — 코드 레벨 보안 수정 (CORS, rate limiting, send-chat 접근 제어) + 통합 테스트
-- [ ] 12.1-02-PLAN.md — nginx 인프라 보안 설정 + OWASP Top 10 감사 보고서
+- [x] 12.1-01-PLAN.md — 코드 레벨 보안 수정 (CORS, rate limiting, send-chat 접근 제어) + 통합 테스트
+- [x] 12.1-02-PLAN.md — nginx 인프라 보안 설정 + OWASP Top 10 감사 보고서
 
 ### Phase 14: 서버 레벨 방 생성 패스워드
 

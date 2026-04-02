@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 14-room-password-01-PLAN.md
-last_updated: "2026-04-02T09:18:03.353Z"
-last_activity: 2026-04-02 -- Phase 12.1 execution started
+stopped_at: Completed 12.1-02-PLAN.md
+last_updated: "2026-04-02T09:43:03.776Z"
+last_activity: 2026-04-02
 progress:
   total_phases: 15
-  completed_phases: 13
+  completed_phases: 14
   total_plans: 34
-  completed_plans: 32
+  completed_plans: 34
   percent: 44
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 ## Current Position
 
 Phase: 12.1 (security-audit-owasp-top-10-npm-audit) — EXECUTING
-Plan: 1 of 2
-Status: Executing Phase 12.1
-Last activity: 2026-04-02 -- Phase 12.1 execution started
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-04-02
 
 Progress: [████░░░░░░] 44%
 
@@ -87,6 +87,7 @@ Progress: [████░░░░░░] 44%
 | Phase 12-deploy P01 | 6 | 2 tasks | 3 files |
 | Phase 12-deploy P02 | 35 | 2 tasks | 8 files |
 | Phase 14-room-password P01 | 2 | 2 tasks | 3 files |
+| Phase 12.1-security-audit-owasp-top-10-npm-audit P02 | 10 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -184,6 +185,8 @@ Recent decisions affecting current work:
 - [Phase 12-hotfix]: 대기실 disconnect 시 room-state emit 필수 — player-left만으론 클라이언트 목록 갱신 안 됨
 - [Phase 14-room-password]: ROOM_CREATE_PASSWORD 환경변수 설정 시에만 비밀번호 강제 — 미설정 시 하위 호환으로 누구나 방 생성 가능
 - [Phase 14-room-password]: password 필드를 optional로 정의 — 기존 클라이언트 및 테스트 코드 변경 없이 호환
+- [Phase 12.1]: CSP connect-src에 wss://sutda.duckdns.org 명시 — self만으로는 WebSocket wss:// 차단됨
+- [Phase 12.1]: Medium/Low 잔여 항목 3건(innerHTML XSS, 닉네임 길이, 에러 로깅) 보고서 기록만 — D-01 결정 준수
 
 ### Pending Todos
 
@@ -203,6 +206,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-02T08:44:10.721Z
-Stopped at: Completed 14-room-password-01-PLAN.md
+Last session: 2026-04-02T09:43:03.770Z
+Stopped at: Completed 12.1-02-PLAN.md
 Resume file: None
