@@ -256,6 +256,16 @@ Plans:
 Plans:
 - [ ] TBD (run /gsd:plan-phase 12.1 to break down)
 
+### Phase 14: 서버 레벨 방 생성 패스워드
+
+**Goal:** 방 생성 시 서버 관리자 비밀번호 입력을 요구한다. 올바른 비밀번호 없이는 방을 만들 수 없어 낯선 사람이 무단으로 방을 생성하는 것을 방지한다. 비밀번호는 서버 환경변수(.env)로 관리하며 검증은 서버 권위로 동작한다.
+**Requirements:** ROOM-CREATE-PASSWORD-SERVER, ROOM-CREATE-PASSWORD-CLIENT
+**Depends on:** Phase 12
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 14 to break down)
+
 ### Phase 13: Stitch 연계 UI 고도화 (DEFERRED)
 
 **Goal:** Google Stitch MCP를 활용하여 전체 UI를 D-09 군용담요 컨셉("공장에서 군용담요 깔아놓고 하는 느낌")으로 프로페셔널하게 개선한다 — 메인화면, 대기실, 게임테이블, 패널, 모달 16개, 공통 UI 전체.
@@ -298,14 +308,5 @@ Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 
 | 11. 소셜/기능 완성 | 4/4 | Complete    | 2026-04-01 |
 | 12. 통합 테스트 + 배포 | 2/2 | Complete    | 2026-04-02 |
 | 13. Stitch UI 고도화 | 3/7 | Deferred | - |
+| 14. 서버 레벨 방 생성 패스워드 | 0/0 | Not Started | - |
 
-## Backlog
-
-### Phase 999.1: 서버 레벨 방 생성 패스워드 (BACKLOG)
-
-**Goal:** 방 생성 시 서버 관리자 비밀번호 입력을 요구한다. 올바른 비밀번호 없이는 방을 만들 수 없어 낯선 사람이 무단으로 방을 생성하는 것을 방지한다. 비밀번호는 서버 환경변수(.env)로 관리하며 검증은 서버 권위로 동작한다.
-**Requirements:** TBD
-**Plans:** 0 plans
-
-Plans:
-- [ ] TBD (promote with /gsd:review-backlog when ready)
