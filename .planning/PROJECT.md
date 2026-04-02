@@ -128,4 +128,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-30
+*Last updated: 2026-04-02 — Phase 12.1 complete: OWASP Top 10 보안 감사 완료, CORS/rate limiting/send-chat 접근 제어/nginx 보안 헤더 적용
