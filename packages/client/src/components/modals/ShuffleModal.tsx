@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 interface ShuffleModalProps {
   open: boolean;
   roomId: string;
+  /** 관전 모드: 자동 재생, 버튼 없음 */
+  readOnly?: boolean;
 }
 
 // --- 참조 구현 포팅 (sutda-shuffle.html) ---
@@ -25,10 +27,11 @@ function rnd(min: number, max: number) { return min + Math.random() * (max - min
 function easeInOut(t: number) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; }
 function easeOut(t: number) { return 1 - (1 - t) * (1 - t); }
 
-export function ShuffleModal({ open, roomId }: ShuffleModalProps) {
-  const { socket } = useGameStore();
+export function ShuffleModal({ open, roomId, readOnly = false }: ShuffleModalProps) {
+  const { socket, gameState } = useGameStore();
   const [isShuffling, setIsShuffling] = useState(false);
   const [hasShuffled, setHasShuffled] = useState(false);
+  const dealerName = gameState?.players.find((p) => p.isDealer)?.nickname ?? '딜러';
 
   // 카드 DOM refs — React 재렌더링 없이 직접 조작
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -173,8 +176,10 @@ export function ShuffleModal({ open, roomId }: ShuffleModalProps) {
   useEffect(() => {
     if (open) {
       setHasShuffled(false);
-      // refs가 준비된 후 덱 초기화
-      requestAnimationFrame(() => buildDeck());
+      requestAnimationFrame(() => {
+        buildDeck();
+        if (readOnly) startShuffle();
+      });
     }
     return () => {
       cancelAnimationFrame(anim.current.rafId);
@@ -191,7 +196,9 @@ export function ShuffleModal({ open, roomId }: ShuffleModalProps) {
       >
         <DialogHeader>
           <DialogTitle>
-            {isShuffling ? '섞는 중...' : hasShuffled ? '잘 섞였어요! 확인을 누르세요' : '카드 더미를 꾹 누르면 섞입니다'}
+            {readOnly
+              ? `${dealerName}가 카드를 섞는 중...`
+              : isShuffling ? '섞는 중...' : hasShuffled ? '잘 섞였어요! 확인을 누르세요' : '카드 더미를 꾹 누르면 섞입니다'}
           </DialogTitle>
         </DialogHeader>
 
@@ -200,12 +207,12 @@ export function ShuffleModal({ open, roomId }: ShuffleModalProps) {
           <div
             style={{
               perspective: '700px', perspectiveOrigin: '50% 50%',
-              cursor: 'pointer', userSelect: 'none',
+              cursor: readOnly ? 'default' : 'pointer', userSelect: 'none',
               overflow: 'visible',
             }}
-            onPointerDown={startShuffle}
-            onPointerUp={stopShuffle}
-            onPointerLeave={stopShuffle}
+            onPointerDown={readOnly ? undefined : startShuffle}
+            onPointerUp={readOnly ? undefined : stopShuffle}
+            onPointerLeave={readOnly ? undefined : stopShuffle}
           >
             <div
               style={{
@@ -239,11 +246,13 @@ export function ShuffleModal({ open, roomId }: ShuffleModalProps) {
           </div>
         </div>
 
-        <DialogFooter>
-          <Button onClick={() => socket?.emit('shuffle', { roomId })} disabled={!hasShuffled}>
-            확인
-          </Button>
-        </DialogFooter>
+        {!readOnly && (
+          <DialogFooter>
+            <Button onClick={() => socket?.emit('shuffle', { roomId })} disabled={!hasShuffled}>
+              확인
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

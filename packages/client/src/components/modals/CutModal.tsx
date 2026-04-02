@@ -208,10 +208,13 @@ export function CutModal({ open, roomId }: CutModalProps) {
     if (phase !== 'split') return;
     const tableRect = tableRef.current?.getBoundingClientRect();
     const localX = tableRect ? e.clientX - tableRect.left : e.clientX;
+    const localY = tableRect ? e.clientY - tableRect.top : e.clientY;
     let closestPi = 0;
     let minDist = Infinity;
     piles.forEach((p, pi) => {
-      const dist = Math.abs(localX - (p.x + 30));
+      const cx = p.x + 30;
+      const cy = p.y + pileH(p.cardCount) / 2;
+      const dist = Math.sqrt(Math.pow(localX - cx, 2) + Math.pow(localY - cy, 2));
       if (dist < minDist) { minDist = dist; closestPi = pi; }
     });
     pointerState.current = { pi: closestPi, startX: e.clientX, startY: e.clientY, cutCount: 0, isDragging: false };
@@ -223,10 +226,11 @@ export function CutModal({ open, roomId }: CutModalProps) {
       if (!ps) return;
 
       if (isTouchDevice) {
-        const dx = Math.abs(e.clientX - ps.startX);
+        const dx = e.clientX - ps.startX; // signed
         const dy = Math.abs(e.clientY - ps.startY);
-        if (Math.max(dx, dy) >= SWIPE_MIN) {
+        if (Math.max(Math.abs(dx), dy) >= SWIPE_MIN && !ps.isDragging) {
           ps.isDragging = true;
+          ps.cutCount = dx > 0 ? 1 : -1; // 1=오른쪽(추가), -1=왼쪽(감소)
         }
       } else {
         const dx = e.clientX - ps.startX;
@@ -251,19 +255,29 @@ export function CutModal({ open, roomId }: CutModalProps) {
       pointerState.current = null;
 
       if (isTouchDevice) {
-        if (ps.isDragging && piles.length <= MAX_SWIPES) {
-          // 스와이프: 고정 배분으로 전체 더미 교체
-          const newCount = piles.length + 1;
+        if (ps.isDragging) {
+          const swipeDir = ps.cutCount; // 1=오른쪽, -1=왼쪽
           const tw = tableRef.current?.offsetWidth ?? TABLE_W;
-          const positions = getFixedLayout(newCount, tw);
-          const distributions = CARD_DISTRIBUTIONS[piles.length];
-          const newPiles: Pile[] = distributions.map((count, i) => ({
-            id: i,
-            cardCount: count,
-            x: positions[i]?.x ?? 0,
-            y: positions[i]?.y ?? 0,
-          }));
-          splitAll(newPiles);
+
+          if (swipeDir > 0 && piles.length <= MAX_SWIPES) {
+            // 오른쪽 스와이프: 더미 추가
+            const newCount = piles.length + 1;
+            const positions = getFixedLayout(newCount, tw);
+            const newPiles: Pile[] = CARD_DISTRIBUTIONS[piles.length].map((count, i) => ({
+              id: i, cardCount: count,
+              x: positions[i]?.x ?? 0, y: positions[i]?.y ?? 0,
+            }));
+            splitAll(newPiles);
+          } else if (swipeDir < 0 && piles.length >= 2) {
+            // 왼쪽 스와이프: 더미 감소
+            const newCount = piles.length - 1;
+            const positions = getFixedLayout(newCount, tw);
+            const newPiles: Pile[] = CARD_DISTRIBUTIONS[newCount - 1].map((count, i) => ({
+              id: i, cardCount: count,
+              x: positions[i]?.x ?? 0, y: positions[i]?.y ?? 0,
+            }));
+            splitAll(newPiles);
+          }
         } else if (!ps.isDragging && piles.length >= 2) {
           // 탭: 순서 지정
           const pile = piles[ps.pi];
@@ -304,6 +318,7 @@ export function CutModal({ open, roomId }: CutModalProps) {
 
   const allTapped = piles.length > 1 && tapOrder.length === piles.length;
   const canSwipeMore = piles.length <= MAX_SWIPES;
+  const canSwipeLess = piles.length >= 2;
 
   const displayPiles = deducted
     ? piles.map((p, i) => i === deducted.pi ? { ...p, cardCount: p.cardCount - deducted.count } : p)
@@ -350,38 +365,46 @@ export function CutModal({ open, roomId }: CutModalProps) {
             ref={tableRef}
             style={{ position: 'relative', width: '100%', maxWidth: TABLE_W, height: TABLE_H, margin: '0 auto' }}
           >
-            {/* 스와이프 안내선 (터치 전용, 스와이프 가능할 때만 표시) */}
-            {isTouchDevice && canSwipeMore && phase === 'split' && (
+            {/* 스와이프 안내선 (터치 전용) */}
+            {isTouchDevice && (canSwipeMore || canSwipeLess) && phase === 'split' && (
               <div
                 className="giri-swipe-guide"
                 style={{
                   position: 'absolute',
-                  left: '12%',
-                  right: '12%',
+                  left: 0,
+                  right: 0,
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  height: 0,
-                  borderTop: '1.5px dashed rgba(255, 200, 80, 0.75)',
+                  display: 'flex',
+                  alignItems: 'center',
                   pointerEvents: 'none',
                   zIndex: 1,
+                  padding: '0 8px',
+                  gap: 6,
                 }}
               >
+                {/* 왼쪽: 줄이기 */}
                 <div style={{
-                  position: 'absolute',
-                  left: -10,
-                  top: -8,
+                  display: 'flex', alignItems: 'center', gap: 4,
                   color: 'rgba(255, 200, 80, 0.75)',
-                  fontSize: 13,
-                  lineHeight: 1,
-                }}>◀</div>
+                  fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
+                  opacity: canSwipeLess ? 1 : 0,
+                }}>
+                  <span>◀</span>
+                  <span>줄이기</span>
+                </div>
+                {/* 가운데 점선 */}
+                <div style={{ flex: 1, borderTop: '1.5px dashed rgba(255, 200, 80, 0.5)' }} />
+                {/* 오른쪽: 나누기 */}
                 <div style={{
-                  position: 'absolute',
-                  right: -10,
-                  top: -8,
+                  display: 'flex', alignItems: 'center', gap: 4,
                   color: 'rgba(255, 200, 80, 0.75)',
-                  fontSize: 13,
-                  lineHeight: 1,
-                }}>▶</div>
+                  fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
+                  opacity: canSwipeMore ? 1 : 0,
+                }}>
+                  <span>나누기</span>
+                  <span>▶</span>
+                </div>
               </div>
             )}
 

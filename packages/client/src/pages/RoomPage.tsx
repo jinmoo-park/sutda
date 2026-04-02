@@ -670,6 +670,7 @@ export function RoomPage() {
       <ModeSelectModal open={phase === 'mode-select'} isDealer={isDealer} roomId={roomId!} />
       <SharedCardSelectModal open={phase === 'shared-card-select'} roomId={roomId!} />
       <ShuffleModal open={phase === 'shuffling' && isDealer} roomId={roomId!} />
+      <ShuffleModal open={phase === 'shuffling' && !isDealer} roomId={roomId!} readOnly />
       <CutModal open={phase === 'cutting' && isMyTurn} roomId={roomId!} />
       {/* 상대 전원 다이 시 패 공개 선택 */}
       <MuckChoiceModal
