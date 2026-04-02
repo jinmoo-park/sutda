@@ -106,7 +106,11 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch }: Resul
       )}
       <h2 className="text-xl font-semibold">{winnerNickname} 승리!</h2>
 
-      <div className="grid grid-cols-3 gap-2 justify-items-center md:flex md:flex-wrap md:gap-6 md:justify-center">
+      <div className={`grid gap-2 justify-items-center ${
+        allPlayers.length <= 2 ? 'grid-cols-1' :
+        allPlayers.length === 4 ? 'grid-cols-2' :
+        'grid-cols-3'
+      } md:flex md:flex-wrap md:gap-6 md:justify-center`}>
         {allPlayers.map((player, pi) => {
           const isDied = !player.isAlive;
 

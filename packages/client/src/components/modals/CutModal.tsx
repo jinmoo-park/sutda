@@ -25,6 +25,7 @@ const TABLE_W = 360;
 const TABLE_H = 180;
 
 function pileH(n: number) { return CARD_H + (n - 1) * GAP; }
+function easeInOut(t: number) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; }
 
 /** 터치 모드 전용: N개 더미를 한 줄로 균일하게 배치 */
 function computeRowLayout(
@@ -36,7 +37,8 @@ function computeRowLayout(
   const pileW = 60;
   const maxCards = Math.max(...piles.map((p) => p.cardCount));
   const h = pileH(maxCards);
-  const y = Math.max(4, (tableH - h) / 2);
+  // 원본과 동일: 세로 중앙 (음수도 허용)
+  const y = (tableH - h) / 2;
   if (N === 1) {
     return [{ id: piles[0].id, x: Math.round((tableW - pileW) / 2), y }];
   }
@@ -58,6 +60,7 @@ export function CutModal({ open, roomId }: CutModalProps) {
   } = useGiriStore();
 
   // pointer: coarse = 터치스크린 기기, pointer: fine = 마우스/트랙패드 기기
+  // 창 크기가 아닌 실제 입력 장치 타입으로 구분
   const isTouchDevice = useMemo(
     () => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches,
     []
@@ -82,11 +85,10 @@ export function CutModal({ open, roomId }: CutModalProps) {
 
   useEffect(() => {
     if (open) {
+      // 테이블 실제 너비에 맞춰 더미 중앙 배치 (원본과 동일 공식)
       requestAnimationFrame(() => {
         const tw = tableRef.current?.offsetWidth ?? TABLE_W;
-        const cx = (tw - 60) / 2;
-        const cy = Math.max(4, (TABLE_H - pileH(20)) / 2);
-        initSplit(cx, cy);
+        initSplit((tw - 60) / 2, (TABLE_H - pileH(20)) / 2);
       });
       setDeducted(null);
       setSwipePreviewCount(null);
@@ -159,22 +161,32 @@ export function CutModal({ open, roomId }: CutModalProps) {
     }
   }
 
+  // 데스크탑 전용: 개별 더미 위 pointerdown (드래그 컷팅)
   function onPointerDown(e: React.PointerEvent, pi: number) {
     e.preventDefault();
     if (phase !== 'split') return;
+    const pile = piles[pi];
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const relY = e.clientY - rect.top;
+    const ratio = relY / pileH(pile.cardCount);
+    const cutCount = Math.max(1, Math.min(pile.cardCount - 1, Math.round((1 - ratio) * pile.cardCount)));
+    pointerState.current = { pi, startX: e.clientX, startY: e.clientY, cutCount, isDragging: false };
+  }
 
-    if (isTouchDevice) {
-      // 터치 모드: 수평 스와이프 시작 기록
-      pointerState.current = { pi, startX: e.clientX, startY: e.clientY, cutCount: 0, isDragging: false };
-    } else {
-      // 데스크탑: 클릭 위치로 컷팅 장수 결정
-      const pile = piles[pi];
-      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      const relY = e.clientY - rect.top;
-      const ratio = relY / pileH(pile.cardCount);
-      const cutCount = Math.max(1, Math.min(pile.cardCount - 1, Math.round((1 - ratio) * pile.cardCount)));
-      pointerState.current = { pi, startX: e.clientX, startY: e.clientY, cutCount, isDragging: false };
-    }
+  // 터치 전용: 스와이프 존 전체 영역 pointerdown
+  // 가장 가까운 더미를 x좌표 기준으로 자동 선택
+  function onSwipeZoneDown(e: React.PointerEvent) {
+    e.preventDefault();
+    if (phase !== 'split') return;
+    const tableRect = tableRef.current?.getBoundingClientRect();
+    const localX = tableRect ? e.clientX - tableRect.left : e.clientX;
+    let closestPi = 0;
+    let minDist = Infinity;
+    piles.forEach((p, pi) => {
+      const dist = Math.abs(localX - (p.x + 30));
+      if (dist < minDist) { minDist = dist; closestPi = pi; }
+    });
+    pointerState.current = { pi: closestPi, startX: e.clientX, startY: e.clientY, cutCount: 0, isDragging: false };
   }
 
   useEffect(() => {
@@ -183,7 +195,7 @@ export function CutModal({ open, roomId }: CutModalProps) {
       if (!ps) return;
 
       if (isTouchDevice) {
-        // 터치: 수평 거리로 컷팅 장수 계산 (piles.length <= MAX_SWIPES 일 때만)
+        // 터치: 수평 거리로 컷팅 장수 계산 (최대 스와이프 횟수 이하일 때만)
         const dx = Math.abs(e.clientX - ps.startX);
         if (dx >= SWIPE_MIN && piles.length <= MAX_SWIPES) {
           ps.isDragging = true;
@@ -220,8 +232,8 @@ export function CutModal({ open, roomId }: CutModalProps) {
 
       if (isTouchDevice) {
         setSwipePreviewCount(null);
-        // 스와이프 인식: isDragging && cutCount > 0 && 아직 여유 있음
         if (ps.isDragging && ps.cutCount > 0 && piles.length <= MAX_SWIPES) {
+          // 스와이프 컷팅: 전체 더미 자동 재배치
           const tw = tableRef.current?.offsetWidth ?? TABLE_W;
           addSplitPileWithLayout(piles[ps.pi].id, ps.cutCount, (newPiles) =>
             computeRowLayout(newPiles, tw, TABLE_H)
@@ -268,9 +280,10 @@ export function CutModal({ open, roomId }: CutModalProps) {
   }, [phase, piles, tapOrder, isTouchDevice]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const allTapped = piles.length > 1 && tapOrder.length === piles.length;
-  const canSwipeMore = piles.length <= MAX_SWIPES; // 4번 이하 스와이프 완료 = 5개 미만 더미
+  const canSwipeMore = piles.length <= MAX_SWIPES;
   const swipesLeft = MAX_SWIPES + 1 - piles.length;
 
+  // 데스크탑 drag 시: 해당 더미 카드 수 임시 감소
   const displayPiles = deducted
     ? piles.map((p, i) => i === deducted.pi ? { ...p, cardCount: p.cardCount - deducted.count } : p)
     : piles;
@@ -301,97 +314,98 @@ export function CutModal({ open, roomId }: CutModalProps) {
           <DialogTitle>{titleText}</DialogTitle>
         </DialogHeader>
 
-        {/* 기리 테이블 */}
+        {/*
+          터치 모드: 스와이프 존을 모달 전체 너비로 확장
+          (더미 위를 정확히 터치하지 않아도 스와이프 인식)
+        */}
         <div
-          ref={tableRef}
-          style={{
-            position: 'relative',
-            width: '100%',
-            maxWidth: TABLE_W,
-            height: TABLE_H,
-            margin: '0 auto',
-            touchAction: 'none',
-          }}
+          style={{ width: '100%', touchAction: 'none' }}
+          onPointerDown={isTouchDevice ? onSwipeZoneDown : undefined}
         >
-          {displayPiles.map((pile, pi) => {
-            const orderPos = tapOrder.indexOf(pile.id);
-            const isSelected = orderPos !== -1;
-            const stackCount = Math.min(pile.cardCount, 5);
-            const hPx = pileH(pile.cardCount);
-            const isBeingSwiped = isTouchDevice &&
-              pointerState.current?.pi === pi &&
-              swipePreviewCount !== null;
+          {/* 기리 테이블 */}
+          <div
+            ref={tableRef}
+            style={{ position: 'relative', width: '100%', maxWidth: TABLE_W, height: TABLE_H, margin: '0 auto' }}
+          >
+            {displayPiles.map((pile, pi) => {
+              const orderPos = tapOrder.indexOf(pile.id);
+              const isSelected = orderPos !== -1;
+              const stackCount = Math.min(pile.cardCount, 5);
+              const hPx = pileH(pile.cardCount);
+              const isBeingSwiped = isTouchDevice &&
+                pointerState.current?.pi === pi &&
+                swipePreviewCount !== null;
 
-            return (
-              <div
-                key={pile.id}
-                style={{
-                  position: 'absolute',
-                  left: pile.x,
-                  top: pile.y,
-                  cursor: phase === 'split' ? (isTouchDevice ? 'default' : 'grab') : 'pointer',
-                  opacity: phase === 'merging' ? 0 : 1,
-                  transition: phase === 'merging'
-                    ? 'left 380ms cubic-bezier(0.42,0,0.58,1), top 380ms cubic-bezier(0.42,0,0.58,1), opacity 380ms'
-                    : 'left 200ms ease, top 200ms ease',
-                  ...(phase === 'merging' ? { left: TABLE_W / 2 - 30, top: 20 } : {}),
-                  touchAction: 'none',
-                }}
-                onPointerDown={(e) => onPointerDown(e, pi)}
-              >
-                {/* 탭 순서 배지 */}
-                {isSelected && (
-                  <div style={{
-                    position: 'absolute', top: -10, right: -6, zIndex: 99,
-                    width: 18, height: 18, borderRadius: '50%',
-                    background: '#e67e22', color: 'white',
-                    fontSize: 10, fontWeight: 600,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    {orderPos + 1}
+              return (
+                <div
+                  key={pile.id}
+                  style={{
+                    position: 'absolute',
+                    left: pile.x,
+                    top: pile.y,
+                    cursor: phase === 'split' ? (isTouchDevice ? 'default' : 'grab') : 'pointer',
+                    opacity: phase === 'merging' ? 0 : 1,
+                    transition: phase === 'merging'
+                      ? 'left 380ms cubic-bezier(0.42,0,0.58,1), top 380ms cubic-bezier(0.42,0,0.58,1), opacity 380ms'
+                      : undefined,
+                    ...(phase === 'merging' ? { left: TABLE_W / 2 - 30, top: 20 } : {}),
+                  }}
+                  onPointerDown={!isTouchDevice ? (e) => onPointerDown(e, pi) : undefined}
+                >
+                  {/* 탭 순서 배지 */}
+                  {isSelected && (
+                    <div style={{
+                      position: 'absolute', top: -10, right: -6, zIndex: 99,
+                      width: 18, height: 18, borderRadius: '50%',
+                      background: '#e67e22', color: 'white',
+                      fontSize: 10, fontWeight: 600,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {orderPos + 1}
+                    </div>
+                  )}
+                  {/* 스와이프 미리보기 배지 (터치 모드) */}
+                  {isBeingSwiped && swipePreviewCount !== null && (
+                    <div style={{
+                      position: 'absolute', top: -22, left: '50%', transform: 'translateX(-50%)',
+                      background: 'rgba(52,152,219,0.92)', color: 'white',
+                      borderRadius: 4, fontSize: 10, fontWeight: 700,
+                      padding: '2px 6px', zIndex: 100, whiteSpace: 'nowrap',
+                      pointerEvents: 'none',
+                    }}>
+                      {swipePreviewCount}장 분리
+                    </div>
+                  )}
+                  {/* 카드 스택 */}
+                  <div style={{ position: 'relative', width: 60, height: hPx }}>
+                    {Array.from({ length: stackCount }, (_, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          position: 'absolute',
+                          width: 54,
+                          height: CARD_H,
+                          borderRadius: 5,
+                          left: 3,
+                          top: (pile.cardCount - 1 - i) * GAP,
+                          zIndex: i + 1,
+                          boxShadow: `0 ${2 + i}px 0 rgba(0,0,0,${0.12 + i * 0.03})`,
+                          outline: isSelected ? '2px solid rgba(255,255,255,0.5)' : undefined,
+                          backgroundImage: 'url(/img/card_back.jpg)',
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          filter: isBeingSwiped ? 'brightness(1.15)' : undefined,
+                        }}
+                      />
+                    ))}
                   </div>
-                )}
-                {/* 스와이프 미리보기 배지 (터치 모드) */}
-                {isBeingSwiped && swipePreviewCount !== null && (
-                  <div style={{
-                    position: 'absolute', top: -22, left: '50%', transform: 'translateX(-50%)',
-                    background: 'rgba(52,152,219,0.92)', color: 'white',
-                    borderRadius: 4, fontSize: 10, fontWeight: 700,
-                    padding: '2px 6px', zIndex: 100, whiteSpace: 'nowrap',
-                    pointerEvents: 'none',
-                  }}>
-                    {swipePreviewCount}장 분리
+                  <div style={{ textAlign: 'center', fontSize: 10, color: '#888', marginTop: 4 }}>
+                    {pile.cardCount}장
                   </div>
-                )}
-                {/* 카드 스택 */}
-                <div style={{ position: 'relative', width: 60, height: hPx }}>
-                  {Array.from({ length: stackCount }, (_, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        position: 'absolute',
-                        width: 54,
-                        height: CARD_H,
-                        borderRadius: 5,
-                        left: 3,
-                        top: (pile.cardCount - 1 - i) * GAP,
-                        zIndex: i + 1,
-                        boxShadow: `0 ${2 + i}px 0 rgba(0,0,0,${0.12 + i * 0.03})`,
-                        outline: isSelected ? '2px solid rgba(255,255,255,0.5)' : undefined,
-                        backgroundImage: 'url(/img/card_back.jpg)',
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        filter: isBeingSwiped ? 'brightness(1.15)' : undefined,
-                      }}
-                    />
-                  ))}
                 </div>
-                <div style={{ textAlign: 'center', fontSize: 10, color: '#888', marginTop: 4 }}>
-                  {pile.cardCount}장
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
         {/* 버튼 영역 */}
