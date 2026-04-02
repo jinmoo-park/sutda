@@ -570,15 +570,9 @@ ls packages/client/dist/index.html # 필수 확인
    - What's unclear: `index.ts`를 직접 수정할지, PM2 cwd를 `packages/server`로 설정할지.
    - Recommendation: `index.ts`에서 `__dirname` 기반으로 수정하는 것이 가장 안전. `const STATIC_DIR = join(__dirname, '../../../packages/client/dist')` — 빌드 결과물 위치(`packages/server/dist/`)에서 3단계 올라가면 모노레포 루트.
 
-2. **GitHub 리포지토리 공개/비공개 여부**
-   - What we know: D-04에서 GitHub에 push하기로 결정.
-   - What's unclear: 비공개 리포지토리라면 VM에서 git clone 시 SSH 키 또는 access token 설정 필요.
-   - Recommendation: 공개 리포지토리로 설정하면 추가 인증 없이 clone 가능. 비공개 시 VM에 GitHub deploy key 또는 PAT 설정 단계 추가.
+2. ~~**GitHub 리포지토리 공개/비공개 여부**~~ → **RESOLVED:** 공개 리포지토리. VM에서 인증 없이 `git clone` 가능.
 
-3. **포트 3001 vs 포트 3000**
-   - What we know: 서버는 `PORT || 3001`로 시작. D-06에 포트 3000이 열린 것으로 명시됨.
-   - What's unclear: 포트 3000은 혹시 개발 테스트용이고 nginx 없이 직접 접속 테스트용인지?
-   - Recommendation: nginx → 3001 내부 전달로 통일. 포트 3000 오픈은 개발/디버그용으로 유지하되, 프로덕션 트래픽은 443 → nginx → 3001 경로 사용.
+3. ~~**포트 3001 vs 포트 3000**~~ → **RESOLVED:** 프로덕션은 443 → nginx → 3001 경로만 사용. 포트 3000은 무시해도 됨.
 
 ---
 
