@@ -768,8 +768,10 @@ io.on('connection', (socket) => {
   // 연결 끊김 처리
   socket.on('disconnect', () => {
     const { roomId } = socket.data;
+    console.log(`[disconnect] socket=${socket.id} roomId=${roomId} playerId=${socket.data.playerId}`);
     if (roomId) {
       const room = roomManager.getRoom(roomId);
+      console.log(`[disconnect] room found=${!!room} gamePhase=${room?.gamePhase} players=${room?.players.map(p => `${p.nickname}(${p.id})`).join(',')}`);
       if (room && room.gamePhase === 'playing') {
         // 게임 중이면 연결만 끊김 처리 (재접속 대기, per D-05)
         roomManager.disconnectPlayer(roomId, socket.id);
@@ -835,9 +837,12 @@ io.on('connection', (socket) => {
         // 타이머 만료 후 leaveRoom(old socketId)는 자동으로 no-op
         const disconnectedId = socket.id;
         const timerKey = `${roomId}:${disconnectedId}`;
+        console.log(`[waiting-disconnect] scheduling leave for ${disconnectedId} in room ${roomId}, timer 1s`);
         const timer = setTimeout(() => {
           waitingDisconnectTimers.delete(timerKey);
+          console.log(`[waiting-disconnect] timer fired for ${disconnectedId} in room ${roomId}`);
           const result = roomManager.leaveRoom(roomId, disconnectedId);
+          console.log(`[waiting-disconnect] leaveRoom result=${!!result}`);
           if (result) {
             io.to(roomId).emit('player-left', {
               playerId: result.removedPlayerId,
@@ -849,7 +854,7 @@ io.on('connection', (socket) => {
               chatHistories.delete(roomId);
             }
           }
-        }, 15_000);
+        }, 1_000);
         waitingDisconnectTimers.set(timerKey, timer);
       }
     }
