@@ -1,5 +1,5 @@
-import type { RoomState, RoomPlayer } from './room';
-import type { GameState, GameMode, BetAction, RoundHistoryEntry } from './game';
+import type { RoomState, RoomPlayer } from './room.js';
+import type { GameState, GameMode, BetAction, RoundHistoryEntry } from './game.js';
 
 /** 에러 응답 (per UI-SPEC 에러 메시지 계약) */
 export interface ErrorPayload {

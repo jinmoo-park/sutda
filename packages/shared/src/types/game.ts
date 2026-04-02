@@ -1,4 +1,4 @@
-import type { Card } from './card';
+import type { Card } from './card.js';
 
 /** 칩 단위별 개수 (per CHIP-04, D-12) */
 export interface ChipBreakdown {

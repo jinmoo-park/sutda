@@ -1,4 +1,4 @@
-import type { HandResult } from '../types/hand';
+import type { HandResult } from '../types/hand.js';
 
 /** 땡잡이 판별: isSpecialBeater=true, score=0 */
 function isTtaengJabi(h: HandResult): boolean {

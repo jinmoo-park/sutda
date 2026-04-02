@@ -1,4 +1,4 @@
-import type { HandResult } from '../types/hand';
+import type { HandResult } from '../types/hand.js';
 
 /**
  * 구사 패가 재경기 조건을 충족하는지 판단한다.

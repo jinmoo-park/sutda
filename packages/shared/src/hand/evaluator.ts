@@ -1,5 +1,5 @@
-import type { Card, CardRank } from '../types/card';
-import type { HandResult, HandType } from '../types/hand';
+import type { Card, CardRank } from '../types/card.js';
+import type { HandResult, HandType } from '../types/hand.js';
 
 /** 기본 플래그가 모두 false인 HandResult 생성 헬퍼 */
 function makeResult(handType: HandType, score: number, overrides?: Partial<HandResult>): HandResult {

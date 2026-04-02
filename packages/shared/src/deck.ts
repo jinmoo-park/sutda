@@ -1,5 +1,5 @@
-import type { Card, CardRank } from './types/card';
-import { GWANG_RANKS, YEOLKKEUT_RANKS } from './types/card';
+import type { Card, CardRank } from './types/card.js';
+import { GWANG_RANKS, YEOLKKEUT_RANKS } from './types/card.js';
 
 /**
  * 20장의 섯다 덱을 생성한다.
