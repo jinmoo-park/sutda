@@ -111,20 +111,21 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
           style={{ background: 'rgba(0,0,0,0.45)' }}
         />
 
-        <div className="relative z-10 flex flex-col h-full">
-          {/* 팟 한줄 요약 — padding으로 overflow 방지 */}
-          <div className="text-center pt-2 pb-1 px-2 shrink-0">
-            <span className="text-xs text-muted-foreground tracking-widest uppercase">판돈 </span>
-            <span className="font-semibold tabular-nums">{pot.toLocaleString()}원</span>
-            {hasAllIn && <span className="text-[10px] text-muted-foreground ml-1">올인 포함</span>}
-          </div>
-          {mode === 'shared-card' && sharedCard && (
-            <div className="flex justify-center py-1 shrink-0">
-              <SharedCardDisplay card={sharedCard} />
+        {/* 스크롤 컨텍스트: h-full 고정 + overflow-y-auto → 내용이 넘치면 스크롤 */}
+        <div className="relative z-10 h-full overflow-y-auto">
+          <div className="flex flex-col min-h-full">
+            {/* 팟 한줄 요약 */}
+            <div className="text-center pt-2 pb-1 px-2">
+              <span className="text-xs text-muted-foreground tracking-widest uppercase">판돈 </span>
+              <span className="font-semibold tabular-nums">{pot.toLocaleString()}원</span>
+              {hasAllIn && <span className="text-[10px] text-muted-foreground ml-1">올인 포함</span>}
             </div>
-          )}
-          {/* 그리드 배치: 6명까지 2열 3행 */}
-          <div className="flex-1 min-h-0 overflow-y-auto">
+            {mode === 'shared-card' && sharedCard && (
+              <div className="flex justify-center py-1">
+                <SharedCardDisplay card={sharedCard} />
+              </div>
+            )}
+            {/* 그리드 배치: 6명까지 2열 3행 */}
             <div className="grid grid-cols-2 gap-1 p-1">
               {players.map((p, i) => (
                 <PlayerSeat
