@@ -848,8 +848,12 @@ io.on('connection', (socket) => {
               playerId: result.removedPlayerId,
               newHostId: result.newHostId,
             });
-            // 방이 비었으면 채팅 이력 정리
+            // room-state도 보내서 클라이언트 플레이어 목록 갱신
             const remainingRoom = roomManager.getRoom(roomId);
+            if (remainingRoom && remainingRoom.players.length > 0) {
+              io.to(roomId).emit('room-state', remainingRoom);
+            }
+            // 방이 비었으면 채팅 이력 정리
             if (!remainingRoom || remainingRoom.players.length === 0) {
               chatHistories.delete(roomId);
             }
