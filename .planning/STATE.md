@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 12-deploy-01-PLAN.md
-last_updated: "2026-04-02T02:38:14.075Z"
+status: verifying
+stopped_at: "Checkpoint: Task 3 human-verify at https://sutda.duckdns.org"
+last_updated: "2026-04-02T04:49:40.546Z"
 last_activity: 2026-04-02
 progress:
   total_phases: 13
-  completed_phases: 11
+  completed_phases: 12
   total_plans: 31
-  completed_plans: 30
+  completed_plans: 31
   percent: 44
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 
 Phase: 12 (deploy) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-02
 
 Progress: [████░░░░░░] 44%
@@ -85,6 +85,7 @@ Progress: [████░░░░░░] 44%
 | Phase 11-social-features P03 | 15 | 2 tasks | 3 files |
 | Phase 11-social-features P04 | 45 | 3 tasks | 11 files |
 | Phase 12-deploy P01 | 6 | 2 tasks | 3 files |
+| Phase 12-deploy P02 | 35 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -175,6 +176,8 @@ Recent decisions affecting current work:
 - [Phase 11-social-features]: handLabels.ts 공유 유틸 — HAND_TYPE_KOREAN 매핑 단일 진실 출처, ResultScreen/HistoryModal 중복 제거
 - [Phase 12-deploy]: STATIC_DIR를 import.meta.url 기반으로 변경 — PM2 cwd 무관 올바른 경로 보장
 - [Phase 12-deploy]: GitHub 리포지토리 jinmoo-park/sutda 퍼블릭으로 생성, VM git clone 가능
+- [Phase 12-deploy]: iptables 규칙을 REJECT 이전에 삽입해야 함 — Oracle VM 기본 체인의 REJECT 위치 주의
+- [Phase 12-deploy]: shared ESM .js 확장자 필수 — moduleResolution:bundler는 프로덕션 Node.js ESM에서 extensionless import 해결 불가
 
 ### Pending Todos
 
@@ -193,6 +196,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-02T02:38:14.070Z
-Stopped at: Completed 12-deploy-01-PLAN.md
+Last session: 2026-04-02T04:49:40.541Z
+Stopped at: Checkpoint: Task 3 human-verify at https://sutda.duckdns.org
 Resume file: None

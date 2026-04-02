@@ -21,7 +21,7 @@
 - [x] **Phase 9: 특수 규칙 (땡값 + 94재경기)** - 땡값 자동 정산, 구사/멍텅구리구사 재경기 상태 머신 (completed 2026-03-30)
 - [x] **Phase 10: 시각/UX 완성** - 카드 이미지, 배분 애니메이션, 뒤집기 인터랙션, 셔플/기리 고도화, 패널 레이아웃 재설계, 베팅 강조 (completed 2026-03-31)
 - [x] **Phase 11: 소셜/기능 완성** - 채팅, 게임 이력, 학교 대신 가주기, 뒤늦게 입장(Observer), 세션종료 표시, 올인 POT (completed 2026-04-01)
-- [ ] **Phase 12: 통합 테스트 + 배포** - E2E 검증, Railway/Render 배포, 모바일 브라우저 대응
+- [x] **Phase 12: 통합 테스트 + 배포** - E2E 검증, Railway/Render 배포, 모바일 브라우저 대응 (completed 2026-04-02)
 - [ ] **Phase 13: Stitch 연계 UI 고도화 (DEFERRED)** - Google Stitch MCP 활용 전체 UI D-09 군용담요 컨셉 개선
 
 ## Phase Details
@@ -244,14 +244,14 @@ Plans:
 
 Plans:
 - [x] 12-01-PLAN.md — 코드 수정 (STATIC_DIR fix + ecosystem.config.cjs) + GitHub push
-- [ ] 12-02-PLAN.md — Oracle VM 배포 (Node.js + nginx + SSL + PM2) + 배포 검증
+- [x] 12-02-PLAN.md — Oracle VM 배포 (Node.js + nginx + SSL + PM2) + 배포 검증
 
 ### Phase 13: Stitch 연계 UI 고도화 (DEFERRED)
 
 **Goal:** Google Stitch MCP를 활용하여 전체 UI를 D-09 군용담요 컨셉("공장에서 군용담요 깔아놓고 하는 느낌")으로 프로페셔널하게 개선한다 — 메인화면, 대기실, 게임테이블, 패널, 모달 16개, 공통 UI 전체.
 **Requirements**: STITCH-SETUP, STITCH-DESIGN-SYSTEM, STITCH-MAINPAGE, STITCH-WAITINGROOM, STITCH-GAMETABLE, STITCH-PLAYERSEAT, STITCH-BETTINGPANEL, STITCH-HANDPANEL, STITCH-INFOPANEL, STITCH-MODAL-HIGH, STITCH-MODAL-REST, STITCH-COMMON-UI, STITCH-RESULTSCREEN
 **Depends on:** Phase 12
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 **Success Criteria** (완료 시 참이어야 하는 것):
   1. 모든 주요 화면과 모달이 D-09 군용담요 컨셉으로 시각적으로 개선되어 있다
   2. 기존 게임 로직(소켓 통신, 상태 관리)이 변경 없이 동작한다
@@ -286,5 +286,5 @@ Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 
 | 9. 특수 규칙 (땡값 + 94재경기) | 2/2 | Complete   | 2026-03-30 |
 | 10. 시각/UX 완성 | 4/4 | Complete    | 2026-03-31 |
 | 11. 소셜/기능 완성 | 4/4 | Complete    | 2026-04-01 |
-| 12. 통합 테스트 + 배포 | 1/2 | In Progress|  |
+| 12. 통합 테스트 + 배포 | 2/2 | Complete   | 2026-04-02 |
 | 13. Stitch UI 고도화 | 3/7 | Deferred | - |
