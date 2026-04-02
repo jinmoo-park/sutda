@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: complete
-stopped_at: "Phase 12 complete — 배포 후 핫픽스 완료 (이미지 최적화, UI 수정, disconnect 버그 수정)"
-last_updated: "2026-04-02T05:00:53.288Z"
+status: verifying
+stopped_at: Completed 14-room-password-01-PLAN.md
+last_updated: "2026-04-02T08:44:10.727Z"
 last_activity: 2026-04-02
 progress:
   total_phases: 13
-  completed_phases: 12
+  completed_phases: 11
   total_plans: 31
-  completed_plans: 31
+  completed_plans: 30
   percent: 44
 ---
 
@@ -86,6 +86,7 @@ Progress: [████░░░░░░] 44%
 | Phase 11-social-features P04 | 45 | 3 tasks | 11 files |
 | Phase 12-deploy P01 | 6 | 2 tasks | 3 files |
 | Phase 12-deploy P02 | 35 | 2 tasks | 8 files |
+| Phase 14-room-password P01 | 2 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -181,6 +182,8 @@ Recent decisions affecting current work:
 - [Phase 12-hotfix]: 모든 게임 이미지를 img 태그 대신 CSS background-image로 적용 — 모바일 롱프레스 다운로드 방지
 - [Phase 12-hotfix]: 셔플/기리 모달 안내문구를 DialogTitle로 이동 — 카드더미 영역 침범 방지
 - [Phase 12-hotfix]: 대기실 disconnect 시 room-state emit 필수 — player-left만으론 클라이언트 목록 갱신 안 됨
+- [Phase 14-room-password]: ROOM_CREATE_PASSWORD 환경변수 설정 시에만 비밀번호 강제 — 미설정 시 하위 호환으로 누구나 방 생성 가능
+- [Phase 14-room-password]: password 필드를 optional로 정의 — 기존 클라이언트 및 테스트 코드 변경 없이 호환
 
 ### Pending Todos
 
@@ -199,6 +202,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-02
-Stopped at: Phase 12 complete + 배포 후 핫픽스 (이미지 WebP, img→bg, 셔플/기리 UI, disconnect 수정)
+Last session: 2026-04-02T08:44:10.721Z
+Stopped at: Completed 14-room-password-01-PLAN.md
 Resume file: None

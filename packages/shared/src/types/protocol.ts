@@ -21,13 +21,14 @@ export interface ErrorPayload {
     | 'INSUFFICIENT_CHIPS'
     | 'CARD_ALREADY_TAKEN'
     | 'SELECTION_COMPLETE'
-    | 'CHAT_TOO_FAST';
+    | 'CHAT_TOO_FAST'
+    | 'INVALID_PASSWORD';
   message: string;
 }
 
 /** 클라이언트 -> 서버 이벤트 */
 export interface ClientToServerEvents {
-  'create-room': (data: { nickname: string; initialChips: number }) => void;
+  'create-room': (data: { nickname: string; initialChips: number; password?: string }) => void;
   'join-room': (data: { roomId: string; nickname: string; initialChips: number }) => void;
   'leave-room': (data: { roomId: string }) => void;
   'start-game': (data: { roomId: string }) => void;
