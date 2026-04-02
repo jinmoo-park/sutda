@@ -149,13 +149,10 @@ export function HandPanel({
 
   return (
     <div className="space-y-1.5 p-2">
-      <div className="flex items-center justify-between gap-1">
-        <p className="text-xs font-semibold">{nickname ? `${nickname}의 패` : '내 패'}</p>
-        <Button variant="ghost" size="sm" className="h-5 text-[10px] px-1.5 py-0 shrink-0" onClick={() => setShowReference(true)}>
-          족보 참고표
-        </Button>
-      </div>
+      {/* Row 1: 닉네임 */}
+      <p className="text-xs font-semibold">{nickname ? `${nickname}의 패` : '내 패'}</p>
 
+      {/* Row 2: 카드만 */}
       {cards.length === 0 ? (
         <p className="text-sm text-muted-foreground">카드가 아직 없어요</p>
       ) : (
@@ -176,18 +173,23 @@ export function HandPanel({
               </div>
             );
           })}
-          {handLabel && (
-            <Badge variant="secondary" className="ml-2">
-              {handLabel}
-            </Badge>
-          )}
         </div>
       )}
 
-      {/* 1장만 뒤집은 상태 힌트 */}
-      {flippedIndices.size === 1 && cards.length >= 2 && (
-        <p className="text-xs text-muted-foreground">나머지 카드를 탭해서 확인하세요</p>
-      )}
+      {/* Row 3: 족보 참고표 버튼 + 족보 배지 */}
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="sm" className="h-6 text-[10px] px-1.5 py-0 shrink-0" onClick={() => setShowReference(true)}>
+          족보 참고표
+        </Button>
+        {handLabel && (
+          <Badge variant="secondary" className="text-xs">
+            {handLabel}
+          </Badge>
+        )}
+        {flippedIndices.size === 1 && cards.length >= 2 && (
+          <span className="text-[10px] text-muted-foreground">나머지 카드를 탭하세요</span>
+        )}
+      </div>
 
       <HandReferenceDialog open={showReference} onOpenChange={setShowReference} />
     </div>
