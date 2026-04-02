@@ -133,6 +133,7 @@ export function ChatPanel({ mobile = false }: ChatPanelProps) {
               disabled={!isConnected}
               autoFocus
               className="flex-1 h-8 px-2 rounded border border-white/20 bg-black/50 text-white text-xs placeholder:text-white/40 focus-visible:outline-none"
+              style={{ fontSize: '16px' }}
               maxLength={200}
             />
             <button
@@ -187,6 +188,7 @@ export function ChatPanel({ mobile = false }: ChatPanelProps) {
           placeholder={isConnected ? '메시지를 입력하세요' : '채팅을 사용할 수 없습니다'}
           disabled={!isConnected}
           className="flex-1 h-10 px-3 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+          style={{ fontSize: '16px' }}
           maxLength={200}
         />
         <button
