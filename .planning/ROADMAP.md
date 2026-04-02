@@ -261,7 +261,7 @@ Plans:
 **Goal:** 방 생성 시 서버 관리자 비밀번호 입력을 요구한다. 올바른 비밀번호 없이는 방을 만들 수 없어 낯선 사람이 무단으로 방을 생성하는 것을 방지한다. 비밀번호는 서버 환경변수(.env)로 관리하며 검증은 서버 권위로 동작한다.
 **Requirements:** ROOM-CREATE-PASSWORD-SERVER, ROOM-CREATE-PASSWORD-CLIENT
 **Depends on:** Phase 12
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 14-01-PLAN.md — 프로토콜 타입 확장 + 서버 비밀번호 검증 + 클라이언트 UI (ROOM-CREATE-PASSWORD-SERVER, ROOM-CREATE-PASSWORD-CLIENT)
@@ -308,5 +308,5 @@ Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 
 | 11. 소셜/기능 완성 | 4/4 | Complete    | 2026-04-01 |
 | 12. 통합 테스트 + 배포 | 2/2 | Complete    | 2026-04-02 |
 | 13. Stitch UI 고도화 | 3/7 | Deferred | - |
-| 14. 서버 레벨 방 생성 패스워드 | 0/1 | Not Started | - |
+| 14. 서버 레벨 방 생성 패스워드 | 0/1 | Complete    | 2026-04-02 |
 
