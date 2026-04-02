@@ -246,6 +246,16 @@ Plans:
 - [x] 12-01-PLAN.md — 코드 수정 (STATIC_DIR fix + ecosystem.config.cjs) + GitHub push
 - [x] 12-02-PLAN.md — Oracle VM 배포 (Node.js + nginx + SSL + PM2) + 배포 검증
 
+### Phase 12.1: 보안 감사 (Security Audit) — OWASP Top 10 코드 점검, npm audit 의존성 스캔, 환경변수/시크릿 노출 점검, 인증/인가 검증, 서버 설정 보안 확인 (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 12
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 12.1 to break down)
+
 ### Phase 13: Stitch 연계 UI 고도화 (DEFERRED)
 
 **Goal:** Google Stitch MCP를 활용하여 전체 UI를 D-09 군용담요 컨셉("공장에서 군용담요 깔아놓고 하는 느낌")으로 프로페셔널하게 개선한다 — 메인화면, 대기실, 게임테이블, 패널, 모달 16개, 공통 UI 전체.
@@ -288,3 +298,14 @@ Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 
 | 11. 소셜/기능 완성 | 4/4 | Complete    | 2026-04-01 |
 | 12. 통합 테스트 + 배포 | 2/2 | Complete    | 2026-04-02 |
 | 13. Stitch UI 고도화 | 3/7 | Deferred | - |
+
+## Backlog
+
+### Phase 999.1: 서버 레벨 방만들기 패스워드 (BACKLOG)
+
+**Goal:** 방을 만들 때 선택적으로 패스워드를 설정할 수 있고, 입장 시 패스워드 검증을 서버에서 처리한다. 클라이언트는 UI만 제공하며, 실제 검증 로직은 서버 권위로 동작한다.
+**Requirements:** TBD
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd:review-backlog when ready)
