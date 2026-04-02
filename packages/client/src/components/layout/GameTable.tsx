@@ -138,6 +138,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
                   dealingComplete={dealingComplete}
                   cardSlotIndices={playerCardSlots[i]}
                   isConnected={roomState?.players.find(rp => rp.id === p.id)?.isConnected ?? true}
+                  mode={mode}
                   compact
                 />
               ))}
