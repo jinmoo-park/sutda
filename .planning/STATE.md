@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: "Checkpoint: Task 3 human-verify at https://sutda.duckdns.org"
-last_updated: "2026-04-02T05:00:53.288Z"
+stopped_at: Completed 12.1-01-PLAN.md
+last_updated: "2026-04-02T09:26:03.047Z"
 last_activity: 2026-04-02
 progress:
   total_phases: 13
-  completed_phases: 12
+  completed_phases: 11
   total_plans: 31
-  completed_plans: 31
+  completed_plans: 30
   percent: 44
 ---
 
@@ -86,6 +86,7 @@ Progress: [████░░░░░░] 44%
 | Phase 11-social-features P04 | 45 | 3 tasks | 11 files |
 | Phase 12-deploy P01 | 6 | 2 tasks | 3 files |
 | Phase 12-deploy P02 | 35 | 2 tasks | 8 files |
+| Phase 12.1-security-audit-owasp-top-10-npm-audit P01 | 15 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -178,6 +179,9 @@ Recent decisions affecting current work:
 - [Phase 12-deploy]: GitHub 리포지토리 jinmoo-park/sutda 퍼블릭으로 생성, VM git clone 가능
 - [Phase 12-deploy]: iptables 규칙을 REJECT 이전에 삽입해야 함 — Oracle VM 기본 체인의 REJECT 위치 주의
 - [Phase 12-deploy]: shared ESM .js 확장자 필수 — moduleResolution:bundler는 프로덕션 Node.js ESM에서 extensionless import 해결 불가
+- [Phase 12.1-security-audit-owasp-top-10-npm-audit]: CORS fallback: true 대신 'https://sutda.duckdns.org' 고정 — 미설정 환경에서도 wildcard 허용 방지 (D-04)
+- [Phase 12.1-security-audit-owasp-top-10-npm-audit]: rate limiting: next() 미호출로 이벤트 무시, 연결 유지 — socket.use 미들웨어 Pitfall 3 회피 (D-07)
+- [Phase 12.1-security-audit-owasp-top-10-npm-audit]: send-chat: socket.data.roomId 서버 사이드 검증으로 A01 Broken Access Control 대응
 
 ### Pending Todos
 
@@ -196,6 +200,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-02T04:49:40.541Z
-Stopped at: Checkpoint: Task 3 human-verify at https://sutda.duckdns.org
+Last session: 2026-04-02T09:26:03.041Z
+Stopped at: Completed 12.1-01-PLAN.md
 Resume file: None
