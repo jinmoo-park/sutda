@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 
 export function MainPage() {
   const [nickname, setNickname] = useState('');
+  const [password, setPassword] = useState('');
   const [initialChips, setInitialChips] = useState(100000);
   const navigate = useNavigate();
   const { connect, socket } = useGameStore();
@@ -28,8 +29,13 @@ export function MainPage() {
       toast.error('서버에 연결 중입니다. 잠시 후 다시 시도해 주세요.');
       return;
     }
-    s.emit('create-room', { nickname: nickname.trim(), initialChips });
+    const errorHandler = ({ message }: { message: string }) => {
+      toast.error(message);
+    };
+    s.once('error', errorHandler);
+    s.emit('create-room', { nickname: nickname.trim(), initialChips, password: password.trim() || undefined });
     s.once('room-created', ({ roomId }) => {
+      s.off('error', errorHandler);
       // isHost: true → RoomPage에서 join-room 폼 건너뜀 (이미 create-room으로 입장됨)
       navigate(`/room/${roomId}`, { state: { nickname: nickname.trim(), initialChips, isHost: true } });
     });
@@ -50,6 +56,12 @@ export function MainPage() {
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               maxLength={10}
+            />
+            <Input
+              type="password"
+              placeholder="방 생성 비밀번호"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
             <div className="space-y-1">
               <label className="text-xs text-muted-foreground">
