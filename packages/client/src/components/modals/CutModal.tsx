@@ -47,7 +47,11 @@ export function CutModal({ open, roomId }: CutModalProps) {
 
   useEffect(() => {
     if (open) {
-      initSplit();
+      // 테이블 실제 너비에 맞춰 더미 중앙 배치
+      requestAnimationFrame(() => {
+        const tw = tableRef.current?.offsetWidth ?? TABLE_W;
+        initSplit((tw - 60) / 2, (TABLE_H - pileH(20)) / 2);
+      });
       setDeducted(null);
     }
     return () => {
@@ -216,7 +220,7 @@ export function CutModal({ open, roomId }: CutModalProps) {
         {/* 기리 테이블 */}
         <div
           ref={tableRef}
-          style={{ position: 'relative', width: TABLE_W, height: TABLE_H, margin: '0 auto' }}
+          style={{ position: 'relative', width: '100%', maxWidth: TABLE_W, height: TABLE_H, margin: '0 auto' }}
         >
           {displayPiles.map((pile, pi) => {
             const orderPos = tapOrder.indexOf(pile.id);

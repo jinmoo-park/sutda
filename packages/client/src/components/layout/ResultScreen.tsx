@@ -96,11 +96,11 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch }: Resul
           className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center"
           style={{ animation: 'fadeIn 0.4s ease-in' }}
         >
-          <img
-            src="/img/regame.png"
-            alt="재경기"
-            className="object-contain opacity-85"
-            style={{ maxWidth: '80%', maxHeight: '80%' }}
+          <div
+            role="img"
+            aria-label="재경기"
+            className="opacity-85"
+            style={{ width: '80%', aspectRatio: '1/1', maxHeight: '80%', backgroundImage: 'url(/img/regame.png)', backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center' }}
           />
         </div>
       )}

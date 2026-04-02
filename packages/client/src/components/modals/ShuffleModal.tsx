@@ -16,7 +16,7 @@ interface ShuffleModalProps {
 
 // --- 참조 구현 포팅 (sutda-shuffle.html) ---
 const N = 5;
-const BASE_TOP = 50;
+const BASE_TOP = 10;
 const GAP = 13;
 const CYCLE = 300;
 const T = { peek: 0.22, hold: 0.18, rise: 0.35, drop: 0.15, rest: 0.10 };
@@ -194,7 +194,7 @@ export function ShuffleModal({ open, roomId }: ShuffleModalProps) {
         </DialogHeader>
 
         {/* 카드 더미 — perspective로 3D 효과, 누르면 섞기 */}
-        <div className="flex flex-col items-center justify-center" style={{ minHeight: '220px' }}>
+        <div className="flex flex-col items-center justify-center py-4">
           <div
             style={{ perspective: '700px', perspectiveOrigin: '50% 30%', cursor: 'pointer', userSelect: 'none' }}
             onPointerDown={startShuffle}

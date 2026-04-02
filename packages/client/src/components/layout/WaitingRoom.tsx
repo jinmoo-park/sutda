@@ -34,10 +34,10 @@ export function WaitingRoom({ roomState, myPlayerId, roomId }: WaitingRoomProps)
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6 space-y-6">
-      <img
-        src="/img/main_title_alt.webp"
-        alt="섯다"
-        style={{ width: '100%', maxWidth: '480px', height: 'auto', objectFit: 'contain' }}
+      <div
+        role="img"
+        aria-label="섯다"
+        style={{ width: '100%', maxWidth: '480px', aspectRatio: '1632/656', backgroundImage: 'url(/img/main_title_alt.webp)', backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center' }}
       />
 
       {/* 방 URL 복사 */}

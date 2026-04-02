@@ -16,7 +16,7 @@ interface GiriState {
   isTtong: boolean;
 
   // Actions
-  initSplit: () => void;
+  initSplit: (x?: number, y?: number) => void;
   addSplitPile: (pileId: number, deductCount: number, newX: number, newY: number) => void;
   tapPile: (pileId: number) => void;
   untapPile: (pileId: number) => void;
@@ -32,10 +32,10 @@ export const useGiriStore = create<GiriState>((set) => ({
   tapOrder: [],
   isTtong: false,
 
-  initSplit: () =>
+  initSplit: (x?: number, y?: number) =>
     set({
       phase: 'split',
-      piles: [{ id: 0, cardCount: 20, x: 150, y: 40 }],
+      piles: [{ id: 0, cardCount: 20, x: x ?? 150, y: y ?? 40 }],
       tapOrder: [],
       isTtong: false,
     }),

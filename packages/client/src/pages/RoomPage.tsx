@@ -370,10 +370,10 @@ export function RoomPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
         <div className="w-full max-w-sm space-y-4 p-6">
-          <img
-            src="/img/main_title_alt.webp"
-            alt="섯다"
-            style={{ width: '100%', maxWidth: '360px', height: 'auto', objectFit: 'contain', display: 'block', margin: '0 auto 8px' }}
+          <div
+            role="img"
+            aria-label="섯다"
+            style={{ width: '100%', maxWidth: '360px', aspectRatio: '1632/656', backgroundImage: 'url(/img/main_title_alt.webp)', backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center', margin: '0 auto 8px' }}
           />
           <div className="space-y-2">
             <label className="text-sm font-normal text-muted-foreground" htmlFor="nickname-input">
