@@ -371,7 +371,7 @@ export function RoomPage() {
       <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
         <div className="w-full max-w-sm space-y-4 p-6">
           <img
-            src="/img/main_title_alt.jpg"
+            src="/img/main_title_alt.webp"
             alt="섯다"
             style={{ width: '100%', maxWidth: '360px', height: 'auto', objectFit: 'contain', display: 'block', margin: '0 auto 8px' }}
           />

@@ -38,7 +38,7 @@ export function MainPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background gap-6 p-6">
       <img
-        src="/img/main_title_alt.jpg"
+        src="/img/main_title_alt.webp"
         alt="섯다"
         style={{ width: '100%', maxWidth: '480px', height: 'auto', objectFit: 'contain' }}
       />
