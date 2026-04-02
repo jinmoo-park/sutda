@@ -202,20 +202,18 @@ export function CutModal({ open, roomId }: CutModalProps) {
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle>기리</DialogTitle>
+          <DialogTitle>
+            {phase === 'split' && piles.length === 1
+              ? '더미를 드래그해서 나누세요'
+              : phase === 'split' && piles.length > 1
+                ? '계속 나누거나, 더미를 탭해서 합칠 순서를 정하세요'
+                : phase === 'tap' || tapOrder.length > 0
+                  ? `탭한 순서 = 아래부터 위 (${tapOrder.length}/${piles.length} 선택)`
+                  : phase === 'merging'
+                    ? '합치는 중...'
+                    : '완료'}
+          </DialogTitle>
         </DialogHeader>
-
-        <p className="text-xs text-muted-foreground text-center mb-2">
-          {phase === 'split' && piles.length === 1
-            ? '더미를 드래그해서 나누세요'
-            : phase === 'split' && piles.length > 1
-              ? '계속 나누거나, 더미를 탭해서 합칠 순서를 정하세요'
-              : phase === 'tap' || tapOrder.length > 0
-                ? `탭한 순서 = 아래부터 위 (${tapOrder.length}/${piles.length} 선택)`
-                : phase === 'merging'
-                  ? '합치는 중...'
-                  : '완료'}
-        </p>
 
         {/* 기리 테이블 */}
         <div

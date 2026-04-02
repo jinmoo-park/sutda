@@ -190,21 +190,18 @@ export function ShuffleModal({ open, roomId }: ShuffleModalProps) {
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle>패를 섞으세요</DialogTitle>
+          <DialogTitle>
+            {isShuffling ? '섞는 중...' : hasShuffled ? '잘 섞였어요! 확인을 누르세요' : '카드 더미를 꾹 누르면 섞입니다'}
+          </DialogTitle>
         </DialogHeader>
 
-        {/* 카드 더미 — 모달 콘텐츠 영역 정중앙 */}
-        <div className="flex flex-col items-center">
-          <p className="text-xs text-muted-foreground mb-4 text-center">
-            {isShuffling ? '섞는 중...' : hasShuffled ? '잘 섞였어요! 확인을 누르세요' : '카드 더미를 꾹 누르면 섞입니다'}
-          </p>
+        {/* 카드 더미 — 레이아웃은 카드 시각 크기(130px)만, 애니메이션은 overflow:visible */}
+        <div className="flex items-center justify-center" style={{ padding: '24px 0' }}>
           <div
             style={{
               perspective: '700px', perspectiveOrigin: '50% 50%',
               cursor: 'pointer', userSelect: 'none',
-              width: '80px', height: '150px',
               overflow: 'visible',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
             onPointerDown={startShuffle}
             onPointerUp={stopShuffle}
@@ -214,7 +211,7 @@ export function ShuffleModal({ open, roomId }: ShuffleModalProps) {
               style={{
                 position: 'relative',
                 width: '80px',
-                height: `${BASE_TOP + N * GAP + 78 + 20}px`,
+                height: '130px',
                 transformStyle: 'preserve-3d',
               }}
             >
