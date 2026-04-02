@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 14-room-password-01-PLAN.md
-last_updated: "2026-04-02T08:49:25.631Z"
+status: verifying
+stopped_at: Completed 12.1-01-PLAN.md
+last_updated: "2026-04-02T09:26:03.047Z"
 last_activity: 2026-04-02
 progress:
-  total_phases: 15
-  completed_phases: 13
-  total_plans: 32
-  completed_plans: 32
+  total_phases: 13
+  completed_phases: 11
+  total_plans: 31
+  completed_plans: 30
   percent: 44
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** 아무 설치 없이 링크 하나로 친구들과 실시간으로 섯다를 즐길 수 있어야 한다.
-**Current focus:** Phase 14 — room-password
+**Current focus:** Phase 12 — deploy
 
 ## Current Position
 
-Phase: 14
+Phase: 13
 Plan: Not started
-Status: Executing Phase 14
+Status: Phase complete — ready for verification
 Last activity: 2026-04-02
 
 Progress: [████░░░░░░] 44%
@@ -86,7 +86,7 @@ Progress: [████░░░░░░] 44%
 | Phase 11-social-features P04 | 45 | 3 tasks | 11 files |
 | Phase 12-deploy P01 | 6 | 2 tasks | 3 files |
 | Phase 12-deploy P02 | 35 | 2 tasks | 8 files |
-| Phase 14-room-password P01 | 2 | 2 tasks | 3 files |
+| Phase 12.1-security-audit-owasp-top-10-npm-audit P01 | 15 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -179,11 +179,9 @@ Recent decisions affecting current work:
 - [Phase 12-deploy]: GitHub 리포지토리 jinmoo-park/sutda 퍼블릭으로 생성, VM git clone 가능
 - [Phase 12-deploy]: iptables 규칙을 REJECT 이전에 삽입해야 함 — Oracle VM 기본 체인의 REJECT 위치 주의
 - [Phase 12-deploy]: shared ESM .js 확장자 필수 — moduleResolution:bundler는 프로덕션 Node.js ESM에서 extensionless import 해결 불가
-- [Phase 12-hotfix]: 모든 게임 이미지를 img 태그 대신 CSS background-image로 적용 — 모바일 롱프레스 다운로드 방지
-- [Phase 12-hotfix]: 셔플/기리 모달 안내문구를 DialogTitle로 이동 — 카드더미 영역 침범 방지
-- [Phase 12-hotfix]: 대기실 disconnect 시 room-state emit 필수 — player-left만으론 클라이언트 목록 갱신 안 됨
-- [Phase 14-room-password]: ROOM_CREATE_PASSWORD 환경변수 설정 시에만 비밀번호 강제 — 미설정 시 하위 호환으로 누구나 방 생성 가능
-- [Phase 14-room-password]: password 필드를 optional로 정의 — 기존 클라이언트 및 테스트 코드 변경 없이 호환
+- [Phase 12.1-security-audit-owasp-top-10-npm-audit]: CORS fallback: true 대신 'https://sutda.duckdns.org' 고정 — 미설정 환경에서도 wildcard 허용 방지 (D-04)
+- [Phase 12.1-security-audit-owasp-top-10-npm-audit]: rate limiting: next() 미호출로 이벤트 무시, 연결 유지 — socket.use 미들웨어 Pitfall 3 회피 (D-07)
+- [Phase 12.1-security-audit-owasp-top-10-npm-audit]: send-chat: socket.data.roomId 서버 사이드 검증으로 A01 Broken Access Control 대응
 
 ### Pending Todos
 
@@ -193,7 +191,6 @@ None yet.
 
 - Phase 10 (구 09.1) inserted after Phase 9: 향상된 UX 및 이미지 적용 통합 페이즈 — 배포 전 필수 UX 완성 작업 (카드 이미지, 뒤집기, 채팅, 베팅 강조, 올인 POT, 이력). 기존 Phase 10(통합 테스트+배포)은 Phase 11로 번호 변경.
 - Phase 10.1 inserted after Phase 10: Stitch 연계 UI 고도화 (INSERTED) — Anthropic Stitch 툴을 활용한 UI 디자인 고도화 작업.
-- Phase 12.1 inserted after Phase 12: 보안 감사 (Security Audit) (URGENT) — OWASP Top 10 코드 점검, npm audit 의존성 스캔, 환경변수/시크릿 노출 점검, 인증/인가 검증, 서버 설정 보안 확인
 
 ### Blockers/Concerns
 
@@ -203,6 +200,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-02T08:44:10.721Z
-Stopped at: Completed 14-room-password-01-PLAN.md
+Last session: 2026-04-02T09:26:03.041Z
+Stopped at: Completed 12.1-01-PLAN.md
 Resume file: None

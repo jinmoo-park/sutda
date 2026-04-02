@@ -460,3 +460,75 @@ describe('게임 이벤트 핸들러 통합 테스트', () => {
     expect(afterNextRound.pot).toBe(0);
   });
 });
+
+describe('보안: rate limiting (D-07)', () => {
+  const clients: TestClient[] = [];
+
+  afterEach(() => {
+    clients.forEach(c => c.disconnect());
+    clients.length = 0;
+    gameEngines.clear();
+  });
+
+  it('소켓당 초당 20개 이벤트 초과 시 일부 이벤트가 무시된다', async () => {
+    const client = createClient();
+    clients.push(client);
+    await new Promise<void>((resolve) => client.on('connect', resolve));
+
+    // 방 생성
+    client.emit('create-room', { nickname: 'rate-test', initialChips: 100000 });
+    const { roomId } = await waitForEvent<{ roomId: string }>(client, 'room-created');
+
+    // 30개 send-chat 이벤트를 동기적으로 빠르게 전송 (20개 초과)
+    const received: any[] = [];
+    client.on('chat-message', (msg) => received.push(msg));
+
+    for (let i = 0; i < 30; i++) {
+      client.emit('send-chat', { roomId, text: `msg-${i}` });
+    }
+
+    // 충분한 대기 시간 후 수신된 메시지 수가 30개 미만인지 확인
+    await new Promise((r) => setTimeout(r, 500));
+    expect(received.length).toBeLessThan(30);
+    // 연결은 유지되어야 한다
+    expect(client.connected).toBe(true);
+  });
+});
+
+describe('보안: send-chat 접근 제어 (A01)', () => {
+  const clients: TestClient[] = [];
+
+  afterEach(() => {
+    clients.forEach(c => c.disconnect());
+    clients.length = 0;
+    gameEngines.clear();
+  });
+
+  it('자신이 속하지 않은 방에 채팅을 보내면 무시된다', async () => {
+    const client1 = createClient();
+    const client2 = createClient();
+    clients.push(client1, client2);
+    await Promise.all([
+      new Promise<void>((resolve) => client1.on('connect', resolve)),
+      new Promise<void>((resolve) => client2.on('connect', resolve)),
+    ]);
+
+    // client1이 방 생성
+    client1.emit('create-room', { nickname: 'owner', initialChips: 100000 });
+    const { roomId } = await waitForEvent<{ roomId: string }>(client1, 'room-created');
+
+    // client2는 다른 방을 생성 (자신의 roomId가 다름)
+    client2.emit('create-room', { nickname: 'other', initialChips: 100000 });
+    await waitForEvent<{ roomId: string }>(client2, 'room-created');
+
+    // client2가 client1의 roomId로 채팅 시도
+    const received: any[] = [];
+    client1.on('chat-message', (msg) => received.push(msg));
+
+    client2.emit('send-chat', { roomId, text: 'injection attempt' });
+    await new Promise((r) => setTimeout(r, 300));
+
+    // client1의 방에 메시지가 도달하지 않아야 한다
+    expect(received.length).toBe(0);
+  });
+});
