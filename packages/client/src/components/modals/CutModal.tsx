@@ -131,10 +131,12 @@ export function CutModal({ open, roomId }: CutModalProps) {
 
   useEffect(() => {
     if (phase === 'merging') {
+      // 마지막 더미가 도착한 뒤 닫히도록 stagger 총합 반영
+      const stagger = Math.max(0, piles.length - 1) * 130;
       mergeTimerRef.current = setTimeout(() => {
         emitCutResult();
         setDone();
-      }, 380);
+      }, 420 + stagger);
     }
   }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -413,6 +415,10 @@ export function CutModal({ open, roomId }: CutModalProps) {
               const isSelected = orderPos !== -1;
               const stackCount = Math.min(pile.cardCount, 5);
               const hPx = pileH(pile.cardCount);
+              // 탭 순서 기반 stagger: tapOrder[0](맨 아래) → 가장 먼저 이동
+              const mergeDelay = phase === 'merging'
+                ? (orderPos !== -1 ? orderPos : pi) * 130
+                : 0;
 
               return (
                 <div
@@ -424,7 +430,7 @@ export function CutModal({ open, roomId }: CutModalProps) {
                     cursor: phase === 'split' ? (isTouchDevice ? 'default' : 'grab') : 'pointer',
                     opacity: phase === 'merging' ? 0 : 1,
                     transition: phase === 'merging'
-                      ? 'left 380ms cubic-bezier(0.42,0,0.58,1), top 380ms cubic-bezier(0.42,0,0.58,1), opacity 380ms'
+                      ? `left 350ms cubic-bezier(0.42,0,0.58,1) ${mergeDelay}ms, top 350ms cubic-bezier(0.42,0,0.58,1) ${mergeDelay}ms, opacity 200ms ease ${mergeDelay + 280}ms`
                       : undefined,
                     ...(phase === 'merging' ? { left: TABLE_W / 2 - 30, top: 20 } : {}),
                   }}

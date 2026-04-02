@@ -124,7 +124,7 @@ export function HandPanel({
       handLabel = getHandLabel(evaluateHand(myPlayer.selectedCards[0], myPlayer.selectedCards[1]));
     } else if (cards.length === 1 && sharedCard) {
       // 한장공유: 내 1장 + 공유카드로 족보 계산 (flip 완료 시에만)
-      if (flippedIndices.has(0) || isCardSelectPhase) {
+      if ((flippedIndices.has(0) || isCardSelectPhase) && cards[0] != null) {
         handLabel = getHandLabel(evaluateHand(cards[0], sharedCard));
       }
     } else if (flippedIndices.size >= 2 && cards[0] !== null && cards[1] !== null && !isCardSelectPhase) {

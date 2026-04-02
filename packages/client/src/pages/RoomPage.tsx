@@ -27,7 +27,8 @@ import { HwatuCard } from '@/components/game/HwatuCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { HistoryModal } from '@/components/modals/HistoryModal';
-import { Clock, Send } from 'lucide-react';
+import { Clock, Send, Scissors } from 'lucide-react';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 // sessionStorage 키 헬퍼 (roomId별로 입장 정보 저장)
 function getRoomSessionKey(roomId: string) { return `sutda_room_${roomId}`; }
@@ -627,7 +628,7 @@ export function RoomPage() {
         <div className="shrink-0 border-t border-border">
           <MobileChatInput />
           <div className="flex flex-row items-start gap-1 p-1">
-            <div className="flex-1 min-w-0">
+            <div className="shrink-0">
               {handPanelNode}
             </div>
             {bettingPanelNode && (
@@ -673,6 +674,23 @@ export function RoomPage() {
       <ShuffleModal open={phase === 'shuffling' && isDealer} roomId={roomId!} />
       <ShuffleModal open={phase === 'shuffling' && !isDealer} roomId={roomId!} readOnly />
       <CutModal open={phase === 'cutting' && isMyTurn} roomId={roomId!} />
+      {/* 기리 대기 — 본인 아닌 플레이어에게 표시 */}
+      <Dialog open={phase === 'cutting' && !isMyTurn}>
+        <DialogContent
+          className="max-w-xs text-center"
+          onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
+          <DialogTitle className="flex items-center justify-center gap-2">
+            <Scissors className="h-4 w-4 text-primary" />
+            기리 중
+          </DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            <span className="font-semibold text-foreground">{currentPlayerNickname}</span>님이 기리 중입니다
+          </p>
+          <p className="text-xs text-muted-foreground">잠시만 기다려 주세요…</p>
+        </DialogContent>
+      </Dialog>
       {/* 상대 전원 다이 시 패 공개 선택 */}
       <MuckChoiceModal
         open={
@@ -681,7 +699,7 @@ export function RoomPage() {
           myPlayer !== null
         }
         roomId={roomId!}
-        myCards={myPlayer?.cards ?? []}
+        myCards={(myPlayer?.cards ?? []).filter((c): c is NonNullable<typeof c> => c != null)}
       />
 
       {/* 재충전 모달 — phase 무관, rechargeRequest 있을 때 */}

@@ -237,7 +237,7 @@ function ProxyAnteSection({
 }: {
   gameState: GameState;
   myPlayerId: string | null;
-  socket: ReturnType<typeof useGameStore>['socket'];
+  socket: ReturnType<typeof useGameStore.getState>['socket'];
 }) {
   const [proxyOpen, setProxyOpen] = useState(false);
   const [selectedBeneficiaries, setSelectedBeneficiaries] = useState<string[]>([]);

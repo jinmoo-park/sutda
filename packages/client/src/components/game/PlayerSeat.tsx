@@ -61,7 +61,7 @@ export function PlayerSeat({
     <Card
       className={cn(
         'w-auto transition-shadow duration-300',
-        compact ? 'min-w-0 p-0.5 space-y-0.5' : 'min-w-[7rem] p-2 space-y-1',
+        compact ? 'min-w-0 p-1.5 space-y-1' : 'min-w-[7rem] p-2 space-y-1',
         isCurrentTurn && 'ring-2 ring-primary shadow-[0_0_14px_3px] shadow-primary/50',
         !player.isAlive && 'opacity-50',
         !isConnected && 'opacity-50'
