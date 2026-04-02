@@ -148,8 +148,8 @@ export function HandPanel({
   };
 
   return (
-    <div className="space-y-2 p-4">
-      <p className="text-sm font-semibold">{nickname ? `${nickname}의 패` : '내 패'}</p>
+    <div className="space-y-1.5 p-2">
+      <p className="text-xs font-semibold">{nickname ? `${nickname}의 패` : '내 패'}</p>
 
       {cards.length === 0 ? (
         <p className="text-sm text-muted-foreground">카드가 아직 없어요</p>
@@ -163,7 +163,7 @@ export function HandPanel({
                 <HwatuCard
                   card={card}
                   faceUp={isFlipped}
-                  size="md"
+                  size="sm"
                   onClick={() => handleFlip(idx)}
                   disabled={isDisabled}
                   slotIndex={cardSlots[idx]}

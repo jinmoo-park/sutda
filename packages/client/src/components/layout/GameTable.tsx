@@ -125,7 +125,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
           )}
           {/* 그리드 배치: 6명까지 2열 3행 */}
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="grid grid-cols-2 gap-1.5 p-1.5">
+            <div className="grid grid-cols-2 gap-1 p-1">
               {players.map((p, i) => (
                 <PlayerSeat
                   key={p.id}

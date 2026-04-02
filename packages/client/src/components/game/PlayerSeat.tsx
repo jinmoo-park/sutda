@@ -61,16 +61,16 @@ export function PlayerSeat({
     <Card
       className={cn(
         'w-auto transition-shadow duration-300',
-        compact ? 'min-w-0 p-1 space-y-0.5' : 'min-w-[7rem] p-2 space-y-1',
+        compact ? 'min-w-0 p-0.5 space-y-0.5' : 'min-w-[7rem] p-2 space-y-1',
         isCurrentTurn && 'ring-2 ring-primary shadow-[0_0_14px_3px] shadow-primary/50',
         !player.isAlive && 'opacity-50',
         !isConnected && 'opacity-50'
       )}
     >
       <div className="flex items-center gap-1">
-        <p className={cn(compact ? 'text-[10px]' : 'text-xs', 'font-semibold truncate flex-1', isCurrentTurn && 'text-primary')}>
+        <p className={cn(compact ? 'text-[9px]' : 'text-xs', 'font-semibold truncate flex-1', isCurrentTurn && 'text-primary')}>
           {player.nickname}
-          {isMe && <span className={cn('ml-1 font-semibold text-primary', compact ? 'text-[10px]' : 'text-xs')}>[나]</span>}
+          {isMe && <span className={cn('ml-1 font-semibold text-primary', compact ? 'text-[9px]' : 'text-xs')}>[나]</span>}
         </p>
         {player.isDealer && (
           <Badge variant="outline" className="text-xs px-1 py-0 shrink-0">
@@ -135,7 +135,7 @@ export function PlayerSeat({
                 <HwatuCard
                   card={card ?? undefined}
                   faceUp={showFace}
-                  size="sm"
+                  size={compact ? 'xs' : 'sm'}
                   slotIndex={cardSlots[idx] ?? 0}
                   disabled
                 />
@@ -146,7 +146,7 @@ export function PlayerSeat({
         );
       })()}
 
-      <p className={`tabular-nums ${compact ? 'text-[10px]' : 'text-xs'} ${isMe ? 'text-yellow-400 font-semibold' : 'text-muted-foreground'}`}>{player.chips.toLocaleString()}원</p>
+      <p className={`tabular-nums ${compact ? 'text-[9px]' : 'text-xs'} ${isMe ? 'text-yellow-400 font-semibold' : 'text-muted-foreground'}`}>{player.chips.toLocaleString()}원</p>
 
       {player.lastBetAction && (
         <div className="flex items-center gap-1 flex-wrap">

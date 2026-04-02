@@ -90,9 +90,9 @@ export function BettingPanel({
             size="sm"
             disabled={!isMyTurn}
             onClick={() => setRaiseAmount((prev) => prev + amount)}
-            className={cn('h-auto py-1.5 flex-col gap-0.5 text-xs px-1', !isMyTurn && 'opacity-40')}
+            className={cn('h-auto py-2.5 flex-col gap-1 text-xs px-1', !isMyTurn && 'opacity-40')}
           >
-            <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${color}`} />
+            <span className={`w-3 h-3 rounded-full shrink-0 ${color}`} />
             <span>+{label}</span>
           </Button>
         ))}
@@ -117,7 +117,7 @@ export function BettingPanel({
           variant="outline"
           disabled={!isMyTurn || !canCheck}
           onClick={() => emitAction({ type: 'check' })}
-          className={cn('h-10 text-sm', !isMyTurn && 'opacity-40')}
+          className={cn('h-12 text-sm', !isMyTurn && 'opacity-40')}
         >
           체크
         </Button>
@@ -125,7 +125,7 @@ export function BettingPanel({
         <Button
           disabled={!isMyTurn || !canCall}
           onClick={() => emitAction({ type: 'call' })}
-          className={cn('h-10 text-sm', !isMyTurn && 'opacity-40')}
+          className={cn('h-12 text-sm', !isMyTurn && 'opacity-40')}
         >
           콜{callAmount > 0 ? ` ${callAmount.toLocaleString()}` : ''}
         </Button>
@@ -134,7 +134,7 @@ export function BettingPanel({
           variant="secondary"
           disabled={!isMyTurn || raiseAmount === 0}
           onClick={() => emitAction({ type: 'raise', amount: raiseAmount })}
-          className={cn('h-10 text-sm bg-yellow-400 hover:bg-yellow-500 text-black', (!isMyTurn || raiseAmount === 0) && 'opacity-40')}
+          className={cn('h-12 text-sm bg-yellow-400 hover:bg-yellow-500 text-black', (!isMyTurn || raiseAmount === 0) && 'opacity-40')}
         >
           레이즈
         </Button>
@@ -143,7 +143,7 @@ export function BettingPanel({
           variant="destructive"
           disabled={!isMyTurn || !canDie}
           onClick={() => emitAction({ type: 'die' })}
-          className={cn('h-10 text-sm', (!isMyTurn || !canDie) && 'opacity-40')}
+          className={cn('h-12 text-sm', (!isMyTurn || !canDie) && 'opacity-40')}
         >
           다이
         </Button>
