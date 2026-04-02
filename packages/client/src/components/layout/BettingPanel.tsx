@@ -90,10 +90,10 @@ export function BettingPanel({
             size="sm"
             disabled={!isMyTurn}
             onClick={() => setRaiseAmount((prev) => prev + amount)}
-            className={cn('h-9 gap-1 text-xs px-1', !isMyTurn && 'opacity-40')}
+            className={cn('h-auto py-1.5 flex-col gap-0.5 text-xs px-1', !isMyTurn && 'opacity-40')}
           >
             <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${color}`} />
-            +{label}
+            <span>+{label}</span>
           </Button>
         ))}
       </div>

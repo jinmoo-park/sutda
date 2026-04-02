@@ -59,6 +59,7 @@ function MobileChatInput() {
         placeholder="채팅"
         disabled={!isConnected}
         className="flex-1 h-7 px-2 rounded border border-input bg-background text-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50"
+        style={{ fontSize: '16px' }}
         maxLength={200}
       />
       <button
