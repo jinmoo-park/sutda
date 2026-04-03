@@ -104,7 +104,7 @@ export function RoomPage() {
   const dealingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // 모달 포털 컨테이너 (게임 테이블 영역)
   const [modalContainer, setModalContainer] = useState<HTMLElement | null>(null);
-  const modalContainerRef = useCallback((node: HTMLElement | null) => { setModalContainer(node); }, []);
+  const modalContainerRef = useCallback((node: HTMLElement | null) => { if (node && node.offsetWidth > 0) setModalContainer(node); }, []);
 
   // 입장 정보를 sessionStorage에 저장 (새로고침 시 복원용)
   useEffect(() => {
@@ -636,7 +636,7 @@ export function RoomPage() {
       {/* 모바일: 수직 flex */}
       <div className="md:hidden flex flex-col h-dvh overflow-hidden">
         {/* 상단: GameTable (flex-1) — 이력 버튼 + shared card 오버레이 포함 */}
-        <div ref={node => { if (node && !modalContainer) setModalContainer(node); }} className="relative flex-1 min-h-0 overflow-hidden">
+        <div ref={node => { if (node && node.offsetWidth > 0) setModalContainer(node); }} className="relative flex-1 min-h-0 overflow-hidden">
           {gameTableNode}
           {/* 우상단: 이력 버튼 */}
           <div className="absolute top-2 right-2 z-10 bg-black/50 rounded backdrop-blur-sm">
