@@ -84,7 +84,7 @@ export function RoomPage() {
 
   // location.state → sessionStorage 순서로 입장 정보 복원 (새로고침 대응)
   const cachedSession: RoomSession | null = (() => {
-    try { return JSON.parse(sessionStorage.getItem(getRoomSessionKey(roomId!)) ?? 'null'); } catch { return null; }
+    try { return JSON.parse(localStorage.getItem(getRoomSessionKey(roomId!)) ?? 'null'); } catch { return null; }
   })();
   const initNickname = locationState?.nickname ?? cachedSession?.nickname ?? '';
   const initChips = locationState?.initialChips ?? cachedSession?.initialChips ?? 100000;
@@ -106,7 +106,7 @@ export function RoomPage() {
   const [modalContainer, setModalContainer] = useState<HTMLElement | null>(null);
   const modalContainerRef = useCallback((node: HTMLElement | null) => { if (node && node.offsetWidth > 0) setModalContainer(node); }, []);
 
-  // 입장 정보를 sessionStorage에 저장 (새로고침 시 복원용)
+  // 입장 정보를 localStorage에 저장 (브라우저 닫혀도 복원용 — iOS 브라우저가 잠시 닫힐 때 sessionStorage 소실 방지)
   useEffect(() => {
     if (locationState?.nickname && roomId) {
       const session: RoomSession = {
@@ -114,7 +114,7 @@ export function RoomPage() {
         initialChips: locationState.initialChips ?? 100000,
         isHost: locationState.isHost === true,
       };
-      sessionStorage.setItem(getRoomSessionKey(roomId), JSON.stringify(session));
+      localStorage.setItem(getRoomSessionKey(roomId), JSON.stringify(session));
     }
   }, []);
 
@@ -129,18 +129,14 @@ export function RoomPage() {
     if (!socket) connect(serverUrl);
   }, [socket, connect, serverUrl]);
 
-  // 재연결 시 자동 재입장 — 모바일 백그라운드 복귀 등으로 socket.id가 바뀌면 join-room 재전송
-  const hasReconnectedRef = useRef(false);
+  // 재연결 시 자동 재입장 — connect 이벤트마다 localStorage 세션으로 join-room 재전송
+  // hasReconnectedRef 제거: iOS 브라우저 닫힘/재로드 후 첫 connect도 재입장 처리해야 함
+  // 서버의 joinRoom은 닉네임 기반 중복 처리로 멱등성 보장
   useEffect(() => {
     if (!socket) return;
     const handleReconnect = () => {
-      // 첫 connect는 무시, 재연결만 처리
-      if (!hasReconnectedRef.current) {
-        hasReconnectedRef.current = true;
-        return;
-      }
       const session: RoomSession | null = (() => {
-        try { return JSON.parse(sessionStorage.getItem(getRoomSessionKey(roomId!)) ?? 'null'); } catch { return null; }
+        try { return JSON.parse(localStorage.getItem(getRoomSessionKey(roomId!)) ?? 'null'); } catch { return null; }
       })();
       if (session?.nickname && roomId) {
         socket.emit('join-room', {
@@ -351,7 +347,7 @@ export function RoomPage() {
     if (error) {
       toast.error(error);
       if (error.includes('존재하지 않는 방') && roomId) {
-        sessionStorage.removeItem(getRoomSessionKey(roomId));
+        localStorage.removeItem(getRoomSessionKey(roomId));
         setHasJoined(false);
       }
       clearError();
