@@ -72,6 +72,8 @@ const io = new Server<
     methods: ['GET', 'POST'],
   },
   transports: ['websocket'],
+  pingTimeout: 60000,   // 모바일 백그라운드 대응: 기본 20s → 60s
+  pingInterval: 25000,  // 기본값 유지
 });
 
 const roomManager = new RoomManager();
@@ -927,6 +929,22 @@ io.on('connection', (socket) => {
       }
     }
   });
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[unhandledRejection]', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('[uncaughtException]', err);
+});
+
+process.on('exit', (code) => {
+  console.error(`[process:exit] code=${code}`, new Error('exit stack').stack);
+});
+
+httpServer.on('error', (err) => {
+  console.error('[httpServer:error]', err);
 });
 
 if (process.env.NODE_ENV !== 'test') {

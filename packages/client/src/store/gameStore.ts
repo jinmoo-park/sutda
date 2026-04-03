@@ -56,7 +56,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       existing.disconnect();
     }
 
-    const socket: AppSocket = io(serverUrl, { autoConnect: true, transports: ['websocket'] });
+    const socket: AppSocket = io(serverUrl, {
+      autoConnect: true,
+      transports: ['websocket'],
+      reconnectionDelay: 500,
+      reconnectionDelayMax: 3000,
+    });
 
     socket.on('connect', () => {
       set({ myPlayerId: socket.id ?? null, error: null });
