@@ -227,7 +227,13 @@ export function RoomPage() {
         players.forEach((p) => { counts[p.id] = 2; });
         setVisibleCardCounts(counts);
         // 퉁: 배분 애니메이션 후 즉시 flip 가능
-        setTimeout(() => setDealingComplete(true), 700);
+        setTimeout(() => {
+          setDealingComplete(true);
+          // 세장섯다: 퉁 시에도 두 장 자동 공개
+          if (gameState.mode === 'three-card') {
+            setMyFlippedIndices(new Set([0, 1]));
+          }
+        }, 700);
       } else {
         const initial: Record<string, number> = {};
         players.forEach((p) => { initial[p.id] = 0; });
@@ -503,26 +509,6 @@ export function RoomPage() {
     );
   }
 
-  // 결과 화면
-  const isRematch = ['gusa-pending', 'gusa-announce', 'rematch-pending'].includes(prevPhaseRef.current ?? '');
-  if (phase === 'result' || phase === 'finished') {
-    return (
-      <>
-        <ResultScreen
-          gameState={gameState}
-          myPlayerId={myPlayerId}
-          roomId={roomId!}
-          isRematch={isRematch}
-          onEject={() => {
-            setNickname('');
-            setHasJoined(false);
-          }}
-        />
-        <Toaster />
-      </>
-    );
-  }
-
   // 구사 재경기 안내 (전원 생존 시)
   if (phase === 'gusa-announce') {
     return (
@@ -593,6 +579,9 @@ export function RoomPage() {
   }
 
   // 게임 진행 중
+  const isResultPhase = phase === 'result' || phase === 'finished';
+  const isRematch = ['gusa-pending', 'gusa-announce', 'rematch-pending'].includes(prevPhaseRef.current ?? '');
+
   const handPanelNode = (
     <HandPanel
       myPlayer={myPlayer}
@@ -641,6 +630,17 @@ export function RoomPage() {
     />
   );
 
+  // 결과화면 or 게임테이블 중앙 패널
+  const centerNode = isResultPhase ? (
+    <ResultScreen
+      gameState={gameState}
+      myPlayerId={myPlayerId}
+      roomId={roomId!}
+      isRematch={isRematch}
+      onEject={() => { setNickname(''); setHasJoined(false); }}
+    />
+  ) : gameTableNode;
+
   // 이력 버튼 노드 (데스크탑 우사이드 상단, 모바일 GameTable 우상단)
   const historyButtonNode = (
     <button
@@ -659,62 +659,60 @@ export function RoomPage() {
     <div className="bg-background text-foreground">
       {/* 데스크탑: 2열 그리드 */}
       <div className="hidden md:grid grid-cols-[1fr_clamp(256px,calc(100vw-1408px),512px)] h-dvh overflow-hidden">
-        {/* 중앙: GameTable — 모달 포털 대상 영역 */}
+        {/* 중앙: GameTable or ResultScreen — 모달 포털 대상 영역 */}
         <div ref={modalContainerRef} className="relative overflow-hidden">
-          {gameTableNode}
+          {centerNode}
         </div>
 
-        {/* 우사이드: 이력 버튼 (상단) + ChatPanel (중단, 내부만 스크롤) + BettingPanel + HandPanel (하단) */}
+        {/* 우사이드: 이력 버튼 (상단) + ChatPanel (중단) + BettingPanel + HandPanel (하단, 게임 중에만) */}
         <div className="flex flex-col border-l border-border overflow-hidden">
-          {/* 이력 버튼 헤더 */}
           <div className="shrink-0 flex items-center justify-end px-3 py-1.5 border-b border-border">
             {historyButtonNode}
           </div>
-          {/* ChatPanel: 내부에서만 스크롤, 상위는 overflow-hidden */}
           <div className="flex-1 min-h-0 overflow-hidden">
             <ChatPanel />
           </div>
-          <div className="shrink-0 p-2 space-y-2 border-t border-border">
-            {bettingPanelNode}
-            {handPanelNode}
-          </div>
+          {!isResultPhase && (
+            <div className="shrink-0 p-2 space-y-2 border-t border-border">
+              {bettingPanelNode}
+              {handPanelNode}
+            </div>
+          )}
         </div>
       </div>
 
       {/* 모바일: 수직 flex */}
       <div className="md:hidden flex flex-col h-dvh overflow-hidden">
-        {/* 상단: GameTable (flex-1) — 이력 버튼 + shared card 오버레이 포함 */}
+        {/* 상단: GameTable or ResultScreen (flex-1) */}
         <div ref={node => { if (node && node.offsetWidth > 0) setModalContainer(node); }} className="relative flex-1 min-h-0 overflow-hidden">
-          {gameTableNode}
-          {/* 우상단: 이력 버튼 */}
-          <div className="absolute top-2 right-2 z-10 bg-black/50 rounded backdrop-blur-sm">
-            {historyButtonNode}
-          </div>
-          {/* 모바일: InfoPanel 자리에 shared card 표시 (한장공유 모드) */}
-          {gameState.mode === 'shared-card' && gameState.sharedCard && (
-            <div className="absolute top-2 left-2 z-10">
-              {/* shared card는 GameTable 내부에서 이미 표시되므로 여기서는 생략 */}
+          {centerNode}
+          {/* 우상단: 이력 버튼 (결과화면 제외) */}
+          {!isResultPhase && (
+            <div className="absolute top-2 right-2 z-10 bg-black/50 rounded backdrop-blur-sm">
+              {historyButtonNode}
             </div>
           )}
-          {/* 모바일 채팅 오버레이 */}
-          <div className="absolute bottom-0 left-0 right-0 z-10 max-h-[40%]">
-            <ChatPanel mobile />
-          </div>
         </div>
 
-        {/* 하단: 채팅 입력 + HandPanel + BettingPanel */}
+        {/* 하단: 채팅(최하단 고정) + 채팅 입력 + HandPanel + BettingPanel */}
         <div className="shrink-0 border-t border-border">
-          <MobileChatInput />
-          <div className="flex flex-row items-start gap-1 p-1">
-            <div className="shrink-0">
-              {handPanelNode}
-            </div>
-            {bettingPanelNode && (
-              <div className="flex-1 min-w-0">
-                {bettingPanelNode}
+          {/* 모바일 채팅 — 모달/결과화면과 독립, 항상 최하단 */}
+          <ChatPanel mobile />
+          {!isResultPhase && (
+            <>
+              <MobileChatInput />
+              <div className="flex flex-row items-start gap-1 p-1">
+                <div className="shrink-0">
+                  {handPanelNode}
+                </div>
+                {bettingPanelNode && (
+                  <div className="flex-1 min-w-0">
+                    {bettingPanelNode}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
         </div>
       </div>
 

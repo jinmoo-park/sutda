@@ -111,7 +111,7 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, onEject
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center bg-background text-foreground gap-4 p-3 md:gap-6 md:p-6">
+    <div className="relative flex h-full flex-col items-center justify-center bg-background text-foreground gap-4 p-3 md:gap-6 md:p-6 overflow-y-auto">
       {isRematch && (
         <div
           className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center"

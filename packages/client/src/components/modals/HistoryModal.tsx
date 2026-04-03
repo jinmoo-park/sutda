@@ -23,28 +23,28 @@ export function HistoryModal({ entries, open, onOpenChange }: HistoryModalProps)
             <table className="w-full text-sm border-collapse">
               <thead className="sticky top-0 bg-background z-10">
                 <tr className="border-b border-border text-muted-foreground text-xs">
-                  <th className="py-1.5 px-1 text-left w-10">판</th>
-                  <th className="py-1.5 px-1 text-left">승자</th>
-                  <th className="py-1.5 px-1 text-left">족보</th>
-                  <th className="py-1.5 px-1 text-right">판돈</th>
-                  <th className="py-1.5 px-1 text-left">잔액 현황</th>
+                  <th className="py-1.5 px-1 text-center w-10">판</th>
+                  <th className="py-1.5 px-1 text-center">승자</th>
+                  <th className="py-1.5 px-1 text-center">족보</th>
+                  <th className="py-1.5 px-1 text-center">판돈</th>
+                  <th className="py-1.5 px-1 text-center">잔액 현황</th>
                 </tr>
               </thead>
               <tbody>
                 {[...entries].reverse().map((entry) => (
                   <tr key={entry.roundNumber} className="border-b border-border/50 align-top">
-                    <td className="py-2 px-1 text-muted-foreground tabular-nums">{entry.roundNumber}</td>
-                    <td className="py-2 px-1 font-semibold whitespace-nowrap">
+                    <td className="py-2 px-1 text-center text-muted-foreground tabular-nums">{entry.roundNumber}</td>
+                    <td className="py-2 px-1 text-center font-semibold whitespace-nowrap">
                       {entry.winnerNickname}
                       {entry.hasTtaengPayment && (
                         <Badge variant="secondary" className="text-[10px] ml-1 px-1 py-0">땡값</Badge>
                       )}
                     </td>
-                    <td className="py-2 px-1 whitespace-nowrap">{handLabelToKorean(entry.winnerHandLabel)}</td>
-                    <td className="py-2 px-1 text-right tabular-nums text-yellow-500 whitespace-nowrap">
+                    <td className="py-2 px-1 text-center whitespace-nowrap">{handLabelToKorean(entry.winnerHandLabel)}</td>
+                    <td className="py-2 px-1 text-center tabular-nums text-yellow-500 whitespace-nowrap">
                       +{entry.pot.toLocaleString()}
                     </td>
-                    <td className="py-2 px-1">
+                    <td className="py-2 px-1 text-center">
                       <div className="flex flex-wrap gap-x-2 gap-y-0.5">
                         {entry.playerChipChanges.map((pc) => (
                           <span key={pc.playerId} className="inline-flex items-center gap-0.5 text-xs">
