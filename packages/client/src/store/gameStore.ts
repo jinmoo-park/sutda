@@ -50,10 +50,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const existing = get().socket;
     if (existing?.connected) return; // 싱글턴 보장
 
+    // 좀비 소켓 정리 — 연결 안 된 이전 소켓의 이벤트 리스너가 에러 상태를 오염시키는 것 방지
+    if (existing) {
+      existing.removeAllListeners();
+      existing.disconnect();
+    }
+
     const socket: AppSocket = io(serverUrl, { autoConnect: true });
 
     socket.on('connect', () => {
-      set({ myPlayerId: socket.id ?? null });
+      set({ myPlayerId: socket.id ?? null, error: null });
     });
 
     socket.on('set-player-id', ({ playerId }) => {
