@@ -129,6 +129,31 @@ export function RoomPage() {
     if (!socket) connect(serverUrl);
   }, [socket, connect, serverUrl]);
 
+  // 재연결 시 자동 재입장 — 모바일 백그라운드 복귀 등으로 socket.id가 바뀌면 join-room 재전송
+  const hasReconnectedRef = useRef(false);
+  useEffect(() => {
+    if (!socket) return;
+    const handleReconnect = () => {
+      // 첫 connect는 무시, 재연결만 처리
+      if (!hasReconnectedRef.current) {
+        hasReconnectedRef.current = true;
+        return;
+      }
+      const session: RoomSession | null = (() => {
+        try { return JSON.parse(sessionStorage.getItem(getRoomSessionKey(roomId!)) ?? 'null'); } catch { return null; }
+      })();
+      if (session?.nickname && roomId) {
+        socket.emit('join-room', {
+          roomId,
+          nickname: session.nickname,
+          initialChips: session.initialChips,
+        });
+      }
+    };
+    socket.on('connect', handleReconnect);
+    return () => { socket.off('connect', handleReconnect); };
+  }, [socket, roomId]);
+
   // game-error 이벤트 핸들러 — 골라골라 카드 선착순 에러 등 코드별 토스트 표시
   useEffect(() => {
     if (!socket) return;
