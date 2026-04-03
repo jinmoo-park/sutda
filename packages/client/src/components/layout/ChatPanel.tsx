@@ -16,8 +16,9 @@ export function ChatPanel({ mobile = false }: ChatPanelProps) {
   const isAtBottomRef = useRef(true);
 
   // 모바일 오버레이 opacity 상태
-  // idle: 0.05, event: 0.5(3초후 idle), focused: 0.8
-  const [mobileOpacity, setMobileOpacity] = useState(0.25);
+  // idle: IDLE_OPACITY, event: 0.5(3초후 idle), focused: 0.8
+  const IDLE_OPACITY = 0.25;
+  const [mobileOpacity, setMobileOpacity] = useState(IDLE_OPACITY);
   const [isFocused, setIsFocused] = useState(false);
   const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevMsgCountRef = useRef(chatMessages.length);
@@ -28,7 +29,7 @@ export function ChatPanel({ mobile = false }: ChatPanelProps) {
     if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
     setMobileOpacity(0.5);
     fadeTimerRef.current = setTimeout(() => {
-      if (!isFocused) setMobileOpacity(0.05);
+      if (!isFocused) setMobileOpacity(IDLE_OPACITY);
     }, 3000);
   }, [mobile, isFocused]);
 
@@ -83,7 +84,7 @@ export function ChatPanel({ mobile = false }: ChatPanelProps) {
   const handleBlur = () => {
     if (!mobile) return;
     setIsFocused(false);
-    fadeTimerRef.current = setTimeout(() => setMobileOpacity(0.05), 1000);
+    fadeTimerRef.current = setTimeout(() => setMobileOpacity(IDLE_OPACITY), 1000);
   };
 
   const handleMobileClick = () => {

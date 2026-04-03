@@ -360,7 +360,7 @@ export function CutModal({ open, roomId }: CutModalProps) {
         </DialogHeader>
 
         <div
-          style={{ width: '100%', touchAction: 'none' }}
+          style={{ width: '100%', touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none' }}
           onPointerDown={isTouchDevice ? onSwipeZoneDown : undefined}
         >
           <div
