@@ -1,5 +1,5 @@
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600;700&display=swap');
+@import "tailwindcss";
 
 @theme inline {
   --color-background: hsl(70 15% 8%);
