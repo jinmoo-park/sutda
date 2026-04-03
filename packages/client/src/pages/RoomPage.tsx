@@ -698,9 +698,9 @@ export function RoomPage() {
         <div className="shrink-0 border-t border-border">
           {/* 모바일 채팅 — 모달/결과화면과 독립, 항상 최하단 */}
           <ChatPanel mobile />
+          <MobileChatInput />
           {!isResultPhase && (
             <>
-              <MobileChatInput />
               <div className="flex flex-row items-start gap-1 p-1">
                 <div className="shrink-0">
                   {handPanelNode}

@@ -221,8 +221,15 @@ io.on('connection', (socket) => {
           }
           const engine = gameEngines.get(roomId);
           if (engine) {
-            // nickname으로 엔진 플레이어 id를 새 socket.id로 갱신 후 isDisconnected 해제
-            engine.markReconnected(nickname, socket.id);
+            if (!existing.isObserver) {
+              // 일반 플레이어 재접속: nickname으로 엔진 플레이어 id를 새 socket.id로 갱신 후 isDisconnected 해제
+              engine.markReconnected(nickname, socket.id);
+              const afterReconnect = engine.getState().players.find(p => p.nickname === nickname);
+              console.log(`[reconnect] nickname=${nickname} socket=${socket.id} enginePlayerFound=${!!afterReconnect} isDisconnected=${afterReconnect?.isDisconnected}`);
+            } else {
+              // Observer 재접속: 엔진에 없으므로 markReconnected 불필요
+              console.log(`[reconnect-observer] nickname=${nickname} socket=${socket.id} isObserver=true`);
+            }
             socket.emit('game-state', engine.getStateFor(socket.id) as GameState);
           }
           // 재접속 시 게임 disconnect 타이머 클리어 (nickname 기반 키)

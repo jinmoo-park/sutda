@@ -188,7 +188,7 @@ export function ShuffleModal({ open, roomId, readOnly = false }: ShuffleModalPro
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <Dialog open={open}>
+    <Dialog open={open} modal={false}>
       <DialogContent
         className="max-w-sm"
         onInteractOutside={(e) => e.preventDefault()}

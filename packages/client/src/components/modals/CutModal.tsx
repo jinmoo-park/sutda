@@ -341,7 +341,7 @@ export function CutModal({ open, roomId }: CutModalProps) {
   })();
 
   return (
-    <Dialog open={open}>
+    <Dialog open={open} modal={false}>
       <DialogContent
         className="max-w-md"
         onInteractOutside={(e) => e.preventDefault()}

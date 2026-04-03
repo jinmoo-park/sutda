@@ -1892,6 +1892,8 @@ export class GameEngine {
     if (player) {
       player.id = newPlayerId;
       player.isDisconnected = false;
+    } else {
+      console.warn(`[markReconnected] player not found in engine: nickname=${nickname} newPlayerId=${newPlayerId} enginePlayers=${this.state.players.map(p => p.nickname).join(',')}`);
     }
   }
 
@@ -1995,6 +1997,7 @@ export class GameEngine {
       p.isDealer = false;
       p.isAllIn = false;
       p.totalCommitted = 0;
+      p.isDisconnected = false;  // 다음 판 시작 시 disconnect 상태 리셋 (자동 다이 방지)
       (p as any).selectedCards = undefined;  // 세장섯다: 선택 카드 초기화
       p.openedCardIndex = undefined;  // 세장섯다: 오픈 카드 인덱스 초기화
     });

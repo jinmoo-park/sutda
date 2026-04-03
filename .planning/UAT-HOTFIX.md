@@ -143,27 +143,22 @@
 ## 미해결 이슈 (2026-04-03 세션 4)
 
 ### 16. 게임이력 잔액현황 필드 정렬
-- [ ] 잔액현황 칼럼 헤더는 중앙정렬 완료, 필드값(playerChipChanges)도 중앙정렬로 변경
-  - HistoryModal.tsx: 잔액현황 `<td>` 안의 `<div>`, `<span>` flex 정렬 수정
+- [x] 잔액현황 칼럼 헤더는 중앙정렬 완료, 필드값(playerChipChanges)도 중앙정렬로 변경
+  - HistoryModal.tsx: 잔액현황 `<td>` 안의 flex div에 `justify-center` 추가
 
 ### 17. 채팅 UX 3가지 버그
-- [ ] 셔플(ShuffleModal)/기리(CutModal) 모달에서 채팅 사용 불가
-  - 원인 추정: Dialog overlay(absolute inset-0 z-50)가 모바일 채팅 패널보다 위에 렌더됨
-  - 수정: 두 모달에 `onInteractOutside={(e) => e.preventDefault()}` 확인 및 채팅 z-index 상향
-- [ ] 게임이력(HistoryModal) 열릴 때 채팅창 클릭 → 모달 종료됨
-  - 수정: HistoryModal `onInteractOutside={(e) => e.preventDefault()}` 추가
-- [ ] 모바일 결과화면에서 채팅 입력창이 짤려서 안보임
-  - 원인 추정: `isResultPhase`일 때 MobileChatInput 숨겼으나 ChatPanel mobile 입력창도 안보이는 상황
-  - 수정: 결과화면 모바일에서 ChatPanel mobile 입력창 노출 보장
+- [x] 셔플(ShuffleModal)/기리(CutModal) 모달에서 채팅 사용 불가
+  - 수정: ShuffleModal, CutModal에 `modal={false}` 추가 → Radix focus trap 해제 → 모달 열린 상태에서 채팅 입력 가능
+- [x] 게임이력(HistoryModal) 열릴 때 채팅창 클릭 → 모달 종료됨
+  - 수정: HistoryModal DialogContent에 `onInteractOutside={(e) => e.preventDefault()}` 추가
+- [x] 모바일 결과화면에서 채팅 입력창이 짤려서 안보임
+  - 수정: `MobileChatInput`을 `!isResultPhase` 조건 밖으로 이동 → 항상 표시
 
 ### 18. 모바일 채팅 오버레이 투명도 조정
-- [ ] 현재: ChatPanel mobile이 게임테이블 하단 별도 영역에 위치 → 게임테이블 오버레이가 아닌 별도 영역 차지
-  - 오버레이 방식으로 복원해야 하는지 확인 필요
-  - 투명도 5%(0.05) → 10%(0.1)로 조정 (ChatPanel.tsx `mobileOpacity` 초기값)
+- [x] 투명도 5%(0.05) → 10%(0.1)로 조정 (ChatPanel.tsx `mobileOpacity` 초기값)
 
 ### 19. 재접속 시 중복 접속 / 조작 불가 버그 [CRITICAL]
-- [ ] 증상: 다이 처리 후 재입장 시 화면은 보이고 연결된 것처럼 보이나 베팅/조작 전혀 안됨
-  - 원인 추정: `join-room` 재전송 시 서버에서 기존 소켓 세션과 새 소켓 세션이 동시 존재
-  - 또는 `markReconnected`가 다이 상태 플레이어에 대해 제대로 동작 안 함
-  - 서버 로그 확인 및 `joinRoom` → `markReconnected` 흐름 디버깅 필요
-  - CONNECTION-DEBUG.md 참조
+- [x] `nextRound()` 에서 `isDisconnected = false` 리셋 추가 (다음 판 시작 시 자동 다이 방지)
+- [x] Observer 재접속 시 `markReconnected` 호출 제외 + 서버 로그 추가
+- [x] `markReconnected` 에 플레이어 미발견 시 경고 로그 추가
+- [ ] **현장 테스트 필요**: 다이 처리 후 재입장 시 조작 가능 여부 확인 (서버 로그로 흐름 추적)

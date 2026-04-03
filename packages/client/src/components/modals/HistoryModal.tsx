@@ -12,7 +12,7 @@ interface HistoryModalProps {
 export function HistoryModal({ entries, open, onOpenChange }: HistoryModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[560px] max-h-[80vh] p-4">
+      <DialogContent className="max-w-[560px] max-h-[80vh] p-4" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">게임 이력</DialogTitle>
         </DialogHeader>
@@ -45,7 +45,7 @@ export function HistoryModal({ entries, open, onOpenChange }: HistoryModalProps)
                       +{entry.pot.toLocaleString()}
                     </td>
                     <td className="py-2 px-1 text-center">
-                      <div className="flex flex-wrap gap-x-2 gap-y-0.5">
+                      <div className="flex flex-wrap gap-x-2 gap-y-0.5 justify-center">
                         {entry.playerChipChanges.map((pc) => (
                           <span key={pc.playerId} className="inline-flex items-center gap-0.5 text-xs">
                             <span className="text-muted-foreground">{pc.nickname}</span>

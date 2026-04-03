@@ -17,7 +17,7 @@ export function ChatPanel({ mobile = false }: ChatPanelProps) {
 
   // 모바일 오버레이 opacity 상태
   // idle: 0.05, event: 0.5(3초후 idle), focused: 0.8
-  const [mobileOpacity, setMobileOpacity] = useState(0.05);
+  const [mobileOpacity, setMobileOpacity] = useState(0.1);
   const [isFocused, setIsFocused] = useState(false);
   const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevMsgCountRef = useRef(chatMessages.length);
