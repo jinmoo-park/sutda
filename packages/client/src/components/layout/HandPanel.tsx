@@ -122,6 +122,19 @@ export function HandPanel({
     if (alreadySelected && myPlayer?.selectedCards && myPlayer.selectedCards.length >= 2) {
       // 세장섯다: 선택 완료된 카드로 족보 계산
       handLabel = getHandLabel(evaluateHand(myPlayer.selectedCards[0], myPlayer.selectedCards[1]));
+    } else if (cards.length === 3 && cards.every((c): c is Card => c !== null) && flippedIndices.size >= 2) {
+      // 세장섯다: 3장 중 최고 족보 조합 표시
+      const combos: [Card, Card][] = [[cards[0], cards[1]], [cards[0], cards[2]], [cards[1], cards[2]]];
+      let bestLabel: string | null = null;
+      let bestScore = -1;
+      for (const [a, b] of combos) {
+        const result = evaluateHand(a, b);
+        if (result.score > bestScore) {
+          bestScore = result.score;
+          bestLabel = getHandLabel(result);
+        }
+      }
+      handLabel = bestLabel;
     } else if (cards.length === 1 && sharedCard) {
       // 한장공유: 내 1장 + 공유카드로 족보 계산 (flip 완료 시에만)
       if ((flippedIndices.has(0) || isCardSelectPhase) && cards[0] != null) {

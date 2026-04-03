@@ -286,9 +286,11 @@ export class GameEngine {
     const winner = this.state.players.find(p => p.id === this.state.winnerId);
     if (!winner) return;
 
-    const winnerHand = winner.cards[0] && winner.cards[1]
-      ? evaluateHand(winner.cards[0], winner.cards[1])
-      : null;
+    // 세장섯다: 선택된 카드로 족보 판정
+    const selected = (winner as any).selectedCards as Card[] | undefined;
+    const c1 = selected?.[0] ?? winner.cards[0];
+    const c2 = selected?.[1] ?? winner.cards[1];
+    const winnerHand = c1 && c2 ? evaluateHand(c1, c2) : null;
 
     this.lastRoundHistory = {
       roundNumber: this.state.roundNumber,
@@ -301,6 +303,7 @@ export class GameEngine {
         playerId: p.id,
         nickname: p.nickname,
         chipDelta: p.chips - (chipsBeforeSettle.get(p.id) ?? p.chips),
+        balance: p.chips,
       })),
     };
   }
@@ -1138,6 +1141,19 @@ export class GameEngine {
     this._bettingActed = new Set();
     alivePlayers.forEach(p => { p.currentBet = 0; });
     this._updateEffectiveMaxBet();
+
+    // 전원 올인이면 betting-2 즉시 종료
+    const activeBettorsIndian = alivePlayers.filter(p => !p.isAllIn);
+    if (activeBettorsIndian.length === 0) {
+      this._advanceBettingTurn();
+      return;
+    }
+    // 선 플레이어(딜러)가 올인이면 다음 활성 플레이어로 진행
+    const dealerP = this.state.players.find(p => p.seatIndex === dealerSeatIndex);
+    if (dealerP?.isAllIn) {
+      this._bettingActed.add(dealerP.id);
+      this._advanceBettingTurn();
+    }
   }
 
   /**
@@ -1316,6 +1332,20 @@ export class GameEngine {
         this._bettingActed = new Set();
         this.state.players.filter(p => p.isAlive).forEach(p => { p.currentBet = 0; });
         this._updateEffectiveMaxBet();
+
+        // 전원 올인이면 betting-2 즉시 종료
+        const activeBettors2 = this.state.players.filter(p => p.isAlive && !p.isAllIn);
+        if (activeBettors2.length === 0) {
+          this._advanceBettingTurn();
+          return;
+        }
+        // 선 플레이어(딜러)가 올인이면 다음 활성 플레이어로 진행
+        const dealerPlayer2 = this.state.players.find(p => p.seatIndex === dealerSeatIndex2);
+        if (dealerPlayer2?.isAllIn) {
+          // 딜러를 이미 acted로 간주하고 다음 턴으로 진행
+          this._bettingActed.add(dealerPlayer2.id);
+          this._advanceBettingTurn();
+        }
         return;
       }
       // 세장섯다 betting-2 완료: card-select phase로 전환
@@ -1330,7 +1360,7 @@ export class GameEngine {
       return;
     }
 
-    // 다음 생존 플레이어 찾기 (반시계) — 올인 플레이어 스킵
+    // 다음 생존 플레이어 찾기 (반시계) — 올인/disconnect 플레이어 스킵
     const totalPlayers = this.state.players.length;
     const currentSeatIndex = this.state.currentPlayerIndex;
 
@@ -1338,6 +1368,16 @@ export class GameEngine {
       const nextSeatIndex = (currentSeatIndex - i + totalPlayers) % totalPlayers;
       const nextPlayer = this.state.players.find(p => p.seatIndex === nextSeatIndex);
       if (nextPlayer && nextPlayer.isAlive && !nextPlayer.isAllIn) {
+        // disconnect된 플레이어 차례 → 자동 다이
+        if (nextPlayer.isDisconnected) {
+          nextPlayer.isAlive = false;
+          nextPlayer.lastBetAction = { type: 'die' };
+          this._bettingActed.add(nextPlayer.id);
+          this.state.currentPlayerIndex = nextSeatIndex;
+          // 재귀적으로 다음 턴 처리
+          this._advanceBettingTurn();
+          return;
+        }
         this.state.currentPlayerIndex = nextSeatIndex;
         this._updateEffectiveMaxBet();
         return;
@@ -1828,7 +1868,34 @@ export class GameEngine {
   }
 
   /**
-   * 게임 중 플레이어 강제 퇴장 처리 (D-19: 30초 disconnect 타이머 만료 시 호출)
+   * disconnect 즉시 호출 — isDisconnected 마킹 + 현재 베팅 차례면 자동 다이
+   */
+  forceDisconnectedPlayerAction(playerId: string): void {
+    const player = this.state.players.find(p => p.id === playerId);
+    if (!player) return;
+
+    player.isDisconnected = true;
+
+    if (!player.isAlive) return;
+
+    const currentPlayer = this.state.players.find(p => p.seatIndex === this.state.currentPlayerIndex);
+    if (currentPlayer?.id === playerId && GameEngine.BETTING_PHASES.includes(this.state.phase)) {
+      try {
+        this.processBetAction(playerId, { type: 'die' });
+      } catch { /* no-op */ }
+    }
+  }
+
+  /**
+   * 재접속 시 호출 — isDisconnected 해제
+   */
+  markReconnected(playerId: string): void {
+    const player = this.state.players.find(p => p.id === playerId);
+    if (player) player.isDisconnected = false;
+  }
+
+  /**
+   * 게임 중 플레이어 강제 퇴장 처리 (60초 타임아웃 만료 시 호출)
    * - 베팅 phase 중이면 자동 다이 처리
    * - 그 외 phase에서는 isAlive = false 설정
    */
@@ -1836,12 +1903,10 @@ export class GameEngine {
     const player = this.state.players.find(p => p.id === playerId);
     if (!player) return;
 
-    const bettingPhases: GameState['phase'][] = ['betting', 'betting-1', 'betting-2'];
-    if (bettingPhases.includes(this.state.phase) && player.isAlive) {
+    if (GameEngine.BETTING_PHASES.includes(this.state.phase) && player.isAlive) {
       try {
         this.processBetAction(playerId, { type: 'die' });
       } catch {
-        // 이미 다이 등 — 무시
         player.isAlive = false;
       }
     } else {

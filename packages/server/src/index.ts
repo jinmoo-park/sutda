@@ -24,9 +24,12 @@ const __dirname = dirname(__filename);
 const STATIC_DIR = join(__dirname, '../../../packages/client/dist');
 const MIME: Record<string, string> = {
   '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css',
-  '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.woff': 'font/woff',
+  '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp',
+  '.svg': 'image/svg+xml', '.ico': 'image/x-icon',
+  '.woff2': 'font/woff2', '.woff': 'font/woff',
 };
+// 장기 캐싱 대상 확장자 (이미지, 폰트, 해시된 에셋)
+const LONG_CACHE_EXT = new Set(['.png', '.jpg', '.webp', '.svg', '.ico', '.woff2', '.woff']);
 
 const httpServer = createServer((req: IncomingMessage, res: ServerResponse) => {
   // socket.io는 자체 처리
@@ -44,7 +47,17 @@ const httpServer = createServer((req: IncomingMessage, res: ServerResponse) => {
       });
       return;
     }
-    res.writeHead(200, { 'Content-Type': MIME[extname(filePath)] ?? 'application/octet-stream' });
+    const ext = extname(filePath);
+    const headers: Record<string, string> = {
+      'Content-Type': MIME[ext] ?? 'application/octet-stream',
+    };
+    // 이미지/폰트/해시된 JS·CSS는 1년 캐시, HTML은 no-cache
+    if (LONG_CACHE_EXT.has(ext) || filePath.includes('/assets/')) {
+      headers['Cache-Control'] = 'public, max-age=31536000, immutable';
+    } else if (ext === '.html') {
+      headers['Cache-Control'] = 'no-cache';
+    }
+    res.writeHead(200, headers);
     res.end(data);
   });
 });
@@ -205,13 +218,14 @@ io.on('connection', (socket) => {
           }
           const engine = gameEngines.get(roomId);
           if (engine) {
+            engine.markReconnected(socket.id);
             socket.emit('game-state', engine.getStateFor(socket.id) as GameState);
           }
-          // 재접속 시 게임 disconnect 타이머 클리어
-          const timerKey = `${roomId}:${socket.id}`;
-          if (gameDisconnectTimers.has(timerKey)) {
-            clearTimeout(gameDisconnectTimers.get(timerKey)!);
-            gameDisconnectTimers.delete(timerKey);
+          // 재접속 시 게임 disconnect 타이머 클리어 (nickname 기반 키)
+          const gameTimerKey = `${roomId}:${nickname}`;
+          if (gameDisconnectTimers.has(gameTimerKey)) {
+            clearTimeout(gameDisconnectTimers.get(gameTimerKey)!);
+            gameDisconnectTimers.delete(gameTimerKey);
           }
           return;
         }
@@ -269,11 +283,16 @@ io.on('connection', (socket) => {
       if (chatHistory && chatHistory.length > 0) {
         socket.emit('chat-history', { messages: chatHistory });
       }
-      // 재접속 시 게임 disconnect 타이머 클리어
-      const reconnectTimerKey = `${roomId}:${socket.data.playerId}`;
-      if (gameDisconnectTimers.has(reconnectTimerKey)) {
-        clearTimeout(gameDisconnectTimers.get(reconnectTimerKey)!);
-        gameDisconnectTimers.delete(reconnectTimerKey);
+      // 재접속 시 disconnect 타이머 클리어 (nickname 기반 키)
+      const reconnectGameKey = `${roomId}:${nickname}`;
+      if (gameDisconnectTimers.has(reconnectGameKey)) {
+        clearTimeout(gameDisconnectTimers.get(reconnectGameKey)!);
+        gameDisconnectTimers.delete(reconnectGameKey);
+      }
+      const reconnectWaitKey = `${roomId}:wait:${nickname}`;
+      if (waitingDisconnectTimers.has(reconnectWaitKey)) {
+        clearTimeout(waitingDisconnectTimers.get(reconnectWaitKey)!);
+        waitingDisconnectTimers.delete(reconnectWaitKey);
       }
     } catch (err: any) {
       emitError(socket, err.message as ErrorCode);
@@ -796,34 +815,47 @@ io.on('connection', (socket) => {
       const room = roomManager.getRoom(roomId);
       console.log(`[disconnect] room found=${!!room} gamePhase=${room?.gamePhase} players=${room?.players.map(p => `${p.nickname}(${p.id})`).join(',')}`);
       if (room && room.gamePhase === 'playing') {
-        // 게임 중이면 연결만 끊김 처리 (재접속 대기, per D-05)
+        // 게임 중 disconnect: 즉시 관전/대기 전환, 베팅 차례면 자동 다이
         roomManager.disconnectPlayer(roomId, socket.id);
         const disconnectedPlayerId = socket.data.playerId;
         const disconnectedNickname = socket.data.nickname;
-        const timerKey = `${roomId}:${disconnectedPlayerId}`;
+        const timerKey = `${roomId}:${disconnectedNickname}`; // nickname 기반 키 (재접속 시 socket.id 변경되므로)
+
+        // 즉시: 베팅 차례면 자동 다이 처리
+        const engine = gameEngines.get(roomId);
+        if (engine) {
+          try { engine.forceDisconnectedPlayerAction(disconnectedPlayerId); } catch { /* no-op */ }
+          // 즉시 게임 상태 broadcast (per-player emit)
+          (async () => {
+            const sockets2 = await io.in(roomId).fetchSockets();
+            for (const s of sockets2) {
+              s.emit('game-state', engine.getStateFor(s.data.playerId) as GameState);
+            }
+          })();
+        }
 
         // 기존 타이머가 있으면 제거 (중복 방지)
         if (gameDisconnectTimers.has(timerKey)) {
           clearTimeout(gameDisconnectTimers.get(timerKey)!);
         }
 
-        // 5초 후 강제 퇴장 처리 (D-17)
+        // 60초 후 세션 완전 종료 (방에서 제거)
         const timer = setTimeout(async () => {
           gameDisconnectTimers.delete(timerKey);
           const currentRoom = roomManager.getRoom(roomId);
           if (!currentRoom) return;
 
-          const playerInRoom = currentRoom.players.find(p => p.id === disconnectedPlayerId);
+          const playerInRoom = currentRoom.players.find(p => p.nickname === disconnectedNickname);
           if (!playerInRoom || playerInRoom.isConnected) return; // 이미 재접속함
 
-          // 게임 진행 중이면 자동 다이 처리 (D-19)
-          const engine = gameEngines.get(roomId);
-          if (engine) {
-            try { engine.forcePlayerLeave(disconnectedPlayerId); } catch { /* no-op */ }
+          // 게임 진행 중이면 자동 다이 처리
+          const eng = gameEngines.get(roomId);
+          if (eng) {
+            try { eng.forcePlayerLeave(playerInRoom.id); } catch { /* no-op */ }
           }
 
           // 방에서 제거
-          const result = roomManager.leaveRoom(roomId, disconnectedPlayerId);
+          const result = roomManager.leaveRoom(roomId, playerInRoom.id);
           if (result) {
             io.to(roomId).emit('player-left', {
               playerId: result.removedPlayerId,
@@ -832,12 +864,12 @@ io.on('connection', (socket) => {
             });
 
             // 게임 상태 업데이트 broadcast (per-player emit)
-            if (engine) {
+            if (eng) {
               const room2 = roomManager.getRoom(roomId);
               if (room2) {
                 const sockets2 = await io.in(roomId).fetchSockets();
                 for (const s of sockets2) {
-                  s.emit('game-state', engine.getStateFor(s.data.playerId) as GameState);
+                  s.emit('game-state', eng.getStateFor(s.data.playerId) as GameState);
                 }
               }
             }
@@ -850,25 +882,29 @@ io.on('connection', (socket) => {
               io.to(roomId).emit('room-state', remainingRoom);
             }
           }
-        }, 5_000); // D-17: 5초
+        }, 60_000); // 60초
 
         gameDisconnectTimers.set(timerKey, timer);
       } else if (room) {
-        // 대기실: 즉시 제거 대신 15초 유예 — 순간적 끊김(새로고침 등)으로 인해
-        // 방장이 room.players에서 사라지고 다른 사람이 게임을 시작하는 버그 방지
+        // 대기실: 모바일 앱 전환 대응으로 60초 유예
         // 재접속 시 joinRoom이 nickname으로 기존 플레이어 ID를 갱신하므로,
         // 타이머 만료 후 leaveRoom(old socketId)는 자동으로 no-op
         const disconnectedId = socket.id;
-        const timerKey = `${roomId}:${disconnectedId}`;
+        const disconnectedNickname2 = socket.data.nickname;
+        const timerKey = `${roomId}:wait:${disconnectedNickname2}`; // nickname 기반 키
         const isHost = room.hostId === disconnectedId;
         const isAlone = room.players.length === 1;
-        // 방장 단독: 1시간 유예 (모바일 앱 전환 대응), 그 외: 1초 후 즉시 제거 및 방장 승계
-        const waitDelay = (isHost && isAlone) ? 3_600_000 : 1_000;
-        console.log(`[waiting-disconnect] scheduling leave for ${disconnectedId} in room ${roomId}, timer ${waitDelay}ms (isHost=${isHost}, isAlone=${isAlone})`);
+        // 방장 단독: 1시간 유예, 그 외: 60초 유예 (모바일 앱 전환 대응)
+        const waitDelay = (isHost && isAlone) ? 3_600_000 : 60_000;
+        console.log(`[waiting-disconnect] scheduling leave for ${disconnectedNickname2} in room ${roomId}, timer ${waitDelay}ms (isHost=${isHost}, isAlone=${isAlone})`);
         const timer = setTimeout(() => {
           waitingDisconnectTimers.delete(timerKey);
-          console.log(`[waiting-disconnect] timer fired for ${disconnectedId} in room ${roomId}`);
-          const result = roomManager.leaveRoom(roomId, disconnectedId);
+          console.log(`[waiting-disconnect] timer fired for ${disconnectedNickname2} in room ${roomId}`);
+          // nickname으로 현재 player id 찾기 (재접속 시 id 변경됨)
+          const currentRoom2 = roomManager.getRoom(roomId);
+          const currentPlayer = currentRoom2?.players.find(p => p.nickname === disconnectedNickname2);
+          if (!currentPlayer || currentPlayer.isConnected) return; // 이미 재접속함
+          const result = roomManager.leaveRoom(roomId, currentPlayer.id);
           console.log(`[waiting-disconnect] leaveRoom result=${!!result}`);
           if (result) {
             io.to(roomId).emit('player-left', {

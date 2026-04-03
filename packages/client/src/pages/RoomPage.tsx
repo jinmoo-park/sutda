@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { toast, Toaster } from 'sonner';
 import { useGameStore } from '@/store/gameStore';
@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { HistoryModal } from '@/components/modals/HistoryModal';
 import { Clock, Send, Scissors } from 'lucide-react';
+import { ModalContainerContext } from '@/lib/modalContainerContext';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 // sessionStorage 키 헬퍼 (roomId별로 입장 정보 저장)
@@ -101,6 +102,9 @@ export function RoomPage() {
   const [sejangThirdCardDismissed, setSejangThirdCardDismissed] = useState(false);
   const [visibleCardCounts, setVisibleCardCounts] = useState<Record<string, number>>({});
   const dealingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // 모달 포털 컨테이너 (게임 테이블 영역)
+  const [modalContainer, setModalContainer] = useState<HTMLElement | null>(null);
+  const modalContainerRef = useCallback((node: HTMLElement | null) => { setModalContainer(node); }, []);
 
   // 입장 정보를 sessionStorage에 저장 (새로고침 시 복원용)
   useEffect(() => {
@@ -578,11 +582,12 @@ export function RoomPage() {
   );
 
   return (
+    <ModalContainerContext.Provider value={modalContainer}>
     <div className="bg-background text-foreground">
       {/* 데스크탑: 2열 그리드 */}
       <div className="hidden md:grid grid-cols-[1fr_clamp(256px,calc(100vw-1408px),512px)] h-dvh overflow-hidden">
-        {/* 중앙: GameTable — 배경이미지가 이 영역 전체를 채움 */}
-        <div className="relative overflow-hidden">
+        {/* 중앙: GameTable — 모달 포털 대상 영역 */}
+        <div ref={modalContainerRef} className="relative overflow-hidden">
           {gameTableNode}
         </div>
 
@@ -606,7 +611,7 @@ export function RoomPage() {
       {/* 모바일: 수직 flex */}
       <div className="md:hidden flex flex-col h-dvh overflow-hidden">
         {/* 상단: GameTable (flex-1) — 이력 버튼 + shared card 오버레이 포함 */}
-        <div className="relative flex-1 min-h-0 overflow-hidden">
+        <div ref={node => { if (node && !modalContainer) setModalContainer(node); }} className="relative flex-1 min-h-0 overflow-hidden">
           {gameTableNode}
           {/* 우상단: 이력 버튼 */}
           <div className="absolute top-2 right-2 z-10 bg-black/50 rounded backdrop-blur-sm">
@@ -725,5 +730,6 @@ export function RoomPage() {
       <HistoryModal entries={roundHistory} open={historyOpen} onOpenChange={setHistoryOpen} />
       <Toaster />
     </div>
+    </ModalContainerContext.Provider>
   );
 }

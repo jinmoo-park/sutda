@@ -72,6 +72,7 @@ export interface PlayerState {
   openedCardIndex?: 0 | 1;  // 세장섯다: 최초 2장 중 오픈한 카드 인덱스 (상대방에게 공개)
   isAllIn?: boolean;        // 올인 상태 (베팅 패널 비활성화 대상)
   totalCommitted?: number;  // 이번 판 전체 기여 총액 (앤티 포함, 올인 정산용)
+  isDisconnected?: boolean; // 연결 끊김 상태 (차례 도달 시 자동 다이)
 }
 
 /** 전체 게임 상태 */
@@ -114,5 +115,5 @@ export interface RoundHistoryEntry {
   winnerHandLabel: string;
   pot: number;
   hasTtaengPayment: boolean;
-  playerChipChanges: { playerId: string; nickname: string; chipDelta: number }[];
+  playerChipChanges: { playerId: string; nickname: string; chipDelta: number; balance: number }[];
 }

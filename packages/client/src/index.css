@@ -1,28 +1,5 @@
 @import "tailwindcss";
-
-@font-face {
-  font-family: 'KimjungchulMyungjo';
-  src: url('/font/KimjungchulMyungjo-Light.ttf') format('truetype');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'KimjungchulMyungjo';
-  src: url('/font/KimjungchulMyungjo-Regular.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'KimjungchulMyungjo';
-  src: url('/font/KimjungchulMyungjo-Bold.ttf') format('truetype');
-  font-weight: 600 700;
-  font-style: normal;
-  font-display: swap;
-}
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600;700&display=swap');
 
 @theme inline {
   --color-background: hsl(70 15% 8%);
@@ -54,7 +31,7 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: 'KimjungchulMyungjo', serif;
+    font-family: 'Noto Serif KR', serif;
     font-weight: 400;
   }
 }
