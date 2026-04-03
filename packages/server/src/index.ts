@@ -619,13 +619,13 @@ io.on('connection', (socket) => {
           if (activePlayers.length < 2) {
             // 1명 이하 남으면 대기실로 복귀
             if (roomAfterKick) roomAfterKick.gamePhase = 'waiting';
-            io.to(roomId).emit('room-state', roomAfterKick ?? { disbanded: true });
+            if (roomAfterKick) io.to(roomId).emit('room-state', roomAfterKick);
             gameEngines.delete(roomId);
             return;
           }
           // 엔진 players를 남은 room players와 동기화
           const engineState = engine.getState();
-          engineState.players = engineState.players.filter(
+          (engineState as any).players = engineState.players.filter(
             p => activePlayers.some(rp => rp.id === p.id)
           );
         }
