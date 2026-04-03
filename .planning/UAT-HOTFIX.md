@@ -106,6 +106,40 @@
 
 ---
 
+## UAT 중 추가 수정사항 (2026-04-03 세션 3)
+
+### 14. 칩 재충전 투표 시스템 완전 제거 [서버 + 클라이언트]
+**배경**: 올인된 플레이어의 칩 재충전 동의 기능이 강퇴 로직으로 이미 대체됨. 잔존 코드 전량 삭제.
+
+**삭제 범위**:
+- `protocol.ts`: `recharge-request`, `recharge-vote`, `recharge-requested`, `recharge-vote-update`, `recharge-result` 이벤트 및 `RECHARGE_IN_PROGRESS`, `RECHARGE_NOT_FOUND` 에러 코드
+- `room-manager.ts`: `requestRecharge`, `processRechargeVote`, `applyRecharge` 메서드 및 관련 타입
+- `game-engine.ts`: `applyRechargeToPlayer` 메서드
+- `server/index.ts`: `recharge-request`, `recharge-vote` 핸들러
+- `gameStore.ts`: `rechargeRequest` 상태 및 리스너
+- `RechargeVoteModal.tsx`: 파일 전체 삭제
+- 관련 테스트 블록 전량 삭제
+
+- [x] 재충전 관련 코드 완전 제거 확인
+
+### 15. 올인 패배자 결과화면 버그 수정 [서버 + 클라이언트]
+**원인 1**: 결과화면에서 "학교 가기" 클릭 → `next-round` 투표 완료 → 0칩 플레이어 강퇴 → 방 대기실 복귀 처리 시 `room-state(gamePhase:'waiting')`만 전송하고 `game-state`는 미전송 → 클라이언트 `gameState.phase === 'result'` stale 유지 → 승자가 결과화면에서 대기실로 이동 불가
+
+**원인 2**: 결과화면에 "학교 가기" 버튼이 그대로 표시되어 혼란 유발
+
+**수정**:
+1. `gameStore.ts`: `room-state(gamePhase:'waiting')` 수신 시 `gameState: null` 초기화 → `phase` 자동으로 `'waiting'`으로 전환
+2. `server/index.ts`: `next-round` 필요 투표수에서 0칩 플레이어 제외 (`chips > 0` 조건) — 어차피 강퇴 예정이므로 승자 혼자 투표해도 즉시 처리
+3. `ResultScreen.tsx`: 0칩 플레이어 존재 시 "학교 가기" 대신 "확인" 버튼 표시
+   - 패배자(0칩): 확인 클릭 → localStorage 세션 삭제 → join 폼으로 이동
+   - 승자: 확인 클릭 → `next-round` 투표 → 서버 강퇴 처리 → 대기실 복귀
+
+- [x] 올인 패배자 결과화면에 "확인" 버튼 표시
+- [ ] 패배자 확인 클릭 후 닉네임 입력 폼으로 이동 확인
+- [ ] 승자 확인 클릭 후 대기실 화면으로 이동 확인
+
+---
+
 ## 미해결 이슈 (추가 작업 필요)
 
 ### CRITICAL: 올인 시 칩 계산 버그 [서버 수정 완료 - 배포 필요]

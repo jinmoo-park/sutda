@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { toast, Toaster } from 'sonner';
 import { useGameStore } from '@/store/gameStore';
-import { WaitingRoom } from '@/components/layout/WaitingRoom';
+import { WaitingTable } from '@/components/layout/WaitingTable';
 import { GameTable } from '@/components/layout/GameTable';
 import { HandPanel } from '@/components/layout/HandPanel';
 import { BettingPanel } from '@/components/layout/BettingPanel';
@@ -466,19 +466,38 @@ export function RoomPage() {
     );
   }
 
-  // 대기실 (게임 시작 전)
+  // 대기실 (게임 시작 전) — 게임 레이아웃과 동일한 구조, 중앙만 대기 UI
   if (phase === 'waiting' || !gameState) {
-    if (roomState) {
+    if (!roomState) {
       return (
-        <>
-          <WaitingRoom roomState={roomState} myPlayerId={myPlayerId} roomId={roomId!} />
+        <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
+          <p className="text-muted-foreground">방 {roomId} 연결 중...</p>
           <Toaster />
-        </>
+        </div>
       );
     }
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
-        <p className="text-muted-foreground">방 {roomId} 연결 중...</p>
+      <div className="bg-background text-foreground">
+        {/* 데스크탑: 2열 그리드 */}
+        <div className="hidden md:grid grid-cols-[1fr_clamp(256px,calc(100vw-1408px),512px)] h-dvh overflow-hidden">
+          <div className="relative overflow-hidden">
+            <WaitingTable roomState={roomState} myPlayerId={myPlayerId} roomId={roomId!} />
+          </div>
+          <div className="flex flex-col border-l border-border overflow-hidden">
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <ChatPanel />
+            </div>
+          </div>
+        </div>
+        {/* 모바일: 수직 flex */}
+        <div className="md:hidden flex flex-col h-dvh overflow-hidden">
+          <div className="relative flex-1 min-h-0 overflow-hidden">
+            <WaitingTable roomState={roomState} myPlayerId={myPlayerId} roomId={roomId!} />
+          </div>
+          <div className="shrink-0 border-t border-border">
+            <MobileChatInput />
+          </div>
+        </div>
         <Toaster />
       </div>
     );
@@ -489,7 +508,16 @@ export function RoomPage() {
   if (phase === 'result' || phase === 'finished') {
     return (
       <>
-        <ResultScreen gameState={gameState} myPlayerId={myPlayerId} roomId={roomId!} isRematch={isRematch} />
+        <ResultScreen
+          gameState={gameState}
+          myPlayerId={myPlayerId}
+          roomId={roomId!}
+          isRematch={isRematch}
+          onEject={() => {
+            setNickname('');
+            setHasJoined(false);
+          }}
+        />
         <Toaster />
       </>
     );

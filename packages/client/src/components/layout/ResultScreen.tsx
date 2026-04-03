@@ -19,11 +19,12 @@ interface ResultScreenProps {
   myPlayerId: string | null;
   roomId: string;
   isRematch?: boolean;
+  onEject?: () => void;
 }
 
 const AUTO_NEXT_SECONDS = 5;
 
-export function ResultScreen({ gameState, myPlayerId, roomId, isRematch }: ResultScreenProps) {
+export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, onEject }: ResultScreenProps) {
   const { socket } = useGameStore();
   const navigate = useNavigate();
   const [hasVotedNextRound, setHasVotedNextRound] = useState(false);
@@ -53,7 +54,11 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch }: Resul
   const handleConfirm = () => {
     if (iAmBroke) {
       localStorage.removeItem(`sutda_room_${roomId}`);
-      navigate(`/room/${roomId}`, { replace: true });
+      if (onEject) {
+        onEject();
+      } else {
+        navigate(`/room/${roomId}`, { replace: true });
+      }
     } else {
       handleNextRound();
     }
