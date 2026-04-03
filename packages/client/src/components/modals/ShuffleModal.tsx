@@ -207,7 +207,7 @@ export function ShuffleModal({ open, roomId, readOnly = false }: ShuffleModalPro
           <div
             style={{
               perspective: '700px', perspectiveOrigin: '50% 50%',
-              cursor: readOnly ? 'default' : 'pointer', userSelect: 'none',
+              cursor: readOnly ? 'default' : 'pointer', userSelect: 'none', WebkitUserSelect: 'none',
               overflow: 'visible',
             }}
             onPointerDown={readOnly ? undefined : startShuffle}
