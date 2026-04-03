@@ -140,17 +140,30 @@
 
 ---
 
-## 미해결 이슈 (추가 작업 필요)
+## 미해결 이슈 (2026-04-03 세션 4)
 
-### CRITICAL: 올인 시 칩 계산 버그 [서버 수정 완료 - 배포 필요]
-- [x] 올인 승리 시 승자에게 pot 전액 지급되는지 확인 (배포 후 테스트)
+### 16. 게임이력 잔액현황 필드 정렬
+- [ ] 잔액현황 칼럼 헤더는 중앙정렬 완료, 필드값(playerChipChanges)도 중앙정렬로 변경
+  - HistoryModal.tsx: 잔액현황 `<td>` 안의 `<div>`, `<span>` flex 정렬 수정
 
-### 게임이력 테이블 칼럼 정렬
-- [ ] 모든 칼럼 중앙정렬로 변경
-- [ ] 칼럼명 조정
+### 17. 채팅 UX 3가지 버그
+- [ ] 셔플(ShuffleModal)/기리(CutModal) 모달에서 채팅 사용 불가
+  - 원인 추정: Dialog overlay(absolute inset-0 z-50)가 모바일 채팅 패널보다 위에 렌더됨
+  - 수정: 두 모달에 `onInteractOutside={(e) => e.preventDefault()}` 확인 및 채팅 z-index 상향
+- [ ] 게임이력(HistoryModal) 열릴 때 채팅창 클릭 → 모달 종료됨
+  - 수정: HistoryModal `onInteractOutside={(e) => e.preventDefault()}` 추가
+- [ ] 모바일 결과화면에서 채팅 입력창이 짤려서 안보임
+  - 원인 추정: `isResultPhase`일 때 MobileChatInput 숨겼으나 ChatPanel mobile 입력창도 안보이는 상황
+  - 수정: 결과화면 모바일에서 ChatPanel mobile 입력창 노출 보장
 
-### 결과화면 채팅
-- [ ] 모바일: 결과화면 하단에 채팅 패널 배치
+### 18. 모바일 채팅 오버레이 투명도 조정
+- [ ] 현재: ChatPanel mobile이 게임테이블 하단 별도 영역에 위치 → 게임테이블 오버레이가 아닌 별도 영역 차지
+  - 오버레이 방식으로 복원해야 하는지 확인 필요
+  - 투명도 5%(0.05) → 10%(0.1)로 조정 (ChatPanel.tsx `mobileOpacity` 초기값)
 
-### 방장 접속 유지 오류 (재발)
-→ **별도 문서로 분리하여 심도깊게 다룸** (CONNECTION-DEBUG.md)
+### 19. 재접속 시 중복 접속 / 조작 불가 버그 [CRITICAL]
+- [ ] 증상: 다이 처리 후 재입장 시 화면은 보이고 연결된 것처럼 보이나 베팅/조작 전혀 안됨
+  - 원인 추정: `join-room` 재전송 시 서버에서 기존 소켓 세션과 새 소켓 세션이 동시 존재
+  - 또는 `markReconnected`가 다이 상태 플레이어에 대해 제대로 동작 안 함
+  - 서버 로그 확인 및 `joinRoom` → `markReconnected` 흐름 디버깅 필요
+  - CONNECTION-DEBUG.md 참조
