@@ -597,8 +597,8 @@ io.on('connection', (socket) => {
       const votes = nextRoundVotes.get(roomId)!;
       votes.add(socket.data.playerId);
 
-      // 비-absent 플레이어 전원 투표 시 다음 판 시작
-      const nonAbsentCount = state.players.filter(p => !p.isAbsent).length;
+      // 비-absent + 칩 있는 플레이어 전원 투표 시 다음 판 시작 (0칩 플레이어는 어차피 강퇴)
+      const nonAbsentCount = state.players.filter(p => !p.isAbsent && p.chips > 0).length;
       if (votes.size >= nonAbsentCount) {
         nextRoundVotes.delete(roomId);
         schoolResponded.delete(roomId);

@@ -68,7 +68,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
 
     socket.on('room-state', (state: RoomState) => {
-      set({ roomState: state });
+      if (state.gamePhase === 'waiting') {
+        set({ roomState: state, gameState: null });
+      } else {
+        set({ roomState: state });
+      }
     });
 
     socket.on('room-created', ({ roomId: _roomId, roomState }) => {

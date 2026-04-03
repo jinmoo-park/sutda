@@ -1,4 +1,5 @@
 import { useState, useEffect, useSyncExternalStore } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { GameState } from '@sutda/shared';
 import { evaluateHand } from '@sutda/shared';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +25,7 @@ const AUTO_NEXT_SECONDS = 5;
 
 export function ResultScreen({ gameState, myPlayerId, roomId, isRematch }: ResultScreenProps) {
   const { socket } = useGameStore();
+  const navigate = useNavigate();
   const [hasVotedNextRound, setHasVotedNextRound] = useState(false);
   const [hasReturnedFromBreak, setHasReturnedFromBreak] = useState(false);
   const [hasTakenBreak, setHasTakenBreak] = useState(false);
@@ -34,6 +36,10 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch }: Resul
   const nonAbsentCount = gameState.players.filter((p) => !p.isAbsent).length;
   const canSkip = nonAbsentCount > 2;
 
+  // 0칩 플레이어 존재 여부 — 다음 판 진행 불가 (강퇴 예정)
+  const anyPlayerBroke = gameState.players.some((p) => !p.isAbsent && p.chips === 0);
+  const iAmBroke = (myPlayer?.chips ?? 1) === 0;
+
   const winner = gameState.players.find((p) => p.id === gameState.winnerId);
   const winnerNickname = winner?.nickname ?? '알 수 없음';
 
@@ -41,6 +47,16 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch }: Resul
     if (hasVotedNextRound) return;
     setHasVotedNextRound(true);
     socket?.emit('next-round', { roomId });
+  };
+
+  // 올인으로 인한 게임 종료: 패배자 → join 폼으로, 승자 → next-round 투표
+  const handleConfirm = () => {
+    if (iAmBroke) {
+      localStorage.removeItem(`sutda_room_${roomId}`);
+      navigate(`/room/${roomId}`, { replace: true });
+    } else {
+      handleNextRound();
+    }
   };
 
   const handleReturnFromBreak = () => {
@@ -208,6 +224,12 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch }: Resul
               <Button onClick={handleReturnFromBreak}>복귀하기</Button>
             </>
           )
+        ) : anyPlayerBroke ? (
+          hasVotedNextRound ? (
+            <p className="text-sm text-muted-foreground">대기 중...</p>
+          ) : (
+            <Button onClick={handleConfirm}>확인</Button>
+          )
         ) : hasVotedNextRound ? (
           <p className="text-sm text-muted-foreground">다른 플레이어를 기다리는 중...</p>
         ) : (
@@ -223,7 +245,7 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch }: Resul
           </div>
         )}
 
-        <ProxyAnteSection gameState={gameState} myPlayerId={myPlayerId} socket={socket} />
+        {!anyPlayerBroke && <ProxyAnteSection gameState={gameState} myPlayerId={myPlayerId} socket={socket} />}
       </div>
     </div>
   );
