@@ -808,9 +808,9 @@ io.on('connection', (socket) => {
   });
 
   // 연결 끊김 처리
-  socket.on('disconnect', () => {
+  socket.on('disconnect', (reason) => {
     const { roomId } = socket.data;
-    console.log(`[disconnect] socket=${socket.id} roomId=${roomId} playerId=${socket.data.playerId}`);
+    console.log(`[disconnect] socket=${socket.id} reason=${reason} roomId=${roomId} playerId=${socket.data.playerId}`);
     if (roomId) {
       const room = roomManager.getRoom(roomId);
       console.log(`[disconnect] room found=${!!room} gamePhase=${room?.gamePhase} players=${room?.players.map(p => `${p.nickname}(${p.id})`).join(',')}`);
