@@ -22,7 +22,7 @@
 - [x] **Phase 10: 시각/UX 완성** - 카드 이미지, 배분 애니메이션, 뒤집기 인터랙션, 셔플/기리 고도화, 패널 레이아웃 재설계, 베팅 강조 (completed 2026-03-31)
 - [x] **Phase 11: 소셜/기능 완성** - 채팅, 게임 이력, 학교 대신 가주기, 뒤늦게 입장(Observer), 세션종료 표시, 올인 POT (completed 2026-04-01)
 - [x] **Phase 12: 통합 테스트 + 배포** - E2E 검증, Railway/Render 배포, 모바일 브라우저 대응 (completed 2026-04-02)
-- [ ] **Phase 13: Stitch 연계 UI 고도화 (DEFERRED)** - Google Stitch MCP 활용 전체 UI D-09 군용담요 컨셉 개선
+- [ ] **Phase 13: 부가기능** - 기리 실시간 스트리밍, 효과음/배경음악 삽입
 
 ## Phase Details
 
@@ -273,27 +273,18 @@ Plans:
 Plans:
 - [ ] 14-01-PLAN.md — 프로토콜 타입 확장 + 서버 비밀번호 검증 + 클라이언트 UI (ROOM-CREATE-PASSWORD-SERVER, ROOM-CREATE-PASSWORD-CLIENT)
 
-### Phase 13: Stitch 연계 UI 고도화 (DEFERRED)
+### Phase 13: 부가기능
 
-**Goal:** Google Stitch MCP를 활용하여 전체 UI를 D-09 군용담요 컨셉("공장에서 군용담요 깔아놓고 하는 느낌")으로 프로페셔널하게 개선한다 — 메인화면, 대기실, 게임테이블, 패널, 모달 16개, 공통 UI 전체.
-**Requirements**: STITCH-SETUP, STITCH-DESIGN-SYSTEM, STITCH-MAINPAGE, STITCH-WAITINGROOM, STITCH-GAMETABLE, STITCH-PLAYERSEAT, STITCH-BETTINGPANEL, STITCH-HANDPANEL, STITCH-INFOPANEL, STITCH-MODAL-HIGH, STITCH-MODAL-REST, STITCH-COMMON-UI, STITCH-RESULTSCREEN
+**Goal:** 게임 몰입감을 높이는 두 가지 부가기능을 완성한다 — 기리 인터랙션을 모든 플레이어에게 실시간 스트리밍하고, 게임 이벤트에 맞는 효과음과 배경음악을 삽입한다.
+**Requirements**: FEATURE-CUT-STREAM, FEATURE-SFX, FEATURE-BGM
 **Depends on:** Phase 12
-**Plans:** 2/2 plans complete
+**Plans:** 0/2 plans complete
 **Success Criteria** (완료 시 참이어야 하는 것):
-  1. 모든 주요 화면과 모달이 D-09 군용담요 컨셉으로 시각적으로 개선되어 있다
-  2. 기존 게임 로직(소켓 통신, 상태 관리)이 변경 없이 동작한다
-  3. ShuffleModal/CutModal의 rAF 애니메이션/드래그 로직이 완전히 보존되어 있다
-  4. HwatuCard 3D flip 인터랙션이 모든 v2 컴포넌트에서 정상 동작한다
-  5. pnpm test 통과 (리그레션 없음)
-
-Plans:
-- [x] 10.1-01-PLAN.md — Stitch MCP 환경 설정 + DESIGN.md 작성 + 디자인 시스템 등록
-- [x] 10.1-02-PLAN.md — MainPage + WaitingRoom UI 고도화
-- [x] 10.1-03-PLAN.md — GameTable + PlayerSeat UI 고도화
-- [ ] 10.1-04-PLAN.md — BettingPanel + HandPanel + InfoPanel UI 고도화
-- [ ] 10.1-05-PLAN.md — 고우선순위 모달 4개 UI 고도화 (ModeSelect, AttendSchool, DealerSelect, DealerResult)
-- [ ] 10.1-06-PLAN.md — 나머지 모달 12개 UI 고도화 (Shuffle, Cut 외관만 + 나머지 10개)
-- [ ] 10.1-07-PLAN.md — shadcn/ui 공통 UI 커스터마이징 + ResultScreen + 전체 리그레션
+  1. 기리 플레이어의 드래그/탭 조작이 실시간으로 모든 관전자 화면에 동기화된다
+  2. 카드 배분, 베팅(콜/레이즈/다이), 학교 대신 가주기, 땡값 납부, 결과 공개 등 주요 이벤트에 효과음이 재생된다
+  3. 배경음악이 반복 재생되며 볼륨 조절 또는 음소거가 가능하다
+  4. 효과음/배경음악은 `sfx/` 폴더의 기존 파일을 활용한다
+  5. 음소거 상태는 로컬 스토리지에 저장되어 새로고침 후에도 유지된다
 
 ## Progress
 
@@ -314,6 +305,6 @@ Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 
 | 10. 시각/UX 완성 | 4/4 | Complete    | 2026-03-31 |
 | 11. 소셜/기능 완성 | 4/4 | Complete    | 2026-04-01 |
 | 12. 통합 테스트 + 배포 | 2/2 | Complete    | 2026-04-02 |
-| 13. Stitch UI 고도화 | 3/7 | Deferred | - |
+| 13. 부가기능 | 0/2 | Planned | - |
 | 14. 서버 레벨 방 생성 패스워드 | 0/1 | Complete    | 2026-04-02 |
 
