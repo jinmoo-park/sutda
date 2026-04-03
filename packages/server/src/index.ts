@@ -71,6 +71,7 @@ const io = new Server<
     origin: process.env.CLIENT_ORIGIN || 'https://sutda.duckdns.org',
     methods: ['GET', 'POST'],
   },
+  transports: ['websocket'],
 });
 
 const roomManager = new RoomManager();
