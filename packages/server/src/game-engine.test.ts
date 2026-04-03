@@ -1329,47 +1329,6 @@ describe('chipBreakdown 및 effectiveMaxBet — game-state 포함', () => {
   });
 });
 
-describe('applyRechargeToPlayer', () => {
-  let players4: import('@sutda/shared').RoomPlayer[];
-  let engine: GameEngine;
-
-  beforeEach(() => {
-    players4 = Array.from({ length: 4 }, (_, i) => ({
-      id: `player-${i}`,
-      nickname: `Player${i}`,
-      chips: 100000,
-      seatIndex: i,
-      isConnected: true,
-    }));
-    engine = new GameEngine('room1', players4, 'original', 2);
-    advanceToBetting(engine, players4);
-  });
-
-  it('해당 플레이어의 chips가 newChips로 갱신된다', () => {
-    engine.applyRechargeToPlayer('player-0', 200000);
-    const p = engine.getState().players.find(p => p.id === 'player-0')!;
-    expect(p.chips).toBe(200000);
-  });
-
-  it('호출 후 모든 플레이어의 chipBreakdown이 재계산된다', () => {
-    engine.applyRechargeToPlayer('player-0', 15500);
-    const p = engine.getState().players.find(p => p.id === 'player-0')!;
-    expect(p.chipBreakdown).toEqual({ ten_thousand: 1, five_thousand: 1, one_thousand: 0, five_hundred: 1 });
-  });
-
-  it('호출 후 effectiveMaxBet이 재계산된다 (betting phase인 경우)', () => {
-    const stateBefore = engine.getState();
-    expect(stateBefore.phase).toBe('betting');
-    engine.applyRechargeToPlayer('player-0', 500000);
-    const stateAfter = engine.getState();
-    expect(stateAfter.effectiveMaxBet).toBeDefined();
-  });
-
-  it('존재하지 않는 playerId면 에러 throw', () => {
-    expect(() => engine.applyRechargeToPlayer('non-existent', 100000)).toThrow('PLAYER_NOT_FOUND');
-  });
-});
-
 // ============================================================
 // 땡값 정산 (_settleTtaengValue) — Phase 09-01 Task 1
 // ============================================================
@@ -2323,6 +2282,82 @@ describe('allIn: 올인 POT 정산', () => {
 
     const p0 = engine.getState().players.find(p => p.id === 'player-0')!;
     expect((p0.totalCommitted ?? 0)).toBeGreaterThan(0);
+  });
+
+  it('Test 9: 세장섯다(three-card) — cards 3장일 때 selectedCards 기준으로 정산', () => {
+    // 버그 재현: settleChipsWithAllIn이 cards.length===2 만 체크하면
+    // 세장섯다에서 cards.length===3 → handCache 비어있음 → 아무도 팟 못받음
+    const ps = [
+      { id: 'player-0', nickname: 'P0', chips: 0, seatIndex: 0, isConnected: true },
+      { id: 'player-1', nickname: 'P1', chips: 0, seatIndex: 1, isConnected: true },
+    ];
+    const engine = new GameEngine('room1', ps, 'three-card', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'result';
+    state.pot = 200000;
+    state.winnerId = 'player-0';
+    state.players[0].isAlive = true;
+    state.players[1].isAlive = true;
+    state.players[0].isAllIn = true;
+    state.players[1].isAllIn = true;
+    state.players[0].totalCommitted = 100000;
+    state.players[1].totalCommitted = 100000;
+    // 세장섯다: 3장씩 배분됨
+    state.players[0].cards = [
+      { rank: 10, attribute: 'normal' },
+      { rank: 10, attribute: 'yeolkkeut' },
+      { rank: 5, attribute: 'normal' },
+    ];
+    state.players[1].cards = [
+      { rank: 3, attribute: 'normal' },
+      { rank: 3, attribute: 'normal' },
+      { rank: 7, attribute: 'normal' },
+    ];
+    // 선택된 카드: P0=장땡(10,10), P1=삼땡(3,3)
+    (state.players[0] as any).selectedCards = [
+      { rank: 10, attribute: 'normal' },
+      { rank: 10, attribute: 'yeolkkeut' },
+    ];
+    (state.players[1] as any).selectedCards = [
+      { rank: 3, attribute: 'normal' },
+      { rank: 3, attribute: 'normal' },
+    ];
+
+    (engine as any).settleChipsWithAllIn();
+
+    // P0(장땡)이 200000 전액 수령해야 함
+    expect(state.players[0].chips).toBe(200000);
+    expect(state.players[1].chips).toBe(0);
+  });
+
+  it('Test 10: 한장공유(shared-card) — cards 1장 + sharedCard 기준으로 정산', () => {
+    // 버그 재현: settleChipsWithAllIn이 cards.length===2 만 체크하면
+    // 한장공유에서 cards.length===1 → handCache 비어있음 → 아무도 팟 못받음
+    const ps = [
+      { id: 'player-0', nickname: 'P0', chips: 0, seatIndex: 0, isConnected: true },
+      { id: 'player-1', nickname: 'P1', chips: 0, seatIndex: 1, isConnected: true },
+    ];
+    const engine = new GameEngine('room1', ps, 'shared-card', 2);
+    const state = engine.getState() as GameState;
+    state.phase = 'result';
+    state.pot = 200000;
+    state.winnerId = 'player-0';
+    state.players[0].isAlive = true;
+    state.players[1].isAlive = true;
+    state.players[0].isAllIn = true;
+    state.players[1].isAllIn = true;
+    state.players[0].totalCommitted = 100000;
+    state.players[1].totalCommitted = 100000;
+    // 한장공유: 각자 1장 + 공유패
+    state.players[0].cards = [{ rank: 10, attribute: 'normal' }];  // 10 + 공유 10 = 장땡
+    state.players[1].cards = [{ rank: 3, attribute: 'normal' }];   // 3 + 공유 10 = 삼팔
+    (state as any).sharedCard = { rank: 10, attribute: 'yeolkkeut' };
+
+    (engine as any).settleChipsWithAllIn();
+
+    // P0(장땡)이 200000 전액 수령해야 함
+    expect(state.players[0].chips).toBe(200000);
+    expect(state.players[1].chips).toBe(0);
   });
 
   it('Test 8: nextRound에서 isAllIn=false, totalCommitted=0 리셋', () => {

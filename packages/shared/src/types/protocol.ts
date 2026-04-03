@@ -16,8 +16,6 @@ export interface ErrorPayload {
     | 'INVALID_CUT'
     | 'ALREADY_ATTENDED'
     | 'INVALID_ACTION'
-    | 'RECHARGE_IN_PROGRESS'
-    | 'RECHARGE_NOT_FOUND'
     | 'INSUFFICIENT_CHIPS'
     | 'CARD_ALREADY_TAKEN'
     | 'SELECTION_COMPLETE'
@@ -43,8 +41,6 @@ export interface ClientToServerEvents {
   'reveal-card': (data: { roomId: string }) => void;
   'muck-hand': (data: { roomId: string }) => void;
   'next-round': (data: { roomId: string }) => void;
-  'recharge-request': (data: { roomId: string; amount: number }) => void;
-  'recharge-vote': (data: { roomId: string; approved: boolean }) => void;
   'return-from-break': (data: { roomId: string }) => void;
   'take-break': (data: { roomId: string }) => void;
   'open-sejang-card': (data: { roomId: string; cardIndex: 0 | 1 }) => void;
@@ -68,14 +64,12 @@ export interface ServerToClientEvents {
   'error': (data: ErrorPayload) => void;
   'game-state': (data: GameState) => void;
   'game-error': (data: { code: string; message: string }) => void;
-  'recharge-requested': (data: { requesterId: string; requesterNickname: string; amount: number }) => void;
-  'recharge-vote-update': (data: { votedCount: number; totalNeeded: number; approved: boolean }) => void;
-  'recharge-result': (data: { requesterId: string; approved: boolean; newChips?: number }) => void;
   'set-player-id': (data: { playerId: string }) => void;
   'chat-message': (data: { playerId: string; nickname: string; text: string; timestamp: number }) => void;
   'chat-history': (data: { messages: Array<{ playerId: string; nickname: string; text: string; timestamp: number }> }) => void;
   'proxy-ante-applied': (data: { sponsorNickname: string; beneficiaryNickname: string }) => void;
   'game-history': (data: { entries: RoundHistoryEntry[] }) => void;
+  'kicked': (data: { reason: string }) => void;
 }
 
 /** Socket.IO 서버 간 이벤트 (사용하지 않지만 타입 완전성) */

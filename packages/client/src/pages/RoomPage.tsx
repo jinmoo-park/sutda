@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { toast, Toaster } from 'sonner';
 import { useGameStore } from '@/store/gameStore';
 import { WaitingRoom } from '@/components/layout/WaitingRoom';
@@ -14,7 +14,6 @@ import { ModeSelectModal } from '@/components/modals/ModeSelectModal';
 import { SharedCardSelectModal } from '@/components/modals/SharedCardSelectModal';
 import { ShuffleModal } from '@/components/modals/ShuffleModal';
 import { CutModal } from '@/components/modals/CutModal';
-import { RechargeVoteModal } from '@/components/modals/RechargeVoteModal';
 import { GusaRejoinModal } from '@/components/modals/GusaRejoinModal';
 import { GusaAnnounceModal } from '@/components/modals/GusaAnnounceModal';
 import { SejangCardSelectModal } from '@/components/modals/SejangCardSelectModal';
@@ -78,6 +77,7 @@ function MobileChatInput() {
 export function RoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
   const location = useLocation();
+  const navigate = useNavigate();
   const locationState = location.state as { nickname?: string; initialChips?: number; isHost?: boolean } | null;
   const { socket, connect, gameState, roomState, myPlayerId, error, clearError } = useGameStore();
   const serverUrl = import.meta.env.VITE_SERVER_URL || '';
@@ -92,7 +92,8 @@ export function RoomPage() {
 
   const [nickname, setNickname] = useState(initNickname);
   const [initialChips, setInitialChips] = useState(initChips);
-  const [hasJoined, setHasJoined] = useState(initIsHost);
+  // cachedSession이 있으면 재접속 중 — 폼을 먼저 보여주지 않음
+  const [hasJoined, setHasJoined] = useState(initIsHost || !!cachedSession?.nickname);
   const [dealingComplete, setDealingComplete] = useState(true);
   const [cardConfirmed, setCardConfirmed] = useState(false);
   const [myFlippedIndices, setMyFlippedIndices] = useState<Set<number>>(new Set());
@@ -163,6 +164,23 @@ export function RoomPage() {
     socket.on('game-error', handleGameError);
     return () => { socket.off('game-error', handleGameError); };
   }, [socket]);
+
+  // kicked 이벤트 — 0원 강제퇴장: localStorage 세션 삭제 후 홈으로 이동
+  useEffect(() => {
+    if (!socket) return;
+    const handleKicked = ({ reason }: { reason: string }) => {
+      if (roomId) localStorage.removeItem(getRoomSessionKey(roomId));
+      if (reason === 'NO_CHIPS') {
+        toast.error('칩이 부족하여 퇴장되었습니다. 다시 입장하려면 닉네임을 입력하세요.');
+      } else {
+        toast.error('방에서 퇴장되었습니다.');
+      }
+      // 같은 방 URL로 돌아가되 locationState 없이 → cachedSession도 없으므로 닉네임 폼 표시
+      setTimeout(() => navigate(`/room/${roomId}`, { replace: true }), 1500);
+    };
+    socket.on('kicked', handleKicked);
+    return () => { socket.off('kicked', handleKicked); };
+  }, [socket, roomId, navigate]);
 
   // cutting/shuffling → betting/betting-1/sejang-open 전환 감지 → 딜링 애니메이션 후 카드 확인 오버레이 표시
   // (skipCutting 재경기 시 shuffling → betting 직접 전환)
@@ -385,6 +403,12 @@ export function RoomPage() {
   // 닉네임 입력 폼 (방 미입장 상태)
   const handleJoinRoom = () => {
     if (!nickname.trim() || !socket) return;
+    // 재접속 시 폼 없이 복원될 수 있도록 localStorage에 세션 저장
+    localStorage.setItem(getRoomSessionKey(roomId!), JSON.stringify({
+      nickname: nickname.trim(),
+      initialChips,
+      isHost: false,
+    } satisfies RoomSession));
     socket.emit('join-room', {
       roomId: roomId!,
       nickname: nickname.trim(),
@@ -727,11 +751,6 @@ export function RoomPage() {
         roomId={roomId!}
         myCards={(myPlayer?.cards ?? []).filter((c): c is NonNullable<typeof c> => c != null)}
       />
-
-      {/* 재충전 모달 — phase 무관, rechargeRequest 있을 때 */}
-      <RechargeVoteModal roomId={roomId!} />
-
-
 
       {/* 세장섯다 3번째 카드 확인 오버레이 (생존자만, betting-2 진입 시 자동 표시) */}
       {phase === 'betting-2' && gameState?.mode === 'three-card' && !sejangThirdCardDismissed && myPlayer && !myPlayer.isAbsent && myPlayer.isAlive && myPlayer.cards.length >= 3 && (

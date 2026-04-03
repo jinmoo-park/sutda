@@ -233,9 +233,20 @@ export class GameEngine {
     }
 
     // 각 플레이어의 족보를 미리 계산 (isAlive = 폴드하지 않은 플레이어)
+    // 모드별 카드 구조 차이 대응:
+    //   - 세장섯다: cards 3장 → selectedCards(선택한 2장) 우선
+    //   - 한장공유: cards 1장 + sharedCard 분리
+    //   - 기타: cards[0], cards[1]
     const handCache = new Map<string, ReturnType<typeof evaluateHand>>();
+    const sharedCard = (this.state as any).sharedCard as import('@sutda/shared').Card | undefined;
     for (const p of this.state.players) {
-      if (p.isAlive && p.cards.length === 2 && p.cards[0] && p.cards[1]) {
+      if (!p.isAlive) continue;
+      const selected = (p as any).selectedCards as import('@sutda/shared').Card[] | undefined;
+      if (selected?.[0] && selected?.[1]) {
+        handCache.set(p.id, evaluateHand(selected[0]!, selected[1]!));
+      } else if (this.state.mode === 'shared-card' && p.cards[0] && sharedCard) {
+        handCache.set(p.id, evaluateHand(p.cards[0]!, sharedCard));
+      } else if (p.cards[0] && p.cards[1]) {
         handCache.set(p.id, evaluateHand(p.cards[0]!, p.cards[1]!));
       }
     }
@@ -344,20 +355,6 @@ export class GameEngine {
     winner.chips += perPlayerAmount * diedPlayers.length;
     this.state.ttaengPayments = ttaengPayments;
     this._updateChipBreakdowns();
-  }
-
-  /**
-   * 재충전 승인 시 GameEngine 상태를 안전하게 갱신 (Plan 02 Task 2에서 호출)
-   * 칩 갱신 후 chipBreakdown과 effectiveMaxBet 파생 상태를 자동으로 재계산
-   */
-  applyRechargeToPlayer(playerId: string, newChips: number): void {
-    const player = this.state.players.find(p => p.id === playerId);
-    if (!player) {
-      throw new Error('PLAYER_NOT_FOUND');
-    }
-    player.chips = newChips;
-    this._updateChipBreakdowns();
-    this._updateEffectiveMaxBet();
   }
 
   /**
@@ -1887,11 +1884,15 @@ export class GameEngine {
   }
 
   /**
-   * 재접속 시 호출 — isDisconnected 해제
+   * 재접속 시 호출 — 닉네임으로 기존 플레이어를 찾아 id를 새 socket.id로 갱신하고 isDisconnected 해제.
+   * roomManager.joinRoom은 room.players만 갱신하므로 engine.state.players도 여기서 동기화해야 함.
    */
-  markReconnected(playerId: string): void {
-    const player = this.state.players.find(p => p.id === playerId);
-    if (player) player.isDisconnected = false;
+  markReconnected(nickname: string, newPlayerId: string): void {
+    const player = this.state.players.find(p => p.nickname === nickname);
+    if (player) {
+      player.id = newPlayerId;
+      player.isDisconnected = false;
+    }
   }
 
   /**

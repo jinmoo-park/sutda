@@ -1,20 +1,8 @@
 import type { RoomState, RoomPlayer } from '@sutda/shared';
 import { randomUUID } from 'crypto';
 
-type RechargeVoteResult =
-  | { complete: true; approved: boolean; requesterId: string }
-  | { complete: false; votedCount: number; totalNeeded: number };
-
-interface RechargeRequest {
-  requesterId: string;
-  amount: number;
-  votes: Map<string, boolean>;
-  totalNeeded: number;
-}
-
 export class RoomManager {
   private rooms: Map<string, RoomState> = new Map();
-  private rechargeRequests: Map<string, RechargeRequest> = new Map();
 
   /** 방 생성 -- 8자리 UUID 코드 반환 (per D-01) */
   createRoom(hostId: string, nickname: string, initialChips: number): RoomState {
@@ -137,70 +125,6 @@ export class RoomManager {
   /** 초기 칩 유효성 검증 (만원 단위, per INFRA-06) */
   static validateChips(chips: number): boolean {
     return Number.isInteger(chips) && chips > 0 && chips % 10000 === 0;
-  }
-
-  /** 재충전 요청 시작 */
-  requestRecharge(roomId: string, requesterId: string, amount: number): { requesterId: string; requesterNickname: string; amount: number; totalNeeded: number } {
-    const room = this.rooms.get(roomId);
-    if (!room) throw new Error('ROOM_NOT_FOUND');
-    if (this.rechargeRequests.has(roomId)) throw new Error('RECHARGE_IN_PROGRESS');
-    if (!RoomManager.validateChips(amount)) throw new Error('INVALID_CHIPS');
-
-    const requester = room.players.find(p => p.id === requesterId);
-    const requesterNickname = requester ? requester.nickname : '';
-    const totalNeeded = room.players.length - 1;
-
-    this.rechargeRequests.set(roomId, {
-      requesterId,
-      amount,
-      votes: new Map(),
-      totalNeeded,
-    });
-
-    return { requesterId, requesterNickname, amount, totalNeeded };
-  }
-
-  /** 재충전 투표 처리 */
-  processRechargeVote(roomId: string, voterId: string, approved: boolean): RechargeVoteResult {
-    const request = this.rechargeRequests.get(roomId);
-    if (!request) throw new Error('RECHARGE_NOT_FOUND');
-    if (voterId === request.requesterId) throw new Error('INVALID_ACTION');
-
-    request.votes.set(voterId, approved);
-
-    // 거부 시 즉시 완료
-    if (!approved) {
-      const requesterId = request.requesterId;
-      this.rechargeRequests.delete(roomId);
-      return { complete: true, approved: false, requesterId };
-    }
-
-    // 전원 찬성 완료 확인
-    if (request.votes.size === request.totalNeeded) {
-      return { complete: true, approved: true, requesterId: request.requesterId };
-    }
-
-    // 아직 미완료
-    return { complete: false, votedCount: request.votes.size, totalNeeded: request.totalNeeded };
-  }
-
-  /** 재충전 적용 (전원 동의 후 호출) */
-  applyRecharge(roomId: string): { requesterId: string; newChips: number } {
-    const request = this.rechargeRequests.get(roomId);
-    if (!request) throw new Error('RECHARGE_NOT_FOUND');
-
-    const room = this.rooms.get(roomId);
-    if (!room) throw new Error('ROOM_NOT_FOUND');
-
-    const player = room.players.find(p => p.id === request.requesterId);
-    if (player) {
-      player.chips += request.amount;
-    }
-    const newChips = player ? player.chips : 0;
-
-    this.rechargeRequests.delete(roomId);
-
-    return { requesterId: request.requesterId, newChips };
   }
 
   /** 방 삭제 */

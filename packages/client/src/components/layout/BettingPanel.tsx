@@ -26,6 +26,7 @@ export function BettingPanel({
   isMyTurn,
   currentBetAmount,
   myCurrentBet,
+  myChips,
   roomId,
   currentPlayerNickname,
   isEffectiveSen,
@@ -35,6 +36,10 @@ export function BettingPanel({
   const me = gameState?.players.find(p => p.id === myPlayerId);
   const isMyAllIn = me?.isAllIn ?? false;
 
+  const callAmount = currentBetAmount - myCurrentBet;
+  // 내 잔액에서 콜금액을 뺀 나머지가 최대 레이즈 가능 금액
+  const maxRaiseAmount = Math.max(0, myChips - callAmount);
+
   const emitAction = (action: BetAction) => {
     const socket = useGameStore.getState().socket;
     if (!socket || !isMyTurn) return;
@@ -42,7 +47,6 @@ export function BettingPanel({
     setRaiseAmount(0);
   };
 
-  const callAmount = currentBetAmount - myCurrentBet;
   const totalRaisePayment = callAmount + raiseAmount;
   const canCheck = callAmount === 0 && isEffectiveSen;
   const canCall = callAmount > 0 || !isEffectiveSen;
@@ -85,20 +89,27 @@ export function BettingPanel({
 
       {/* 칩 버튼 — 1×4 그리드 */}
       <div className="grid grid-cols-4 gap-1.5">
-        {CHIP_BUTTONS.map(({ amount, color, label }) => (
-          <Button
-            key={amount}
-            variant="secondary"
-            size="sm"
-            disabled={!isMyTurn}
-            onClick={() => setRaiseAmount((prev) => prev + amount)}
-            className={cn('h-auto py-3 md:py-2.5 flex-col gap-1 text-xs px-1', !isMyTurn && 'opacity-20 pointer-events-none')}
-          >
-            <span className={`w-3 h-3 rounded-full shrink-0 ${color}`} />
-            <span>+{label}</span>
-          </Button>
-        ))}
+        {CHIP_BUTTONS.map(({ amount, color, label }) => {
+          const chipDisabled = !isMyTurn || raiseAmount >= maxRaiseAmount;
+          return (
+            <Button
+              key={amount}
+              variant="secondary"
+              size="sm"
+              disabled={chipDisabled}
+              onClick={() => setRaiseAmount((prev) => Math.min(prev + amount, maxRaiseAmount))}
+              className={cn('h-auto py-3 md:py-2.5 flex-col gap-1 text-xs px-1', chipDisabled && 'opacity-20 pointer-events-none')}
+            >
+              <span className={`w-3 h-3 rounded-full shrink-0 ${color}`} />
+              <span>+{label}</span>
+            </Button>
+          );
+        })}
       </div>
+      {/* 올인 뱃지 — raiseAmount가 최대에 달했을 때 */}
+      {isMyTurn && raiseAmount > 0 && raiseAmount >= maxRaiseAmount && (
+        <p className="text-xs text-center text-yellow-400 font-semibold">올인</p>
+      )}
 
       {/* 초기화 */}
       {raiseAmount > 0 && (

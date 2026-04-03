@@ -5,12 +5,6 @@ import type { GameState, RoomState, ServerToClientEvents, ClientToServerEvents, 
 
 type AppSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
-interface RechargeRequest {
-  requesterId: string;
-  requesterNickname: string;
-  amount: number;
-}
-
 interface ChatMessage {
   playerId: string;
   nickname: string;
@@ -25,7 +19,6 @@ interface GameStore {
   roomState: RoomState | null;
   myPlayerId: string | null;
   error: string | null;
-  rechargeRequest: RechargeRequest | null;
   chatMessages: ChatMessage[];
   roundHistory: RoundHistoryEntry[];
 
@@ -42,7 +35,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
   roomState: null,
   myPlayerId: null,
   error: null,
-  rechargeRequest: null,
   chatMessages: [],
   roundHistory: [],
 
@@ -91,14 +83,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ error: message });
     });
 
-    socket.on('recharge-requested', (data) => {
-      set({ rechargeRequest: data });
-    });
-
-    socket.on('recharge-result', () => {
-      set({ rechargeRequest: null });
-    });
-
     socket.on('chat-message', (msg) => {
       set(state => ({ chatMessages: [...state.chatMessages, msg] }));
     });
@@ -130,7 +114,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   disconnect: () => {
     get().socket?.disconnect();
-    set({ socket: null, gameState: null, roomState: null, myPlayerId: null, rechargeRequest: null, chatMessages: [], roundHistory: [] });
+    set({ socket: null, gameState: null, roomState: null, myPlayerId: null, chatMessages: [], roundHistory: [] });
   },
 
   clearError: () => set({ error: null }),
