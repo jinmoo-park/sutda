@@ -78,7 +78,7 @@ export function GollaSelectModal({ open, roomId }: GollaSelectModalProps) {
   const selectedCount = displayPicks.length;
 
   return (
-    <Dialog open={open}>
+    <Dialog open={open} modal={false}>
       <DialogContent
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}

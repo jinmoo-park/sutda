@@ -30,7 +30,7 @@ export function SharedCardSelectModal({ open, roomId }: SharedCardSelectModalPro
   };
 
   return (
-    <Dialog open={open}>
+    <Dialog open={open} modal={false}>
       <DialogContent
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}

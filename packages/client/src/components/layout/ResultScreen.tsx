@@ -5,7 +5,6 @@ import { evaluateHand } from '@sutda/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { HwatuCard } from '@/components/game/HwatuCard';
-import { computeSlotIndices } from '@/lib/cardImageUtils';
 import { useGameStore } from '@/store/gameStore';
 import { getHandLabel } from '@/lib/handLabels';
 
@@ -97,18 +96,9 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, onEject
 
   const allPlayers = gameState.players.filter((p) => !p.isAbsent);
 
-  // 전체 플레이어 표시 카드를 평탄화하여 글로벌 슬롯 인덱스 계산
-  // (같은 rank 카드가 여러 플레이어에게 있을 때 이미지 중복 방지)
   const playerDisplayCards = allPlayers.map((player) =>
     (player.selectedCards?.length === 2 ? player.selectedCards : player.cards)
   );
-  const globalSlots = computeSlotIndices(playerDisplayCards.flat());
-  const playerSlotIndices: number[][] = [];
-  let _slotOffset = 0;
-  for (const dc of playerDisplayCards) {
-    playerSlotIndices.push(globalSlots.slice(_slotOffset, _slotOffset + dc.length));
-    _slotOffset += dc.length;
-  }
 
   return (
     <div className="relative flex h-full flex-col items-center justify-center bg-background text-foreground gap-4 p-3 md:gap-6 md:p-6 overflow-y-auto">
@@ -177,7 +167,7 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, onEject
                   ? player.cards.map((_, idx) => <HwatuCard key={idx} faceUp={false} size={cardSize} />)
                   : displayCards.map((card, idx) =>
                       player.isRevealed ? (
-                        <HwatuCard key={idx} card={card!} faceUp={true} size={cardSize} slotIndex={playerSlotIndices[pi]?.[idx] ?? 0} />
+                        <HwatuCard key={idx} card={card!} faceUp={true} size={cardSize} />
                       ) : (
                         <HwatuCard key={idx} faceUp={false} size={cardSize} />
                       )

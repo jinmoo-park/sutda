@@ -1,7 +1,6 @@
 import type { PlayerState, Card, GameMode, RoomState } from '@sutda/shared';
 import { PlayerSeat } from '@/components/game/PlayerSeat';
 import { SharedCardDisplay } from '@/components/game/SharedCardDisplay';
-import { computeSlotIndices } from '@/lib/cardImageUtils';
 import { Badge } from '@/components/ui/badge';
 
 interface GameTableProps {
@@ -22,15 +21,6 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
   const observers = roomState?.players.filter(p => p.isObserver) ?? [];
   // 올인 플레이어 존재 여부
   const hasAllIn = players.some(p => p.isAllIn);
-
-  // 전역 slot 계산: 모든 플레이어 카드를 flat하게 합산해 rank 충돌 방지
-  const globalSlots = computeSlotIndices(players.flatMap(p => p.cards));
-  let offset = 0;
-  const playerCardSlots = players.map(p => {
-    const slots = globalSlots.slice(offset, offset + p.cards.length);
-    offset += p.cards.length;
-    return slots;
-  });
 
   return (
     <>
@@ -90,7 +80,6 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
             mode={mode}
             dealingComplete={dealingComplete}
             flippedCardIndices={p.id === myPlayerId ? myFlippedCardIndices : undefined}
-            cardSlotIndices={playerCardSlots[i]}
             isConnected={roomState?.players.find(rp => rp.id === p.id)?.isConnected ?? true}
           />
         ))}
@@ -137,7 +126,6 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
                   isCurrentTurn={i === currentPlayerIndex}
                   visibleCardCount={visibleCardCounts?.[p.id]}
                   dealingComplete={dealingComplete}
-                  cardSlotIndices={playerCardSlots[i]}
                   isConnected={roomState?.players.find(rp => rp.id === p.id)?.isConnected ?? true}
                   mode={mode}
                   compact

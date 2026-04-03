@@ -2,7 +2,6 @@ import type { PlayerState, GameMode } from '@sutda/shared';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { HwatuCard } from './HwatuCard';
-import { computeSlotIndices } from '@/lib/cardImageUtils';
 import { cn } from '@/lib/utils';
 
 interface PlayerSeatProps {
@@ -16,8 +15,6 @@ interface PlayerSeatProps {
   dealingComplete?: boolean;
   /** 내 카드 flip 동기화 (HandPanel과 연동) */
   flippedCardIndices?: Set<number>;
-  /** 전역 slot 계산 결과 (GameTable에서 주입, 없으면 로컬 계산) */
-  cardSlotIndices?: number[];
   /** Observer 모드 여부 */
   isObserver?: boolean;
   /** 소켓 연결 상태 (재접속 대기 중 표시) */
@@ -36,7 +33,6 @@ export function PlayerSeat({
   mode,
   dealingComplete = true,
   flippedCardIndices,
-  cardSlotIndices,
   isObserver,
   isConnected = true,
   compact = false,
@@ -108,10 +104,12 @@ export function PlayerSeat({
       )}
 
       {player.cards.length > 0 && (() => {
-        const cardSlots = cardSlotIndices ?? computeSlotIndices(player.cards);
+        const maxSlots = mode === 'shared-card'
+          ? Math.max(player.cards.length, 1)
+          : Math.max(player.cards.length, 2);
         return (
         <div className="flex gap-1 flex-wrap">
-          {Array.from({ length: Math.max(player.cards.length, 2) }, (_, idx) => {
+          {Array.from({ length: maxSlots }, (_, idx) => {
             const visible = idx < showCount;
             const card = player.cards[idx];
             // 세장섯다: openedCardIndex가 있으면 해당 카드는 전원에게 공개
@@ -136,7 +134,6 @@ export function PlayerSeat({
                   card={card ?? undefined}
                   faceUp={showFace}
                   size={compact ? 'xs' : 'sm'}
-                  slotIndex={cardSlots[idx] ?? 0}
                   disabled
                 />
               </div>

@@ -1,7 +1,6 @@
 import { useGameStore } from '@/store/gameStore';
 import { Button } from '@/components/ui/button';
 import { HwatuCard } from '@/components/game/HwatuCard';
-import { computeSlotIndices } from '@/lib/cardImageUtils';
 
 interface MuckChoiceModalProps {
   open: boolean;
@@ -21,7 +20,7 @@ export function MuckChoiceModal({ open, roomId, myCards }: MuckChoiceModalProps)
 
         <div className="flex justify-center gap-3">
           {myCards.map((card, i) => (
-            <HwatuCard key={i} card={card as any} faceUp={true} size="md" slotIndex={computeSlotIndices(myCards as any)[i]} />
+            <HwatuCard key={i} card={card as any} faceUp={true} size="md" />
           ))}
         </div>
 

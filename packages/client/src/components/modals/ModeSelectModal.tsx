@@ -18,7 +18,7 @@ export function ModeSelectModal({ open, roomId, isDealer }: ModeSelectModalProps
   const { socket } = useGameStore();
 
   return (
-    <Dialog open={open}>
+    <Dialog open={open} modal={false}>
       <DialogContent
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}

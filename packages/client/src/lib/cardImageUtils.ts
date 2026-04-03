@@ -1,38 +1,53 @@
 import type { Card } from '@sutda/shared';
 
 /**
- * 특수 속성(gwang/yeolkkeut) 카드가 존재하는 rank 목록.
- * 이 rank의 normal 카드는 항상 fileIndex=2 (특수카드가 1번 파일)
+ * 화투 20장 카드 ID → 이미지 파일 1:1 매핑 테이블.
+ *
+ * ID는 createDeck() 생성 순서와 일치:
+ *   1=01-1(광), 2=01-2(일), 3=02-1(일), 4=02-2(일),
+ *   5=03-1(광), 6=03-2(일), 7=04-1(열끗), 8=04-2(일),
+ *   9=05-1(일), 10=05-2(일), 11=06-1(일), 12=06-2(일),
+ *   13=07-1(열끗), 14=07-2(일), 15=08-1(광), 16=08-2(일),
+ *   17=09-1(열끗), 18=09-2(일), 19=10-1(일), 20=10-2(일)
  */
-const SPECIAL_RANKS = new Set([1, 3, 4, 7, 8, 9]);
+const CARD_IMAGE_MAP: Record<number, string> = {
+  1:  '/img/01-1.png',
+  2:  '/img/01-2.png',
+  3:  '/img/02-1.png',
+  4:  '/img/02-2.png',
+  5:  '/img/03-1.png',
+  6:  '/img/03-2.png',
+  7:  '/img/04-1.png',
+  8:  '/img/04-2.png',
+  9:  '/img/05-1.png',
+  10: '/img/05-2.png',
+  11: '/img/06-1.png',
+  12: '/img/06-2.png',
+  13: '/img/07-1.png',
+  14: '/img/07-2.png',
+  15: '/img/08-1.png',
+  16: '/img/08-2.png',
+  17: '/img/09-1.png',
+  18: '/img/09-2.png',
+  19: '/img/10-1.png',
+  20: '/img/10-2.png',
+};
 
 /**
- * Card 객체를 이미지 파일 경로로 매핑한다.
+ * Card 객체를 이미지 파일 경로로 변환한다.
  *
- * 파일명 규칙: `/img/{rank 2자리}-{fileIndex}.png`
- * - 특수 속성(gwang/yeolkkeut): fileIndex=1
- * - normal 속성이고 rank에 특수 카드가 있으면: fileIndex=2
- * - 양쪽 모두 normal인 rank(2,5,6,10): slotIndex로 구분 (0→1, 1→2)
- *
- * @param card 카드 객체
- * @param slotIndex 같은 rank normal 2장 구분용 (0 또는 1, 기본값 0)
+ * card.id(1~20)가 있으면 룩업 테이블에서 직접 반환한다.
+ * id가 없는 경우(테스트용 카드 등)에는 rank/attribute 기반 fallback을 사용한다.
  */
-export function getCardImageSrc(card: Card, slotIndex: number = 0): string {
-  const paddedRank = String(card.rank).padStart(2, '0');
-  let fileIndex: number;
-
-  if (card.attribute !== 'normal') {
-    // gwang, yeolkkeut → 항상 -1
-    fileIndex = 1;
-  } else if (SPECIAL_RANKS.has(card.rank)) {
-    // 이 rank의 normal 카드는 항상 -2 (특수 카드가 -1 파일)
-    fileIndex = 2;
-  } else {
-    // 모두 normal인 rank (2, 5, 6, 10) → slotIndex로 구분
-    fileIndex = slotIndex === 1 ? 2 : 1;
+export function getCardImageSrc(card: Card): string {
+  if (card.id != null) {
+    return CARD_IMAGE_MAP[card.id] ?? '/img/card_back.jpg';
   }
-
-  return `/img/${paddedRank}-${fileIndex}.png`;
+  // fallback: id 없는 경우 (테스트 카드 등)
+  const paddedRank = String(card.rank).padStart(2, '0');
+  if (card.attribute !== 'normal') return `/img/${paddedRank}-1.png`;
+  const SPECIAL_RANKS = new Set([1, 3, 4, 7, 8, 9]);
+  return `/img/${paddedRank}-${SPECIAL_RANKS.has(card.rank) ? 2 : 1}.png`;
 }
 
 /**
@@ -40,20 +55,4 @@ export function getCardImageSrc(card: Card, slotIndex: number = 0): string {
  */
 export function getCardBackSrc(): string {
   return '/img/card_back.jpg';
-}
-
-/**
- * 카드 배열에서 각 카드의 slotIndex를 계산한다.
- * 같은 rank 카드가 여러 장 있을 때 앞에서부터 0, 1을 부여한다.
- * (rank 2/5/6/10의 normal 카드처럼 양쪽 모두 normal인 경우에만 slotIndex가 이미지 선택에 영향을 줌)
- */
-export function computeSlotIndices(cards: (Card | null | undefined)[]): number[] {
-  const counts: Record<number, number> = {};
-  return cards.map((card) => {
-    if (!card) return 0;
-    const rank = card.rank;
-    const idx = counts[rank] ?? 0;
-    counts[rank] = idx + 1;
-    return idx;
-  });
 }

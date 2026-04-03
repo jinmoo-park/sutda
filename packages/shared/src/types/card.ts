@@ -6,6 +6,8 @@ export type CardAttribute = 'gwang' | 'yeolkkeut' | 'normal';
 
 /** 섯다 카드 한 장 */
 export interface Card {
+  /** 덱 고유 번호 (1~20). 이미지 1:1 매핑에 사용. createDeck()이 부여한다. */
+  id?: number;
   /** 숫자 (1~10) */
   rank: CardRank;
   /** 속성: 광/열끗/일반 */

@@ -21,7 +21,6 @@ import { SejangOpenCardModal } from '@/components/modals/SejangOpenCardModal';
 import { MuckChoiceModal } from '@/components/modals/MuckChoiceModal';
 import { DealerResultOverlay } from '@/components/modals/DealerResultOverlay';
 import type { DealerSelectResult } from '@/components/modals/DealerResultOverlay';
-import { computeSlotIndices } from '@/lib/cardImageUtils';
 import { HwatuCard } from '@/components/game/HwatuCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -381,17 +380,6 @@ export function RoomPage() {
   const phase = gameState?.phase ?? roomState?.gamePhase ?? 'waiting';
   const myPlayer = gameState?.players.find((p) => p.id === myPlayerId) ?? null;
 
-  // 전역 slot 계산: 모든 플레이어 카드를 flat해서 rank 충돌 방지
-  const _allCards = gameState?.players.flatMap(p => p.cards) ?? [];
-  const _globalSlots = computeSlotIndices(_allCards);
-  let _offset = 0;
-  const _playerCardSlots = (gameState?.players ?? []).map(p => {
-    const slots = _globalSlots.slice(_offset, _offset + p.cards.length);
-    _offset += p.cards.length;
-    return slots;
-  });
-  const myPlayerIndex = gameState?.players.findIndex(p => p.id === myPlayerId) ?? -1;
-  const myCardSlotIndices = myPlayerIndex >= 0 ? _playerCardSlots[myPlayerIndex] : undefined;
   const isMyTurn =
     gameState !== null &&
     gameState.players[gameState.currentPlayerIndex]?.id === myPlayerId;
@@ -586,6 +574,7 @@ export function RoomPage() {
     <HandPanel
       myPlayer={myPlayer}
       phase={gameState.phase}
+      mode={gameState.mode}
       sharedCard={gameState.mode === 'shared-card' ? gameState.sharedCard : undefined}
       visibleCardCount={
         phase === 'card-select' || (phase === 'betting-2' && gameState.mode === 'three-card')
@@ -598,7 +587,6 @@ export function RoomPage() {
       flippedIndices={myFlippedIndices}
       onFlip={(idx) => setMyFlippedIndices(prev => { const n = new Set(prev); n.add(idx); return n; })}
       dealingComplete={dealingComplete}
-      cardSlotIndices={myCardSlotIndices}
     />
   );
 
@@ -751,7 +739,7 @@ export function RoomPage() {
       <ShuffleModal open={phase === 'shuffling' && !isDealer} roomId={roomId!} readOnly />
       <CutModal open={phase === 'cutting' && isMyTurn} roomId={roomId!} />
       {/* 기리 대기 — 본인 아닌 플레이어에게 표시 */}
-      <Dialog open={phase === 'cutting' && !isMyTurn}>
+      <Dialog open={phase === 'cutting' && !isMyTurn} modal={false}>
         <DialogContent
           className="max-w-xs text-center"
           onInteractOutside={(e) => e.preventDefault()}
@@ -786,7 +774,10 @@ export function RoomPage() {
             <div className="flex justify-center">
               <HwatuCard card={myPlayer.cards[2]} faceUp={true} size="md" />
             </div>
-            <Button className="w-full" onClick={() => setSejangThirdCardDismissed(true)}>
+            <Button className="w-full" onClick={() => {
+              setSejangThirdCardDismissed(true);
+              setMyFlippedIndices(prev => { const n = new Set(prev); n.add(2); return n; });
+            }}>
               확인
             </Button>
           </div>

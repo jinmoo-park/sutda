@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
-import type { PlayerState, GamePhase, Card, HandResult } from '@sutda/shared';
+import type { PlayerState, GamePhase, Card, HandResult, GameMode } from '@sutda/shared';
 import { evaluateHand } from '@sutda/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { HwatuCard } from '@/components/game/HwatuCard';
-import { computeSlotIndices } from '@/lib/cardImageUtils';
 import { HandReferenceDialog } from './HandReferenceDialog';
 
 interface HandPanelProps {
   myPlayer: PlayerState | null;
   phase?: GamePhase;
+  mode?: GameMode;
   sharedCard?: Card;
   visibleCardCount?: number;
   nickname?: string;
@@ -18,8 +18,6 @@ interface HandPanelProps {
   /** 외부 제어 모드: RoomPage에서 flip 상태를 관리할 때 사용 */
   flippedIndices?: Set<number>;
   onFlip?: (idx: number) => void;
-  /** 전역 slot 계산 결과 (RoomPage에서 주입, 없으면 로컬 계산) */
-  cardSlotIndices?: number[];
 }
 
 const HAND_TYPE_KOREAN: Record<string, string> = {
@@ -64,6 +62,7 @@ function getHandLabel(result: HandResult): string {
 export function HandPanel({
   myPlayer,
   phase,
+  mode,
   sharedCard,
   visibleCardCount,
   nickname,
@@ -71,7 +70,6 @@ export function HandPanel({
   dealingComplete = true,
   flippedIndices: controlledFlipped,
   onFlip,
-  cardSlotIndices,
 }: HandPanelProps) {
   const [showReference, setShowReference] = useState(false);
   const [internalFlipped, setInternalFlipped] = useState<Set<number>>(new Set());
@@ -148,8 +146,6 @@ export function HandPanel({
     // 카드가 2장 미만이거나 평가 불가한 경우 무시
   }
 
-  const cardSlots = cardSlotIndices ?? computeSlotIndices(cards);
-
   // 배분 날아오기 애니메이션 스타일
   const getDealAnimStyle = (idx: number): React.CSSProperties => {
     if (dealingComplete) return {};
@@ -171,17 +167,17 @@ export function HandPanel({
       ) : (
         <div className="flex gap-2 items-center flex-wrap">
           {cards.map((card, idx) => {
+            const isIndianHidden = mode === 'indian' && idx === 0;
             const isFlipped = isCardSelectPhase ? true : flippedIndices.has(idx);
-            const isDisabled = !dealingComplete || isFlipped || card === null;
+            const isDisabled = !dealingComplete || isFlipped || card === null || isIndianHidden;
             return (
-              <div key={idx} style={getDealAnimStyle(idx)}>
+              <div key={idx} style={getDealAnimStyle(idx)} className={isIndianHidden ? 'opacity-40' : undefined}>
                 <HwatuCard
                   card={card}
                   faceUp={isFlipped}
                   size="sm"
                   onClick={() => handleFlip(idx)}
                   disabled={isDisabled}
-                  slotIndex={cardSlots[idx]}
                 />
               </div>
             );

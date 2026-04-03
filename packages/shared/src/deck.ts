@@ -12,6 +12,7 @@ import { GWANG_RANKS, YEOLKKEUT_RANKS } from './types/card.js';
  */
 export function createDeck(): Card[] {
   const deck: Card[] = [];
+  let id = 1;
 
   for (let r = 1; r <= 10; r++) {
     const rank = r as CardRank;
@@ -19,14 +20,14 @@ export function createDeck(): Card[] {
     const isYeolkkeut = (YEOLKKEUT_RANKS as readonly number[]).includes(rank);
 
     if (isGwang) {
-      deck.push({ rank, attribute: 'gwang' });
-      deck.push({ rank, attribute: 'normal' });
+      deck.push({ id: id++, rank, attribute: 'gwang' });
+      deck.push({ id: id++, rank, attribute: 'normal' });
     } else if (isYeolkkeut) {
-      deck.push({ rank, attribute: 'yeolkkeut' });
-      deck.push({ rank, attribute: 'normal' });
+      deck.push({ id: id++, rank, attribute: 'yeolkkeut' });
+      deck.push({ id: id++, rank, attribute: 'normal' });
     } else {
-      deck.push({ rank, attribute: 'normal' });
-      deck.push({ rank, attribute: 'normal' });
+      deck.push({ id: id++, rank, attribute: 'normal' });
+      deck.push({ id: id++, rank, attribute: 'normal' });
     }
   }
 

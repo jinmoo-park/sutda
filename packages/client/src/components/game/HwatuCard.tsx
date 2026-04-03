@@ -8,7 +8,6 @@ interface HwatuCardProps {
   onClick?: () => void;
   disabled?: boolean;         // true면 pointer-events: none
   className?: string;
-  slotIndex?: number;         // 같은 rank normal 카드 구분 (cardImageUtils에 전달)
 }
 
 /** 화투 실물 1:1.583 비율 크기 매핑 */
@@ -35,13 +34,12 @@ export function HwatuCard({
   onClick,
   disabled = false,
   className,
-  slotIndex = 0,
 }: HwatuCardProps) {
   const { width, height } = SIZE_MAP[size];
   const showFace = faceUp && card != null;
 
   const backSrc = getCardBackSrc();
-  const faceSrc = card != null ? getCardImageSrc(card, slotIndex) : backSrc;
+  const faceSrc = card != null ? getCardImageSrc(card) : backSrc;
 
   return (
     <div
