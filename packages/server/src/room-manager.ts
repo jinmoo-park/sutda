@@ -51,6 +51,9 @@ export class RoomManager {
       // 재접속 확인 (per D-04, D-05)
       const existing = room.players.find(p => p.nickname === nickname);
       if (existing) {
+        if (room.hostId === existing.id) {
+          room.hostId = playerId; // 방장 재접속 시 hostId도 새 socket.id로 갱신
+        }
         existing.id = playerId; // 새 소켓 ID로 갱신
         existing.isConnected = true;
         return { room, player: existing };
@@ -60,6 +63,9 @@ export class RoomManager {
     // waiting 상태에서도 동일 닉네임 → 재접속 처리 (소켓 재연결, 방장 권한 유지)
     const existingWaiting = room.players.find(p => p.nickname === nickname);
     if (existingWaiting) {
+      if (room.hostId === existingWaiting.id) {
+        room.hostId = playerId; // 방장 재접속 시 hostId도 새 socket.id로 갱신
+      }
       existingWaiting.id = playerId;
       existingWaiting.isConnected = true;
       return { room, player: existingWaiting };

@@ -274,6 +274,7 @@ io.on('connection', (socket) => {
 
       // 대기실 입장 (기존 로직)
       const { room: updatedRoom } = roomManager.joinRoom(roomId, socket.id, nickname, initialChips);
+      console.log(`[join-room] socket=${socket.id} nickname=${nickname} roomId=${roomId} isHost=${updatedRoom.hostId === socket.id} players=${updatedRoom.players.map(p => p.nickname).join(',')}`);
       socket.data.playerId = socket.id;
       socket.data.nickname = nickname;
       socket.data.roomId = roomId;

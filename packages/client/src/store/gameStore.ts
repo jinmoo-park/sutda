@@ -122,7 +122,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
 
     socket.on('disconnect', () => {
-      set({ error: '서버 연결이 끊겼어요. 페이지를 새로 고침해 주세요.' });
+      set({ error: '연결이 끊겼어요. 자동 재연결 중...' });
     });
 
     set({ socket });
