@@ -278,7 +278,7 @@ Plans:
 **Goal:** 게임 몰입감을 높이는 두 가지 부가기능을 완성한다 — 기리 인터랙션을 모든 플레이어에게 실시간 스트리밍하고, 게임 이벤트에 맞는 효과음과 배경음악을 삽입한다.
 **Requirements**: FEATURE-CUT-STREAM, FEATURE-SFX, FEATURE-BGM
 **Depends on:** Phase 12
-**Plans:** 0/2 plans complete
+**Plans:** 1/2 plans complete
 **Success Criteria** (완료 시 참이어야 하는 것):
   1. 기리 플레이어의 드래그/탭 조작이 실시간으로 모든 관전자 화면에 동기화된다
   2. 카드 배분, 베팅(콜/레이즈/다이), 학교 대신 가주기, 땡값 납부, 결과 공개 등 주요 이벤트에 효과음이 재생된다
