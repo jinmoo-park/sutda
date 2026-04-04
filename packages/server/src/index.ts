@@ -806,6 +806,8 @@ io.on('connection', (socket) => {
       if (room && room.gamePhase === 'playing') {
         // 게임 중 disconnect: 즉시 관전/대기 전환, 베팅 차례면 자동 다이
         roomManager.disconnectPlayer(roomId, socket.id);
+        const updatedRoomAfterDisconnect = roomManager.getRoom(roomId);
+        if (updatedRoomAfterDisconnect) io.to(roomId).emit('room-state', updatedRoomAfterDisconnect);
         const disconnectedPlayerId = socket.data.playerId;
         const disconnectedNickname = socket.data.nickname;
         const timerKey = `${roomId}:${disconnectedNickname}`; // nickname 기반 키 (재접속 시 socket.id 변경되므로)
