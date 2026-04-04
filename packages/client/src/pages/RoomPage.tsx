@@ -100,6 +100,7 @@ export function RoomPage() {
   // cachedSession이 있으면 재접속 중 — 폼을 먼저 보여주지 않음
   const [hasJoined, setHasJoined] = useState(initIsHost || !!cachedSession?.nickname);
   const [dealingComplete, setDealingComplete] = useState(true);
+  const [showMyTurnAlert, setShowMyTurnAlert] = useState(false);
   const [cardConfirmed, setCardConfirmed] = useState(false);
   const [myFlippedIndices, setMyFlippedIndices] = useState<Set<number>>(new Set());
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -459,6 +460,18 @@ export function RoomPage() {
     gameState?.openingBettorSeatIndex !== undefined &&
     myPlayer?.seatIndex === gameState?.openingBettorSeatIndex;
 
+  // 내 차례 알림 — 베팅 phase에서 isMyTurn 변경 시 2초 토스트
+  useEffect(() => {
+    const isBettingPhase = ['betting', 'betting-1', 'betting-2'].includes(phase);
+    if (isBettingPhase && isMyTurn && dealingComplete) {
+      setShowMyTurnAlert(true);
+      const timer = setTimeout(() => setShowMyTurnAlert(false), 2000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowMyTurnAlert(false);
+    }
+  }, [isMyTurn, phase, dealingComplete]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // 닉네임 입력 폼 (방 미입장 상태)
   const handleJoinRoom = () => {
     if (!nickname.trim() || !socket) return;
@@ -653,6 +666,7 @@ export function RoomPage() {
       dealingComplete={dealingComplete}
       myFlippedCardIndices={myFlippedIndices}
       roomState={roomState}
+      showMyTurnAlert={showMyTurnAlert}
     />
   );
 

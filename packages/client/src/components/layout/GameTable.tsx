@@ -3,6 +3,14 @@ import { PlayerSeat } from '@/components/game/PlayerSeat';
 import { SharedCardDisplay } from '@/components/game/SharedCardDisplay';
 import { Badge } from '@/components/ui/badge';
 
+const MODE_LABELS: Record<string, string> = {
+  'original': '오리지날',
+  'three-card': '세장',
+  'shared-card': '한장공유',
+  'gollagolla': '골라골라',
+  'indian': '인디언',
+};
+
 interface GameTableProps {
   players: PlayerState[];
   myPlayerId: string | null;
@@ -14,9 +22,10 @@ interface GameTableProps {
   dealingComplete?: boolean;
   myFlippedCardIndices?: Set<number>;
   roomState?: RoomState | null;
+  showMyTurnAlert?: boolean;
 }
 
-export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibleCardCounts, sharedCard, mode, dealingComplete = true, myFlippedCardIndices, roomState }: GameTableProps) {
+export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibleCardCounts, sharedCard, mode, dealingComplete = true, myFlippedCardIndices, roomState, showMyTurnAlert }: GameTableProps) {
   // Observer 목록
   const observers = roomState?.players.filter(p => p.isObserver) ?? [];
   // 올인 플레이어 존재 여부
@@ -42,6 +51,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
         {/* 중앙 팟 표시 */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center bg-background/60 border border-border rounded-2xl px-5 py-3 shadow-inner">
+            {mode && <p className="text-[10px] text-primary font-medium tracking-wider">{MODE_LABELS[mode] ?? mode}</p>}
             <p className="text-xs text-muted-foreground tracking-widest uppercase">판돈</p>
             <p className="text-[26px] font-semibold tabular-nums">{pot.toLocaleString()}원</p>
             {hasAllIn && (
@@ -54,6 +64,15 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
             )}
           </div>
         </div>
+
+        {/* 내 차례 알림 토스트 */}
+        {showMyTurnAlert && (
+          <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+            <div className="bg-primary text-primary-foreground px-6 py-3 rounded-xl text-lg font-bold shadow-lg animate-in fade-in zoom-in duration-300">
+              내 차례!
+            </div>
+          </div>
+        )}
 
         {/* Observer 목록 */}
         {observers.length > 0 && (
@@ -105,6 +124,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
           <div className="flex flex-col min-h-full">
             {/* 팟 한줄 요약 */}
             <div className="text-center pt-2 pb-1 px-2">
+              {mode && <span className="text-[10px] text-primary font-medium mr-1">{MODE_LABELS[mode] ?? ''}</span>}
               <span className="text-xs text-muted-foreground tracking-widest uppercase">판돈 </span>
               <span className="font-semibold tabular-nums">{pot.toLocaleString()}원</span>
               {hasAllIn && <span className="text-[10px] text-muted-foreground ml-1">올인 포함</span>}
