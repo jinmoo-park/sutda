@@ -9,7 +9,7 @@ function getAudio(): HTMLAudioElement {
     const audio = new Audio('/sfx/' + encodeURIComponent('main_bgm.mp3'));
     audio.loop = true;
     audio.preload = 'none';
-    audio.volume = 0.15;
+    audio.volume = 0.1;
     _audio = audio;
 
     const muted = localStorage.getItem('sutda_bgm_muted') === 'true';

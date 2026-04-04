@@ -65,10 +65,10 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
           </div>
         </div>
 
-        {/* 내 차례 알림 토스트 */}
+        {/* 내 차례 알림 모달 */}
         {showMyTurnAlert && (
-          <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-            <div className="bg-primary text-primary-foreground px-6 py-3 rounded-xl text-lg font-bold shadow-lg animate-in fade-in zoom-in duration-300">
+          <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none" style={{ background: 'rgba(0,0,0,0.45)' }}>
+            <div className="bg-background/80 backdrop-blur-sm border border-primary/40 text-foreground px-10 py-5 rounded-2xl text-2xl font-bold shadow-2xl animate-in fade-in zoom-in duration-300">
               내 차례!
             </div>
           </div>
@@ -118,6 +118,15 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
           className="absolute inset-0 pointer-events-none"
           style={{ background: 'rgba(0,0,0,0.45)' }}
         />
+
+        {/* 내 차례 알림 모달 (모바일) */}
+        {showMyTurnAlert && (
+          <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none" style={{ background: 'rgba(0,0,0,0.45)' }}>
+            <div className="bg-background/80 backdrop-blur-sm border border-primary/40 text-foreground px-10 py-5 rounded-2xl text-2xl font-bold shadow-2xl animate-in fade-in zoom-in duration-300">
+              내 차례!
+            </div>
+          </div>
+        )}
 
         {/* 스크롤 컨텍스트: h-full 고정 + overflow-y-auto → 내용이 넘치면 스크롤 */}
         <div className="relative z-10 h-full overflow-y-auto">

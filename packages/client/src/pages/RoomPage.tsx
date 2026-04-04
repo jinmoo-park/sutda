@@ -460,12 +460,12 @@ export function RoomPage() {
     gameState?.openingBettorSeatIndex !== undefined &&
     myPlayer?.seatIndex === gameState?.openingBettorSeatIndex;
 
-  // 내 차례 알림 — 베팅 phase에서 isMyTurn 변경 시 2초 토스트
+  // 내 차례 알림 — 베팅 phase에서 isMyTurn 변경 시 3초 토스트
   useEffect(() => {
     const isBettingPhase = ['betting', 'betting-1', 'betting-2'].includes(phase);
     if (isBettingPhase && isMyTurn && dealingComplete) {
       setShowMyTurnAlert(true);
-      const timer = setTimeout(() => setShowMyTurnAlert(false), 2000);
+      const timer = setTimeout(() => setShowMyTurnAlert(false), 3000);
       return () => clearTimeout(timer);
     } else {
       setShowMyTurnAlert(false);
