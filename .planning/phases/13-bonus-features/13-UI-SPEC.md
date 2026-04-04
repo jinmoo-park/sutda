@@ -1,7 +1,8 @@
 ---
 phase: 13
 slug: bonus-features
-status: draft
+status: approved
+reviewed_at: 2026-04-04
 shadcn_initialized: true
 preset: "style=default, baseColor=slate, cssVariables=true, iconLibrary=lucide"
 created: 2026-04-04
