@@ -340,6 +340,17 @@ export function RoomPage() {
         return;
       }
     }
+
+    // 세장섯다: card-select/betting-2 진입 시 3장 모두 표시되도록 visibleCardCounts 업데이트
+    // (딜링 애니메이션은 2라운드=2장까지만 설정하므로 3번째 카드는 별도 업데이트 필요)
+    if ((prevPhaseRef.current === 'betting-1' || prevPhaseRef.current === 'card-select') &&
+        (gameState?.phase === 'card-select' || gameState?.phase === 'betting-2')) {
+      if (gameState.mode === 'three-card') {
+        const counts: Record<string, number> = {};
+        gameState.players.forEach(p => { counts[p.id] = 3; });
+        setVisibleCardCounts(counts);
+      }
+    }
   }, [gameState?.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 베팅/커팅 phase 벗어나면 딜링 상태 초기화

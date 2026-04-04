@@ -107,8 +107,12 @@ export function PlayerSeat({
         const maxSlots = mode === 'shared-card'
           ? Math.max(player.cards.length, 1)
           : Math.max(player.cards.length, 2);
+        const isThreeCardLayout = mode === 'three-card' && maxSlots >= 3;
         return (
-        <div className="flex gap-1 flex-wrap">
+        <div className={cn(
+          'flex flex-wrap',
+          isThreeCardLayout ? '-space-x-2' : 'gap-1'
+        )}>
           {Array.from({ length: maxSlots }, (_, idx) => {
             const visible = idx < showCount;
             const card = player.cards[idx];
@@ -126,7 +130,12 @@ export function PlayerSeat({
                 key={idx}
                 className={cn(
                   'transition-opacity duration-300',
-                  visible ? 'opacity-100' : 'opacity-0'
+                  visible ? 'opacity-100' : 'opacity-0',
+                  isThreeCardLayout && 'relative',
+                  isThreeCardLayout && idx === 0 && 'z-30',
+                  isThreeCardLayout && idx === 1 && 'z-20',
+                  isThreeCardLayout && idx === 2 && 'z-10',
+                  isOpenedCard && 'ring-2 ring-amber-400 rounded brightness-110'
                 )}
                 style={getDealAnimStyle(idx)}
               >
