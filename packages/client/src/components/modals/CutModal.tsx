@@ -280,7 +280,6 @@ export function CutModal({ open, roomId }: CutModalProps) {
               id: i, cardCount: count,
               x: positions[i]?.x ?? 0, y: positions[i]?.y ?? 0,
             }));
-            play('giri');
             splitAll(newPiles);
             emitGiriUpdate('split', newPiles, []);
           } else if (swipeDir < 0 && piles.length >= 2) {
@@ -291,7 +290,6 @@ export function CutModal({ open, roomId }: CutModalProps) {
               id: i, cardCount: count,
               x: positions[i]?.x ?? 0, y: positions[i]?.y ?? 0,
             }));
-            play('giri');
             splitAll(newPiles);
             emitGiriUpdate('split', newPiles, []);
           }

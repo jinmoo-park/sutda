@@ -179,7 +179,6 @@ export function ShuffleModal({ open, roomId, readOnly = false }: ShuffleModalPro
   useEffect(() => {
     if (open) {
       setHasShuffled(false);
-      if (readOnly) play('shuffle');
       requestAnimationFrame(() => {
         buildDeck();
         if (readOnly) startShuffle();
