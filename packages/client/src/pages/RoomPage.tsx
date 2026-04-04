@@ -16,6 +16,7 @@ import { ModeSelectModal } from '@/components/modals/ModeSelectModal';
 import { SharedCardSelectModal } from '@/components/modals/SharedCardSelectModal';
 import { ShuffleModal } from '@/components/modals/ShuffleModal';
 import { CutModal } from '@/components/modals/CutModal';
+import { SpectatorCutView } from '@/components/modals/SpectatorCutView';
 import { GusaRejoinModal } from '@/components/modals/GusaRejoinModal';
 import { GusaAnnounceModal } from '@/components/modals/GusaAnnounceModal';
 import { SejangCardSelectModal } from '@/components/modals/SejangCardSelectModal';
@@ -27,7 +28,7 @@ import { HwatuCard } from '@/components/game/HwatuCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { HistoryModal } from '@/components/modals/HistoryModal';
-import { Clock, Send, Scissors } from 'lucide-react';
+import { Clock, Send } from 'lucide-react';
 import { ModalContainerContext } from '@/lib/modalContainerContext';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
@@ -103,6 +104,13 @@ export function RoomPage() {
   const { roundHistory } = useGameStore();
   // 세장섯다 3번째 카드 확인: phase === 'card-select' && !sejangThirdCardDismissed 이면 오버레이 표시
   const [sejangThirdCardDismissed, setSejangThirdCardDismissed] = useState(false);
+  // 기리 관전자 상태 (본인 외 플레이어에게 실시간 스트리밍)
+  const [spectatorGiriState, setSpectatorGiriState] = useState<{
+    phase: 'split' | 'tap' | 'merging' | 'done';
+    piles: { id: number; cardCount: number; x: number; y: number }[];
+    tapOrder: number[];
+    cutterNickname: string;
+  } | null>(null);
   const [visibleCardCounts, setVisibleCardCounts] = useState<Record<string, number>>({});
   const dealingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // 모달 포털 컨테이너 (게임 테이블 영역)
@@ -183,6 +191,37 @@ export function RoomPage() {
     socket.on('kicked', handleKicked);
     return () => { socket.off('kicked', handleKicked); };
   }, [socket, roomId, navigate]);
+
+  // giri-phase-update 이벤트: 기리 플레이어가 단계 전환 시 관전자에게 실시간 브로드캐스트
+  useEffect(() => {
+    if (!socket) return;
+    const handleGiriPhaseUpdate = (data: {
+      phase: 'split' | 'tap' | 'merging' | 'done';
+      piles: { id: number; cardCount: number; x: number; y: number }[];
+      tapOrder: number[];
+      cutterNickname: string;
+    }) => {
+      setSpectatorGiriState({
+        phase: data.phase,
+        piles: data.piles,
+        tapOrder: data.tapOrder,
+        cutterNickname: data.cutterNickname,
+      });
+      // 기리 split 단계 SFX (관전자에게도 재생)
+      if (data.phase === 'split') {
+        playSfx('giri');
+      }
+    };
+    socket.on('giri-phase-update', handleGiriPhaseUpdate);
+    return () => { socket.off('giri-phase-update', handleGiriPhaseUpdate); };
+  }, [socket]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // cutting phase 벗어나면 spectatorGiriState 초기화
+  useEffect(() => {
+    if (gameState?.phase !== 'cutting') {
+      setSpectatorGiriState(null);
+    }
+  }, [gameState?.phase]);
 
   // cutting/shuffling → betting/betting-1/sejang-open 전환 감지 → 딜링 애니메이션 후 카드 확인 오버레이 표시
   // (skipCutting 재경기 시 shuffling → betting 직접 전환)
@@ -752,23 +791,14 @@ export function RoomPage() {
       <ShuffleModal open={phase === 'shuffling' && isDealer} roomId={roomId!} />
       <ShuffleModal open={phase === 'shuffling' && !isDealer} roomId={roomId!} readOnly />
       <CutModal open={phase === 'cutting' && isMyTurn} roomId={roomId!} />
-      {/* 기리 대기 — 본인 아닌 플레이어에게 표시 */}
-      <Dialog open={phase === 'cutting' && !isMyTurn} modal={false}>
-        <DialogContent
-          className="max-w-xs text-center"
-          onInteractOutside={(e) => e.preventDefault()}
-          onEscapeKeyDown={(e) => e.preventDefault()}
-        >
-          <DialogTitle className="flex items-center justify-center gap-2">
-            <Scissors className="h-4 w-4 text-primary" />
-            기리 중
-          </DialogTitle>
-          <p className="text-sm text-muted-foreground">
-            <span className="font-semibold text-foreground">{currentPlayerNickname}</span>님이 기리 중입니다
-          </p>
-          <p className="text-xs text-muted-foreground">잠시만 기다려 주세요…</p>
-        </DialogContent>
-      </Dialog>
+      {/* 기리 대기 — 본인 아닌 플레이어에게 실시간 더미 스트리밍 표시 */}
+      <SpectatorCutView
+        open={phase === 'cutting' && !isMyTurn}
+        cutterNickname={spectatorGiriState?.cutterNickname ?? currentPlayerNickname ?? ''}
+        giriPhase={spectatorGiriState?.phase ?? null}
+        piles={spectatorGiriState?.piles ?? []}
+        tapOrder={spectatorGiriState?.tapOrder ?? []}
+      />
       {/* 상대 전원 다이 시 패 공개 선택 */}
       <MuckChoiceModal
         open={
