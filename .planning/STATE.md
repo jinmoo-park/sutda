@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 Phase: 16
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-04 - Completed quick task 260404-qni: master push + Oracle VM 배포 (PM2 restart)
+Last activity: 2026-04-04 - Completed quick task 260404-svi: sfx 트리거 조건 및 맵핑 문서화
 
 Progress: [████░░░░░░] 44%
 
@@ -224,6 +224,7 @@ None yet.
 | 260404-pyv | master push + Oracle VM 배포 (PM2 restart) | 2026-04-04 | d3d5d37 | [260404-pyv-master-origin-push-oracle-vm-pm2-reload](./quick/260404-pyv-master-origin-push-oracle-vm-pm2-reload/) |
 | 260404-qk2 | HandPanel 손패 패널 힌트 문구 제거 — 나머지 카드를 탭하세요 스팬 삭제 | 2026-04-04 | c32396e | [260404-qk2-handpanel](./quick/260404-qk2-handpanel/) |
 | 260404-qni | master push + Oracle VM 배포 (PM2 restart) | 2026-04-04 | 834d4bc | [260404-qni-master-push-oracle-vm-pm2-restart](./quick/260404-qni-master-push-oracle-vm-pm2-restart/) |
+| 260404-svi | sfx 트리거 조건 및 맵핑 문서화 | 2026-04-04 | a4d3e7c | [260404-svi-sfx](./quick/260404-svi-sfx/) |
 
 ### Blockers/Concerns
 
