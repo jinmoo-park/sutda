@@ -431,6 +431,17 @@ export function RoomPage() {
     }
   }, [error, clearError]);
 
+  // 대기중(waiting)일 때 다른 플레이어가 입장하면 카드 뒤집기 SFX 재생
+  const prevPlayerCountRef = useRef<number>(0);
+  useEffect(() => {
+    const currentCount = roomState?.players.length ?? 0;
+    const prevCount = prevPlayerCountRef.current;
+    if (roomState?.gamePhase === 'waiting' && currentCount > prevCount && prevCount > 0) {
+      playSfx('flip');
+    }
+    prevPlayerCountRef.current = currentCount;
+  }, [roomState?.players.length, roomState?.gamePhase]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const phase = gameState?.phase ?? roomState?.gamePhase ?? 'waiting';
   const myPlayer = gameState?.players.find((p) => p.id === myPlayerId) ?? null;
 

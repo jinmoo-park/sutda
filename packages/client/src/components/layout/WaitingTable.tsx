@@ -2,6 +2,8 @@ import { useState } from 'react';
 import type { RoomState } from '@sutda/shared';
 import { Button } from '@/components/ui/button';
 import { useGameStore } from '@/store/gameStore';
+import { useBgmPlayer } from '@/hooks/useBgmPlayer';
+import { useSfxPlayer } from '@/hooks/useSfxPlayer';
 
 interface WaitingTableProps {
   roomState: RoomState;
@@ -12,6 +14,8 @@ interface WaitingTableProps {
 export function WaitingTable({ roomState, myPlayerId, roomId }: WaitingTableProps) {
   const [copied, setCopied] = useState(false);
   const { socket } = useGameStore();
+  const { isMuted: bgmMuted, toggleMute: toggleBgm } = useBgmPlayer();
+  const { isMuted: sfxMuted, toggleMute: toggleSfx } = useSfxPlayer();
 
   const isHost = myPlayerId === roomState.hostId;
   const canStart = roomState.players.length >= 2;
@@ -78,6 +82,24 @@ export function WaitingTable({ roomState, myPlayerId, roomId }: WaitingTableProp
       ) : (
         <p className="text-sm text-muted-foreground">방장이 게임을 시작할 때까지 기다려 주세요</p>
       )}
+
+      {/* 오디오 컨트롤 */}
+      <div className="flex gap-2">
+        <button
+          onClick={toggleBgm}
+          title={bgmMuted ? 'BGM 켜기' : 'BGM 끄기'}
+          className={`h-8 w-8 flex items-center justify-center rounded text-xs font-semibold transition-opacity bg-black/50 backdrop-blur-sm border border-white/20 hover:bg-black/70 ${bgmMuted ? 'opacity-40' : 'opacity-80'}`}
+        >
+          {bgmMuted ? '🔇' : '🎵'}
+        </button>
+        <button
+          onClick={toggleSfx}
+          title={sfxMuted ? 'SFX 켜기' : 'SFX 끄기'}
+          className={`h-8 w-8 flex items-center justify-center rounded text-xs font-semibold transition-opacity bg-black/50 backdrop-blur-sm border border-white/20 hover:bg-black/70 ${sfxMuted ? 'opacity-40' : 'opacity-80'}`}
+        >
+          {sfxMuted ? '🔕' : '🔔'}
+        </button>
+      </div>
     </div>
   );
 
