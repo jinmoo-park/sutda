@@ -25,6 +25,7 @@ export type GamePhase =
   | 'betting-2'        // 세장섯다: 2차 베팅
   | 'shared-card-select' // 한장공유: 딜러가 공유 카드 선택
   | 'gollagolla-select' // 골라골라: 20장 오픈 그리드, 동시 선착순 선택
+  | 'card-reveal'      // 카드 공개 단계 (각 플레이어가 자신의 카드를 한장씩 클릭해 공개)
   | 'showdown'         // 족보 비교 / 승패 결정
   | 'result'           // 결과 표시
   | 'rematch-pending'  // 동점 재경기 대기
@@ -73,6 +74,7 @@ export interface PlayerState {
   isAllIn?: boolean;        // 올인 상태 (베팅 패널 비활성화 대상)
   totalCommitted?: number;  // 이번 판 전체 기여 총액 (앤티 포함, 올인 정산용)
   isDisconnected?: boolean; // 연결 끊김 상태 (차례 도달 시 자동 다이)
+  revealedCardIndices?: number[];  // card-reveal phase에서 공개된 카드 인덱스 목록
 }
 
 /** 전체 게임 상태 */

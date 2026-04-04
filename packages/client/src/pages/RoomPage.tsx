@@ -567,7 +567,7 @@ export function RoomPage() {
   }
 
   // 게임 진행 중
-  const isResultPhase = phase === 'result' || phase === 'finished';
+  const isResultPhase = phase === 'result' || phase === 'finished' || phase === 'card-reveal';
   const isRematch = ['gusa-pending', 'gusa-announce', 'rematch-pending'].includes(prevPhaseRef.current ?? '');
 
   const handPanelNode = (

@@ -96,13 +96,11 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, onEject
 
   const allPlayers = gameState.players.filter((p) => !p.isAbsent);
 
-  const playerDisplayCards = allPlayers.map((player) =>
-    (player.selectedCards?.length === 2 ? player.selectedCards : player.cards)
-  );
+  const isCardRevealPhase = gameState.phase === 'card-reveal';
 
   return (
     <div className="relative flex h-full flex-col items-center justify-center bg-background text-foreground gap-4 p-3 md:gap-6 md:p-6 overflow-y-auto">
-      {isRematch && (
+      {isRematch && !isCardRevealPhase && (
         <div
           className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center"
           style={{ animation: 'fadeIn 0.4s ease-in' }}
@@ -115,22 +113,31 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, onEject
           />
         </div>
       )}
-      <h2 className="text-xl font-semibold">{winnerNickname} 승리!</h2>
+      {isCardRevealPhase ? (
+        <h2 className="text-xl font-semibold">패를 공개하세요!</h2>
+      ) : (
+        <h2 className="text-xl font-semibold">{winnerNickname} 승리!</h2>
+      )}
 
       <div className={`grid gap-2 justify-items-center ${
         allPlayers.length <= 2 ? 'grid-cols-1' :
         allPlayers.length === 4 ? 'grid-cols-2' :
         'grid-cols-3'
       } md:flex md:flex-wrap md:gap-6 md:justify-center`}>
-        {allPlayers.map((player, pi) => {
+        {allPlayers.map((player) => {
           const isDied = !player.isAlive;
+          const isMe = player.id === myPlayerId;
 
           // 세장섯다: selectedCards 기준 족보 계산, 아니면 cards[0]/cards[1] fallback
           const displayCards = player.selectedCards?.length === 2
             ? player.selectedCards
             : player.cards;
+
+          // card-reveal phase에서 공개 여부 결정
+          const revealedIndices = player.revealedCardIndices ?? [];
+
           let handLabel: string | null = null;
-          if (!isDied && displayCards.length >= 2) {
+          if (!isDied && displayCards.length >= 2 && player.isRevealed) {
             try {
               handLabel = getHandLabel(evaluateHand(displayCards[0]!, displayCards[1]!));
             } catch {
@@ -165,6 +172,24 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, onEject
               <div className="flex gap-1 md:gap-2">
                 {isDied
                   ? player.cards.map((_, idx) => <HwatuCard key={idx} faceUp={false} size={cardSize} />)
+                  : isCardRevealPhase
+                  ? displayCards.map((card, idx) => {
+                      const isCardRevealed = revealedIndices.includes(idx);
+                      const canClick = isMe && !isCardRevealed && player.isAlive;
+                      return (
+                        <div
+                          key={idx}
+                          onClick={canClick ? () => socket?.emit('reveal-my-card', { roomId, cardIndex: idx }) : undefined}
+                          className={canClick ? 'cursor-pointer animate-pulse' : ''}
+                        >
+                          <HwatuCard
+                            card={isCardRevealed ? card! : undefined}
+                            faceUp={isCardRevealed}
+                            size={cardSize}
+                          />
+                        </div>
+                      );
+                    })
                   : displayCards.map((card, idx) =>
                       player.isRevealed ? (
                         <HwatuCard key={idx} card={card!} faceUp={true} size={cardSize} />
@@ -180,34 +205,38 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, onEject
                   <Badge variant="secondary" className="text-[10px] md:text-xs">{handLabel}</Badge>
                 )
               )}
-              <Badge
-                className={`text-[10px] md:text-xs ${
-                  chipDelta > 0
-                    ? 'bg-green-600 text-white'
-                    : chipDelta < 0
-                    ? 'bg-red-600 text-white'
-                    : ''
-                }`}
-              >
-                {chipDelta > 0 ? '+' : ''}
-                {chipDelta.toLocaleString()}원
-              </Badge>
-              {isWinner && totalTtaengReceived > 0 && (
-                <p className="text-[10px] text-green-400 md:text-xs">
-                  땡값 +{totalTtaengReceived.toLocaleString()}원
-                </p>
-              )}
-              {!isWinner && myTtaengPayment && (
-                <p className="text-[10px] text-red-400 md:text-xs">
-                  땡값 -{myTtaengPayment.amount.toLocaleString()}원
-                </p>
+              {!isCardRevealPhase && (
+                <>
+                  <Badge
+                    className={`text-[10px] md:text-xs ${
+                      chipDelta > 0
+                        ? 'bg-green-600 text-white'
+                        : chipDelta < 0
+                        ? 'bg-red-600 text-white'
+                        : ''
+                    }`}
+                  >
+                    {chipDelta > 0 ? '+' : ''}
+                    {chipDelta.toLocaleString()}원
+                  </Badge>
+                  {isWinner && totalTtaengReceived > 0 && (
+                    <p className="text-[10px] text-green-400 md:text-xs">
+                      땡값 +{totalTtaengReceived.toLocaleString()}원
+                    </p>
+                  )}
+                  {!isWinner && myTtaengPayment && (
+                    <p className="text-[10px] text-red-400 md:text-xs">
+                      땡값 -{myTtaengPayment.amount.toLocaleString()}원
+                    </p>
+                  )}
+                </>
               )}
             </div>
           );
         })}
       </div>
 
-      <div className="flex flex-col items-center gap-2">
+      {!isCardRevealPhase && <div className="flex flex-col items-center gap-2">
         {amAbsent ? (
           hasReturnedFromBreak ? (
             <p className="text-sm text-muted-foreground">복귀 완료 — 다음 판부터 참여합니다</p>
@@ -241,7 +270,7 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, onEject
         )}
 
         {!anyPlayerBroke && <ProxyAnteSection gameState={gameState} myPlayerId={myPlayerId} socket={socket} />}
-      </div>
+      </div>}
     </div>
   );
 }
