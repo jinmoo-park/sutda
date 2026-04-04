@@ -1891,7 +1891,8 @@ export class GameEngine {
     // 공유 카드 초기화
     (this.state as any).sharedCard = undefined;
 
-    // mode 유지 (startRematch와의 핵심 차이)
+    // 구사 재경기는 무조건 오리지날 모드로 진행 (단, 기리 없음 = skipCutting=true)
+    this.state.mode = 'original';
     this.state.isRematchRound = true;  // 구사 재경기 — 땡값 면제
     this.state.skipCutting = true;     // 구사 재경기 — 기리 없이 바로 dealing
     this.state.phase = 'shuffling';

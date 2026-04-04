@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useSyncExternalStore } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import {
   Dialog,
@@ -9,6 +9,11 @@ import {
 } from '@/components/ui/dialog';
 import { HwatuCard } from '@/components/game/HwatuCard';
 import { cn } from '@/lib/utils';
+
+const mdQuery = typeof window !== 'undefined' ? window.matchMedia('(min-width: 768px)') : null;
+const subscribeMd = (cb: () => void) => { mdQuery?.addEventListener('change', cb); return () => mdQuery?.removeEventListener('change', cb); };
+const getSnapshotMd = () => mdQuery?.matches ?? false;
+function useIsMd() { return useSyncExternalStore(subscribeMd, getSnapshotMd, () => false); }
 
 interface SharedCardSelectModalProps {
   open: boolean;
@@ -25,6 +30,7 @@ export function SharedCardSelectModal({ open, roomId }: SharedCardSelectModalPro
     }
   }, [open]);
 
+  const isMd = useIsMd();
   const deck = gameState?.deck ?? [];
   const isDealer =
     gameState?.players.find((p) => p.id === myPlayerId)?.isDealer ?? false;
@@ -38,6 +44,7 @@ export function SharedCardSelectModal({ open, roomId }: SharedCardSelectModalPro
   return (
     <Dialog open={open} modal={false}>
       <DialogContent
+        className="max-h-[85vh] overflow-y-auto p-3 md:p-6"
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
@@ -49,7 +56,7 @@ export function SharedCardSelectModal({ open, roomId }: SharedCardSelectModalPro
               : '선 플레이어가 공유 카드를 선택 중입니다...'}
           </DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-5 gap-2 mt-2">
+        <div className="grid grid-cols-5 gap-1 md:gap-2 mt-2">
           {Array.from({ length: 20 }, (_, i) => {
             const isSelected = selectedIndex === i;
             const disabled = !isDealer || selectedIndex !== null;
@@ -67,9 +74,9 @@ export function SharedCardSelectModal({ open, roomId }: SharedCardSelectModalPro
                 )}
               >
                 {isDealer && deck[i] ? (
-                  <HwatuCard card={deck[i]} faceUp={true} size="lg" />
+                  <HwatuCard card={deck[i]} faceUp={true} size={isMd ? 'lg' : 'md'} />
                 ) : (
-                  <HwatuCard faceUp={false} size="sm" />
+                  <HwatuCard faceUp={false} size={isMd ? 'sm' : 'xs'} />
                 )}
               </button>
             );

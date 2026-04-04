@@ -108,36 +108,43 @@ export function PlayerSeat({
           ? Math.max(player.cards.length, 1)
           : Math.max(player.cards.length, 2);
         const isThreeCardLayout = mode === 'three-card' && maxSlots >= 3;
+
+        // 세장섯다: openedCardIndex 카드를 맨 앞으로 정렬한 렌더 순서 계산 (HandPanel과 동일 패턴)
+        const isThreeCardWithOpened = mode === 'three-card' && player.openedCardIndex !== undefined;
+        const renderOrder: number[] = isThreeCardWithOpened
+          ? [player.openedCardIndex!, ...[...Array(maxSlots).keys()].filter(i => i !== player.openedCardIndex!)]
+          : [...Array(maxSlots).keys()];
+
         return (
         <div className={cn(
           'flex flex-wrap',
           isThreeCardLayout ? '-space-x-2' : 'gap-1'
         )}>
-          {Array.from({ length: maxSlots }, (_, idx) => {
-            const visible = idx < showCount;
-            const card = player.cards[idx];
+          {renderOrder.map((origIdx, renderPos) => {
+            const visible = origIdx < showCount;
+            const card = player.cards[origIdx];
             // 세장섯다: openedCardIndex가 있으면 해당 카드는 전원에게 공개
-            const isOpenedCard = mode === 'three-card' && player.openedCardIndex === idx;
+            const isOpenedCard = mode === 'three-card' && player.openedCardIndex === origIdx;
             // 내 카드: flip 동기화 (HandPanel에서 뒤집은 카드만 앞면)
             // 상대 카드: 인디언 모드이거나 세장섯다 공개 카드만 앞면
             const showFace = card != null && (
-              (isMe && (flippedCardIndices ? flippedCardIndices.has(idx) : false))
+              (isMe && (flippedCardIndices ? flippedCardIndices.has(origIdx) : false))
               || (!isMe && mode === 'indian')
               || isOpenedCard
             );
             return (
               <div
-                key={idx}
+                key={origIdx}
                 className={cn(
                   'transition-opacity duration-300',
                   visible ? 'opacity-100' : 'opacity-0',
                   isThreeCardLayout && 'relative',
-                  isThreeCardLayout && idx === 0 && 'z-30',
-                  isThreeCardLayout && idx === 1 && 'z-20',
-                  isThreeCardLayout && idx === 2 && 'z-10',
+                  isThreeCardLayout && renderPos === 0 && 'z-30',
+                  isThreeCardLayout && renderPos === 1 && 'z-20',
+                  isThreeCardLayout && renderPos === 2 && 'z-10',
                   isOpenedCard && 'ring-2 ring-amber-400 rounded brightness-110'
                 )}
-                style={getDealAnimStyle(idx)}
+                style={getDealAnimStyle(origIdx)}
               >
                 <HwatuCard
                   card={card ?? undefined}
