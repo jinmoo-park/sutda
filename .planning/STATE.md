@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 Phase: 16
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-04
+Last activity: 2026-04-04 - Completed quick task 260404-nkl: UX 개선 4종 (동점 재경기 ResultScreen 통합, 내 차례 알림, 모드 라벨, 체크 SFX 교체 + 볼륨 균일화)
 
 Progress: [████░░░░░░] 44%
 
