@@ -179,6 +179,8 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
 
   const allPlayers = gameState.players.filter((p) => !p.isAbsent);
 
+  const isSharedCardMode = gameState.mode === 'shared-card' && gameState.sharedCard != null;
+
   const isCardRevealPhase = gameState.phase === 'card-reveal';
 
   return (
@@ -213,10 +215,12 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
           const isDied = !player.isAlive;
           const isMe = player.id === myPlayerId;
 
-          // 세장섯다: selectedCards 기준 족보 계산, 아니면 cards[0]/cards[1] fallback
+          // 세장섯다: selectedCards 기준 족보 계산, 한장공유: [본인카드, 공유카드] 2장, 아니면 player.cards fallback
           const displayCards = player.selectedCards?.length === 2
             ? player.selectedCards
-            : player.cards;
+            : isSharedCardMode && player.cards[0]
+              ? [player.cards[0], gameState.sharedCard!]
+              : player.cards;
 
           // card-reveal phase에서 공개 여부 결정
           const revealedIndices = player.revealedCardIndices ?? [];
@@ -259,7 +263,8 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
                   ? player.cards.map((_, idx) => <HwatuCard key={idx} faceUp={false} size={cardSize} />)
                   : isCardRevealPhase
                   ? displayCards.map((card, idx) => {
-                      const isCardRevealed = revealedIndices.includes(idx);
+                      const isSharedCardAtIndex = isSharedCardMode && idx === 1;
+                      const isCardRevealed = isSharedCardAtIndex || revealedIndices.includes(idx);
                       const canClick = isMe && !isCardRevealed && player.isAlive;
                       return (
                         <div
