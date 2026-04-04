@@ -220,6 +220,7 @@ None yet.
 | 260404-nkl | UX 개선 4종 — 동점 재경기 ResultScreen 통합, 내 차례 알림, 모드 라벨, 체크 SFX 교체 + 볼륨 균일화 | 2026-04-04 | 06a1b8d | [260404-nkl-sfx](./quick/260404-nkl-sfx/) |
 | 260404-o0y | 내차례 알림 전체화면 반투명 모달+3초, BGM볼륨 0.1 | 2026-04-04 | 6c23917 | [260404-o0y-3-bgm-0-1](./quick/260404-o0y-3-bgm-0-1/) |
 | 260404-jdp | SFX 이중 재생 버그 수정 — ShuffleModal readOnly 경로, CutModal 터치 split 경로 | 2026-04-04 | c4bddeb | [260404-jdp-sfx-double-play-fix](./quick/260404-jdp-sfx-double-play-fix/) |
+| 260404-pn6 | SFX 버그 수정 2종 — card-reveal 즉시 정지 + 패배자 win-ddaeng-loser SFX | 2026-04-04 | 634a7df | [260404-pn6-10-sfx-12-sfx](./quick/260404-pn6-10-sfx-12-sfx/) |
 
 ### Blockers/Concerns
 
