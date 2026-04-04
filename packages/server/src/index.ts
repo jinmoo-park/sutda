@@ -485,6 +485,16 @@ io.on('connection', (socket) => {
     });
   });
 
+  socket.on('giri-phase-update', ({ roomId, phase, piles, tapOrder }) => {
+    // 게임 로직 불필요 — 순수 UI 브로드캐스트
+    io.to(roomId).emit('giri-phase-update', {
+      phase,
+      piles,
+      tapOrder,
+      cutterNickname: socket.data.nickname,
+    });
+  });
+
   socket.on('cut', ({ roomId, cutPoints, order }) => {
     handleGameAction(socket, roomId, () => {
       getEngine(roomId).cut(socket.data.playerId, cutPoints, order);

@@ -1,6 +1,17 @@
 import type { RoomState, RoomPlayer } from './room.js';
 import type { GameState, GameMode, BetAction, RoundHistoryEntry } from './game.js';
 
+/** 기리 단계 (관전자 스트리밍용) */
+export type GiriPhase = 'split' | 'tap' | 'merging' | 'done';
+
+/** 기리 더미 정보 (관전자 스트리밍용) */
+export interface GiriPile {
+  id: number;
+  cardCount: number;
+  x: number;
+  y: number;
+}
+
 /** 에러 응답 (per UI-SPEC 에러 메시지 계약) */
 export interface ErrorPayload {
   code:
@@ -54,6 +65,12 @@ export interface ClientToServerEvents {
   'confirm-gusa-announce': (data: { roomId: string }) => void;
   'send-chat': (data: { roomId: string; text: string }) => void;
   'proxy-ante': (data: { roomId: string; beneficiaryIds: string[] }) => void;
+  'giri-phase-update': (data: {
+    roomId: string;
+    phase: GiriPhase;
+    piles: GiriPile[];
+    tapOrder: number[];
+  }) => void;
 }
 
 /** 서버 -> 클라이언트 이벤트 */
@@ -71,6 +88,12 @@ export interface ServerToClientEvents {
   'proxy-ante-applied': (data: { sponsorNickname: string; beneficiaryNickname: string }) => void;
   'game-history': (data: { entries: RoundHistoryEntry[] }) => void;
   'kicked': (data: { reason: string }) => void;
+  'giri-phase-update': (data: {
+    phase: GiriPhase;
+    piles: GiriPile[];
+    tapOrder: number[];
+    cutterNickname: string;
+  }) => void;
 }
 
 /** Socket.IO 서버 간 이벤트 (사용하지 않지만 타입 완전성) */
