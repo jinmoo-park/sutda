@@ -87,6 +87,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
         )}
 
         {/* 플레이어 원형 배치 */}
+        {/* Bug Fix: currentPlayerIndex는 seatIndex값 — p.seatIndex로 비교 */}
         {players.map((p, i) => (
           <PlayerSeat
             key={p.id}
@@ -94,7 +95,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
             totalPlayers={players.length}
             player={p}
             isMe={p.id === myPlayerId}
-            isCurrentTurn={i === currentPlayerIndex}
+            isCurrentTurn={p.seatIndex === currentPlayerIndex}
             visibleCardCount={visibleCardCounts?.[p.id]}
             mode={mode}
             dealingComplete={dealingComplete}
@@ -145,6 +146,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
             )}
             {/* 그리드 배치: 6명까지 2열 3행 */}
             <div className="grid grid-cols-2 gap-1 p-1">
+              {/* Bug Fix: currentPlayerIndex는 seatIndex값 — p.seatIndex로 비교 */}
               {players.map((p, i) => (
                 <PlayerSeat
                   key={p.id}
@@ -152,7 +154,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
                   totalPlayers={players.length}
                   player={p}
                   isMe={p.id === myPlayerId}
-                  isCurrentTurn={i === currentPlayerIndex}
+                  isCurrentTurn={p.seatIndex === currentPlayerIndex}
                   visibleCardCount={visibleCardCounts?.[p.id]}
                   dealingComplete={dealingComplete}
                   isConnected={roomState?.players.find(rp => rp.id === p.id)?.isConnected ?? true}

@@ -21,6 +21,7 @@ interface GameStore {
   error: string | null;
   chatMessages: ChatMessage[];
   roundHistory: RoundHistoryEntry[];
+  nextRoundVotedIds: string[];
 
   // 액션
   connect: (serverUrl: string) => void;
@@ -37,6 +38,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   error: null,
   chatMessages: [],
   roundHistory: [],
+  nextRoundVotedIds: [],
 
   connect: (serverUrl: string) => {
     const existing = get().socket;
@@ -64,7 +66,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
 
     socket.on('game-state', (state: GameState) => {
-      set({ gameState: state });
+      const prev = get().gameState;
+      // result phase에서 벗어나면 nextRoundVotedIds 초기화
+      const wasResult = prev?.phase === 'result';
+      const isResult = state.phase === 'result';
+      if (wasResult && !isResult) {
+        set({ gameState: state, nextRoundVotedIds: [] });
+      } else {
+        set({ gameState: state });
+      }
     });
 
     socket.on('room-state', (state: RoomState) => {
@@ -99,6 +109,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ roundHistory: entries });
     });
 
+    socket.on('next-round-votes', ({ votedPlayerIds }) => {
+      set({ nextRoundVotedIds: votedPlayerIds });
+    });
+
     socket.on('proxy-ante-applied', ({ sponsorNickname, beneficiaryNickname }) => {
       toast(`${sponsorNickname}님이 ${beneficiaryNickname}의 학교를 대신 가줬습니다`);
     });
@@ -118,7 +132,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   disconnect: () => {
     get().socket?.disconnect();
-    set({ socket: null, gameState: null, roomState: null, myPlayerId: null, chatMessages: [], roundHistory: [] });
+    set({ socket: null, gameState: null, roomState: null, myPlayerId: null, chatMessages: [], roundHistory: [], nextRoundVotedIds: [] });
   },
 
   clearError: () => set({ error: null }),

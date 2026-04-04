@@ -59,16 +59,27 @@ export function WaitingTable({ roomState, myPlayerId, roomId }: WaitingTableProp
           </p>
         ) : (
           roomState.players.map((p) => (
-            <div key={p.id} className="flex justify-between text-sm">
+            <div key={p.id} className="flex justify-between items-center text-sm">
               <span className="font-semibold">
                 {p.nickname}
                 {p.id === roomState.hostId && (
                   <span className="ml-1 text-xs text-muted-foreground">(방장)</span>
                 )}
               </span>
-              <span className="tabular-nums text-muted-foreground">
-                {p.chips.toLocaleString()}원
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="tabular-nums text-muted-foreground">
+                  {p.chips.toLocaleString()}원
+                </span>
+                {isHost && p.id !== myPlayerId && (
+                  <button
+                    onClick={() => socket?.emit('kick-player', { roomId, targetPlayerId: p.id })}
+                    className="text-[10px] px-1.5 py-0.5 rounded bg-red-600/80 text-white hover:bg-red-600 transition-colors"
+                    title={`${p.nickname} 강퇴`}
+                  >
+                    강퇴
+                  </button>
+                )}
+              </div>
             </div>
           ))
         )}

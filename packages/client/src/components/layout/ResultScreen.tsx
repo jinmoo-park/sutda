@@ -26,7 +26,7 @@ interface ResultScreenProps {
 const AUTO_NEXT_SECONDS = 5;
 
 export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRematchPending, onEject }: ResultScreenProps) {
-  const { socket } = useGameStore();
+  const { socket, nextRoundVotedIds } = useGameStore();
   const { play } = useSfxPlayer();
   const navigate = useNavigate();
   const [hasVotedNextRound, setHasVotedNextRound] = useState(false);
@@ -142,7 +142,8 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
         play('lose-normal');
       }
       // 승자 카드가 땡인 경우 win-ddaeng-loser 추가 재생
-      if (winner) {
+      // 단, 승자가 패를 공개하지 않은 경우(isRevealed=false)에는 재생하지 않음
+      if (winner && winner.isRevealed) {
         const winnerHandCards = getHandCards(winner);
         if (winnerHandCards.length >= 2) {
           try {
@@ -257,10 +258,19 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
               key={player.id}
               className={`flex flex-col items-center gap-1 p-2 rounded-lg border bg-card md:gap-2 md:p-4 ${isDied ? 'border-border opacity-70' : 'border-border'}`}
             >
-              <p className="text-xs font-semibold md:text-sm">{player.nickname}</p>
+              <div className="flex items-center gap-1">
+                <p className="text-xs font-semibold md:text-sm">{player.nickname}</p>
+                {!isCardRevealPhase && !isRematchPending && gameState.phase === 'result' && nextRoundVotedIds.includes(player.id) && (
+                  <span className="text-[9px] px-1 py-0.5 rounded bg-green-600/80 text-white font-medium">학교</span>
+                )}
+              </div>
               <div className="flex gap-1 md:gap-2">
                 {isDied
-                  ? player.cards.map((_, idx) => <HwatuCard key={idx} faceUp={false} size={cardSize} />)
+                  ? (isMe && gameState.mode === 'indian' && player.cards.some(c => c != null))
+                    ? player.cards.map((card, idx) => (
+                        <HwatuCard key={idx} card={card ?? undefined} faceUp={card != null} size={cardSize} />
+                      ))
+                    : player.cards.map((_, idx) => <HwatuCard key={idx} faceUp={false} size={cardSize} />)
                   : isCardRevealPhase
                   ? displayCards.map((card, idx) => {
                       const isSharedCardAtIndex = isSharedCardMode && idx === 1;

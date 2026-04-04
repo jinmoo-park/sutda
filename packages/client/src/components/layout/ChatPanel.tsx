@@ -44,9 +44,12 @@ export function ChatPanel({ mobile = false }: ChatPanelProps) {
   useEffect(() => () => { if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current); }, []);
 
   // 자동 스크롤 — 맨 아래에 있을 때만 (UI-SPEC 인터랙션 계약)
+  // requestAnimationFrame으로 DOM 렌더링 완료 후 실행하여 정확한 위치로 스크롤
   useEffect(() => {
     if (isAtBottomRef.current) {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+      requestAnimationFrame(() => {
+        bottomRef.current?.scrollIntoView({ behavior: 'instant' });
+      });
     }
   }, [chatMessages]);
 

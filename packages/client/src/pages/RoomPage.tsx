@@ -180,13 +180,15 @@ export function RoomPage() {
     return () => { socket.off('game-error', handleGameError); };
   }, [socket]);
 
-  // kicked 이벤트 — 0원 강제퇴장: localStorage 세션 삭제 후 홈으로 이동
+  // kicked 이벤트 — 강퇴/0원 강제퇴장: localStorage 세션 삭제 후 홈으로 이동
   useEffect(() => {
     if (!socket) return;
     const handleKicked = ({ reason }: { reason: string }) => {
       if (roomId) localStorage.removeItem(getRoomSessionKey(roomId));
       if (reason === 'NO_CHIPS') {
         toast.error('칩이 부족하여 퇴장되었습니다. 다시 입장하려면 닉네임을 입력하세요.');
+      } else if (reason === 'BY_HOST') {
+        toast.error('방장에 의해 강퇴되었습니다.');
       } else {
         toast.error('방에서 퇴장되었습니다.');
       }
@@ -485,14 +487,14 @@ export function RoomPage() {
   const phase = gameState?.phase ?? roomState?.gamePhase ?? 'waiting';
   const myPlayer = gameState?.players.find((p) => p.id === myPlayerId) ?? null;
 
-  const isMyTurn =
-    gameState !== null &&
-    gameState.players[gameState.currentPlayerIndex]?.id === myPlayerId;
+  // Bug Fix: currentPlayerIndex는 seatIndex값 — 배열 인덱스가 아닌 seatIndex로 플레이어 탐색
+  // (broke 플레이어 퇴장 후 engine.state.players filter 시 seatIndex에 gap이 생길 수 있음)
+  const currentPlayer = gameState?.players.find(p => p.seatIndex === gameState.currentPlayerIndex) ?? null;
+  const isMyTurn = gameState !== null && currentPlayer?.id === myPlayerId;
   const isDealer = myPlayer?.isDealer ?? false;
   const nonAbsentCount = gameState?.players.filter((p) => !p.isAbsent).length ?? 0;
   const canSkip = nonAbsentCount > 2;
-  const currentPlayerNickname =
-    gameState?.players[gameState.currentPlayerIndex]?.nickname;
+  const currentPlayerNickname = currentPlayer?.nickname;
   // 선 권한 보유자 여부 (체크 가능 조건)
   const isEffectiveSen =
     gameState?.openingBettorSeatIndex !== null &&
@@ -666,7 +668,9 @@ export function RoomPage() {
         phase === 'card-select' || (phase === 'betting-2' && gameState.mode === 'three-card')
           ? (myPlayer?.cards.length ?? 0)
           : Object.keys(visibleCardCounts).length > 0
-            ? (visibleCardCounts[myPlayerId ?? ''] ?? 0)
+            // Bug Fix: myPlayerId가 visibleCardCounts에 없으면 undefined(=전체 표시)로 폴백
+            // 재접속 시 새 socket.id는 딜링 애니메이션 시점의 키와 다를 수 있음
+            ? (myPlayerId && myPlayerId in visibleCardCounts ? visibleCardCounts[myPlayerId] : undefined)
             : undefined
       }
       nickname={myPlayer?.nickname}
@@ -869,7 +873,8 @@ export function RoomPage() {
       )}
 
       <HistoryModal entries={roundHistory} open={historyOpen} onOpenChange={setHistoryOpen} />
-      <Toaster />
+      {/* 모바일: 하단 채팅 바(ChatPanel + MobileChatInput) 높이만큼 토스트를 위로 올림 */}
+      <Toaster mobileOffset={{ bottom: 130 }} />
     </div>
     </ModalContainerContext.Provider>
   );

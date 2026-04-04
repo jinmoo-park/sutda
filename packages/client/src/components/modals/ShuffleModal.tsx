@@ -200,7 +200,7 @@ export function ShuffleModal({ open, roomId, readOnly = false }: ShuffleModalPro
         <DialogHeader>
           <DialogTitle>
             {readOnly
-              ? `${dealerName}가 카드를 섞는 중...`
+              ? `${dealerName}님이 카드를 섞는 중...`
               : isShuffling ? '섞는 중...' : hasShuffled ? '잘 섞였어요! 확인을 누르세요' : '카드 더미를 꾹 누르면 섞입니다'}
           </DialogTitle>
         </DialogHeader>

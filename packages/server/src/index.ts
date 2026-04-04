@@ -620,6 +620,9 @@ io.on('connection', (socket) => {
       const votes = nextRoundVotes.get(roomId)!;
       votes.add(socket.data.playerId);
 
+      // 투표 현황 브로드캐스트 (학교가기 상태 표시용)
+      io.to(roomId).emit('next-round-votes', { votedPlayerIds: Array.from(votes) });
+
       // 비-absent + 칩 있는 플레이어 전원 투표 시 다음 판 시작 (0칩 플레이어는 어차피 강퇴)
       const nonAbsentCount = state.players.filter(p => !p.isAbsent && p.chips > 0).length;
       if (votes.size >= nonAbsentCount) {
@@ -651,6 +654,10 @@ io.on('connection', (socket) => {
           (engineState as any).players = engineState.players.filter(
             p => activePlayers.some(rp => rp.id === p.id)
           );
+          // seatIndex 재정렬 — leaveRoom()이 room.players의 seatIndex를 0부터 재정렬하므로
+          // engine.state.players도 동일하게 재정렬해야 모든 seatIndex 기반 연산이 올바름
+          // (비연속 seatIndex는 _advanceBettingTurn 모듈러 산술과 클라이언트 배열 인덱스 lookup을 깨뜨림)
+          (engineState as any).players.forEach((p: any, i: number) => { p.seatIndex = i; });
         }
 
         // 이력 수집 — lastRoundHistory가 있으면 gameHistories에 추가 (Plan 02 연동)
@@ -674,6 +681,16 @@ io.on('connection', (socket) => {
         const room = roomManager.getRoom(roomId)!;
         const observers = room.players.filter(p => p.isObserver);
         if (observers.length > 0) {
+          // Bug Fix: room.players의 chips를 engine 현재값으로 동기화
+          // (게임 중 칩 변동은 engine.state.players에만 반영되므로, new GameEngine 전에 반드시 동기화)
+          const engineStatePlayers = engine.getState().players;
+          for (const rp of room.players) {
+            if (!rp.isObserver) {
+              const ep = engineStatePlayers.find(p => p.id === rp.id);
+              if (ep) rp.chips = ep.chips;
+            }
+          }
+
           for (const obs of observers) {
             obs.isObserver = false;
             obs.chips = obs.observerChips ?? 100000;  // 입장 시 입력한 초기 칩
@@ -769,6 +786,34 @@ io.on('connection', (socket) => {
       }
     } catch (err: any) {
       socket.emit('game-error', { code: err.message, message: err.message });
+    }
+  });
+
+  // kick-player 핸들러 — 방장이 대기실 플레이어를 강퇴
+  socket.on('kick-player', ({ roomId, targetPlayerId }) => {
+    const room = roomManager.getRoom(roomId);
+    if (!room) return;
+    // 방장 여부 검증
+    if (room.hostId !== socket.id) return;
+    // 게임 중에는 강퇴 불가 (대기실 전용)
+    if (room.gamePhase !== 'waiting') return;
+    // 자기 자신 강퇴 불가
+    if (targetPlayerId === socket.id) return;
+
+    const result = roomManager.leaveRoom(roomId, targetPlayerId);
+    if (result) {
+      // 강퇴된 플레이어에게 알림
+      io.to(targetPlayerId).emit('kicked', { reason: 'BY_HOST' });
+      const targetSocket = io.sockets.sockets.get(targetPlayerId);
+      if (targetSocket) targetSocket.leave(roomId);
+
+      // 방 상태 갱신
+      io.to(roomId).emit('player-left', {
+        playerId: result.removedPlayerId,
+        newHostId: result.newHostId,
+      });
+      const updatedRoom = roomManager.getRoom(roomId);
+      if (updatedRoom) io.to(roomId).emit('room-state', updatedRoom);
     }
   });
 

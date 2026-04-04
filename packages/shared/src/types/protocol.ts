@@ -65,6 +65,7 @@ export interface ClientToServerEvents {
   'confirm-gusa-announce': (data: { roomId: string }) => void;
   'send-chat': (data: { roomId: string; text: string }) => void;
   'proxy-ante': (data: { roomId: string; beneficiaryIds: string[] }) => void;
+  'kick-player': (data: { roomId: string; targetPlayerId: string }) => void;
   'giri-phase-update': (data: {
     roomId: string;
     phase: GiriPhase;
@@ -88,6 +89,7 @@ export interface ServerToClientEvents {
   'proxy-ante-applied': (data: { sponsorNickname: string; beneficiaryNickname: string }) => void;
   'game-history': (data: { entries: RoundHistoryEntry[] }) => void;
   'kicked': (data: { reason: string }) => void;
+  'next-round-votes': (data: { votedPlayerIds: string[] }) => void;
   'giri-phase-update': (data: {
     phase: GiriPhase;
     piles: GiriPile[];
