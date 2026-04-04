@@ -203,9 +203,6 @@ export function HandPanel({
             {handLabel}
           </Badge>
         )}
-        {flippedIndices.size === 1 && cards.length >= 2 && (
-          <span className="text-[10px] text-muted-foreground">나머지 카드를 탭하세요</span>
-        )}
       </div>
 
       {/* Row 4: BGM/SFX 버튼 (모바일 전용, props 제공 시만 렌더링) */}
