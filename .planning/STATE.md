@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 Phase: 16
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-04 - Completed quick task 260404-tgm: 세장섯다 3장 카드 표시 버그 수정
+Last activity: 2026-04-04 - Completed quick task 260404-vct: 세장섯다 공개카드 정렬 버그 + 한장공유 SFX/모달 버그 + 구사재경기 오리지날 모드 고정
 
 Progress: [████░░░░░░] 44%
 
