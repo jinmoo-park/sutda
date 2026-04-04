@@ -254,7 +254,7 @@
 | SCHOOL-PROXY | Phase 11 | Complete |
 | LATE-JOIN | Phase 11 | Complete |
 | BET-07 | Phase 15 | Complete |
-| SESSION-END | Phase 16 | Pending |
+| SESSION-END | Phase 16 | Complete |
 | ALLIN-POT | Phase 11 | Complete |
 
 ---
