@@ -1,15 +1,16 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
-export function useBgmPlayer() {
-  const [isMuted, setIsMuted] = useState(() => localStorage.getItem('sutda_bgm_muted') === 'true');
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+// 모듈 레벨 싱글톤 — 여러 컴포넌트가 훅을 호출해도 Audio 인스턴스는 하나만 생성됨
+let _audio: HTMLAudioElement | null = null;
+const _subscribers = new Set<(muted: boolean) => void>();
 
-  useEffect(() => {
+function getAudio(): HTMLAudioElement {
+  if (!_audio) {
     const audio = new Audio('/sfx/' + encodeURIComponent('main_bgm.mp3'));
     audio.loop = true;
     audio.preload = 'none';
     audio.volume = 0.15;
-    audioRef.current = audio;
+    _audio = audio;
 
     const muted = localStorage.getItem('sutda_bgm_muted') === 'true';
     if (!muted) {
@@ -19,45 +20,49 @@ export function useBgmPlayer() {
           if (localStorage.getItem('sutda_bgm_muted') !== 'true') {
             audio.play().catch(() => {});
           }
-          document.removeEventListener('click', onFirstInteraction);
-          document.removeEventListener('touchstart', onFirstInteraction);
-          document.removeEventListener('keydown', onFirstInteraction);
         };
         document.addEventListener('click', onFirstInteraction, { once: true });
         document.addEventListener('touchstart', onFirstInteraction, { once: true });
         document.addEventListener('keydown', onFirstInteraction, { once: true });
       });
     }
+  }
+  return _audio;
+}
 
+export function useBgmPlayer() {
+  const [isMuted, setIsMuted] = useState(() => localStorage.getItem('sutda_bgm_muted') === 'true');
+
+  useEffect(() => {
+    getAudio(); // 싱글톤 초기화 보장
+
+    const handler = (muted: boolean) => setIsMuted(muted);
+    _subscribers.add(handler);
     return () => {
-      audio.pause();
-      audioRef.current = null;
+      _subscribers.delete(handler);
     };
   }, []);
 
   const toggleMute = () => {
-    setIsMuted(prev => {
-      const next = !prev;
-      localStorage.setItem('sutda_bgm_muted', String(next));
-      const audio = audioRef.current;
-      if (audio) {
-        if (next) {
-          audio.pause();
-        } else {
-          audio.play().catch(() => {});
-        }
-      }
-      return next;
-    });
+    const next = localStorage.getItem('sutda_bgm_muted') !== 'true';
+    localStorage.setItem('sutda_bgm_muted', String(next));
+    const audio = getAudio();
+    if (next) {
+      audio.pause();
+    } else {
+      audio.play().catch(() => {});
+    }
+    // 모든 구독자(컴포넌트)에게 상태 변경 전파
+    _subscribers.forEach(fn => fn(next));
   };
 
   const stopBgm = () => {
-    audioRef.current?.pause();
+    _audio?.pause();
   };
 
   const startBgm = () => {
     if (localStorage.getItem('sutda_bgm_muted') !== 'true') {
-      audioRef.current?.play().catch(() => {});
+      getAudio().play().catch(() => {});
     }
   };
 
