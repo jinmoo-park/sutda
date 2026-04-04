@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 Phase: 14
 Plan: Not started
 Status: Ready to execute
-Last activity: 2026-04-04 - Completed quick task 260404-i8w: 결과 공개 플로우 수정 — 카드 클릭 한장씩 공개 후 최종 승패 노출
+Last activity: 2026-04-04 - Completed quick task 260404-jn6: SFX 시스템 구현 — 17개 이벤트 매핑 및 트리거 조건 적용
 
 Progress: [████░░░░░░] 44%
 
@@ -208,6 +208,7 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260404-i8w | 결과 공개 플로우 수정 — 카드 클릭 한장씩 공개 후 최종 승패 노출 | 2026-04-04 | a4ef055 | [260404-i8w-card-reveal-flow](./quick/260404-i8w-card-reveal-flow/) |
+| 260404-jn6 | SFX 시스템 구현 — 17개 이벤트 매핑 및 트리거 조건 적용 | 2026-04-04 | 00146f9 | [260404-jn6-sfx-17](./quick/260404-jn6-sfx-17/) |
 
 ### Blockers/Concerns
 
