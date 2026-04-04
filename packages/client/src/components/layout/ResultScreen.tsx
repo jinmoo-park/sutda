@@ -122,6 +122,18 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
       } else {
         play('lose-normal');
       }
+      // 승자 카드가 땡인 경우 win-ddaeng-loser 추가 재생
+      const winnerCards = winner?.cards?.filter((c): c is Card => c != null);
+      if (winnerCards && winnerCards.length >= 2) {
+        try {
+          const winnerResult = evaluateHand(winnerCards[0]!, winnerCards[1]!);
+          if (winnerResult.handType.includes('ttaeng')) {
+            play('win-ddaeng-loser');
+          }
+        } catch {
+          // 평가 실패 시 무시
+        }
+      }
     }
   }, [gameState.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
