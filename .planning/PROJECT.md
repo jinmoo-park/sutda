@@ -2,7 +2,7 @@
 
 ## What This Is
 
-친구들끼리만 접속해서 즐기는 온라인 한국 화투 카드 게임 섯다. 방장이 링크를 공유하면 초대받은 플레이어들이 닉네임만으로 참여할 수 있는 웹 앱이다. 하우스룰(rule_draft.md)을 기반으로 오리지날·세장·공유패·골라골라·인디언섯다 5가지 게임 모드와 구사 재경기, 땡값 등 하우스 룰을 모두 구현한다.
+친구들끼리만 접속해서 즐기는 온라인 한국 화투 카드 게임 섯다. 방장이 링크를 공유하면 닉네임만으로 참여할 수 있는 웹 앱이다. 오리지날·세장섯다·한장공유·골라골라·인디언섯다 5가지 게임 모드, 구사 재경기, 땡값, 학교대신가주기 등 하우스룰을 모두 구현하여 실서비스(sutda.duckdns.org)로 배포 완료된 상태다.
 
 ## Core Value
 
@@ -13,119 +13,126 @@
 ### Validated
 
 **카드/덱 (Phase 01에서 검증)**
-- [x] 1~10 숫자 카드 각 2장(총 20장), 광/열끗 속성 포함 — Validated in Phase 01: project-foundation-shared-types
+- ✓ 1~10 숫자 카드 각 2장(총 20장), 광/열끗 속성 포함 — v1.0
 
 **족보 판정 (Phase 02에서 검증)**
-- [x] 전체 족보 판정: 광땡 3종 > 장땡~일땡 > 알리~새륙 > 끗(망통~아홉끗) — Validated in Phase 02: hand-evaluator-engine
-- [x] 구사·멍텅구리구사 재경기 트리거 로직 — Validated in Phase 02: hand-evaluator-engine
-- [x] 땡잡이·암행어사 처리 (compareHands 특수 비교) — Validated in Phase 02: hand-evaluator-engine
-
-**칩 시스템 및 정산 (Phase 05에서 검증)**
-- [x] 칩/포인트 추적 (ChipBreakdown, effectiveMaxBet) — Validated in Phase 05: chip-system-settlement
-- [x] 금액 소진 시 재충전 플로우 (다른 플레이어 동의 필요) — Validated in Phase 05: chip-system-settlement
-- [x] 게임 결과 pot 정산 (settleChips) + chips 차감 (attendSchool, bet actions) — Validated in Phase 05: chip-system-settlement
-
-### Validated (continued)
+- ✓ 전체 족보 판정: 광땡 3종 > 장땡~일땡 > 알리~새륙 > 끗(망통~아홉끗) — v1.0
+- ✓ 구사·멍텅구리구사 재경기 트리거 로직 — v1.0
+- ✓ 땡잡이·암행어사 처리 (compareHands 특수 비교, 땡값 면제) — v1.0
 
 **인프라 (Phase 03에서 검증)**
-- [x] 실시간 멀티플레이어 동기화 (WebSocket/Socket.IO) — Validated in Phase 03: websocket
-- [x] 링크 공유로 방 참여 (방 코드 포함 URL) — Validated in Phase 03: websocket
-- [x] 닉네임만으로 입장, 회원가입 불필요 — Validated in Phase 03: websocket
+- ✓ 실시간 멀티플레이어 동기화 (WebSocket/Socket.IO) — v1.0
+- ✓ 링크 공유로 방 참여 (방 코드 포함 URL) — v1.0
+- ✓ 닉네임만으로 입장, 회원가입 불필요 — v1.0
+- ✓ 2~6인 지원, 7명 이상 입장 거부 — v1.0
+- ✓ 연결 끊김 후 재접속 시 게임 복귀 — v1.0
 
 **오리지날 모드 게임 엔진 (Phase 04에서 검증)**
-- [x] 셔플 + 기리/퉁 메커니즘 구현 — Validated in Phase 04: original-mode-game-engine
-- [x] 패 돌리기: 반시계 방향, 퉁 시 2장씩 — Validated in Phase 04: original-mode-game-engine
-- [x] **패 공개 액션**: showdown에서 각자 "공개" 버튼, 전원 공개 후 승패 판정 — Validated in Phase 04: original-mode-game-engine
-- [x] 콜 / 레이즈 (자유 금액) / 다이 / 체크 — Validated in Phase 04: original-mode-game-engine
-- [x] 오리지날: 2장 + 베팅 + 족보 비교 — Validated in Phase 04: original-mode-game-engine
-- [x] 선 결정: 첫판 밤일낮장(18:00~05:59 낮은 숫자, 06:00~17:59 높은 숫자) — Validated in Phase 04: original-mode-game-engine
-- [x] 동점 재경기(rematch-pending): 동점자만 참여, pot 유지, 앤티 없음 — Validated in Phase 04: original-mode-game-engine
+- ✓ 셔플 + 기리/퉁 메커니즘 — v1.0
+- ✓ 패 돌리기: 반시계 방향, 퉁 시 2장씩 — v1.0
+- ✓ 콜 / 레이즈 (자유 금액) / 다이 / 체크 — v1.0
+- ✓ 첫 판 밤일낮장 선 결정 (18:00~05:59 낮은 숫자) — v1.0
+- ✓ 동점 재경기 (rematch-pending): 동점자만 참여, pot 유지 — v1.0
+
+**칩 시스템 (Phase 05에서 검증)**
+- ✓ 칩/포인트 추적 (ChipBreakdown, effectiveMaxBet) — v1.0
+- ✓ 금액 소진 시 재충전 플로우 (다른 플레이어 동의 필요) — v1.0
+- ✓ 게임 결과 pot 정산 (settleChips) — v1.0
+- ✓ 올인 POT 처리 — 올인 승리자는 자신의 잔액총액만큼만 수령, 차액 반환 — v1.0
+
+**UI / UX (Phase 06, 10에서 검증)**
+- ✓ 원형 플레이어 배치, 카드/칩 표시 — v1.0
+- ✓ 베팅 액션 UI (콜/레이즈/다이/체크), 판돈 표시 — v1.0
+- ✓ 화투 이미지 카드, 3D 뒤집기 인터랙션, 딜링 애니메이션 — v1.0
+- ✓ 셔플 rAF 애니메이션 + 기리 드래그/탭 UX — v1.0
+- ✓ 데스크탑 3열 / 모바일 수직 레이아웃 (스크롤 없이 한 화면) — v1.0
+- ✓ 베팅 차례 강조 표시 — v1.0
+
+**게임 모드 5종 (Phase 07, 08에서 검증)**
+- ✓ 오리지날: 2장 + 베팅 + 족보 비교 — v1.0
+- ✓ 세장섯다: 2장 → 베팅 → 1장 추가 → 3장 중 2장 조합 — v1.0
+- ✓ 한장공유: 선이 공유패 지정 → 각자 1장 받아 조합 — v1.0
+- ✓ 골라골라: 20장 공개 → 자유 선착순 2장 선택 → 베팅 — v1.0
+- ✓ 인디언섯다: 1장 앞면 반대 → 베팅 → 1장 추가(나만 봄) → 최종 베팅 — v1.0
+
+**특수 규칙 (Phase 09에서 검증)**
+- ✓ 땡값: 오리지날 모드 한정, 다이한 땡 보유자 → 승자에게 일땡~구땡 500원, 광땡·장땡 1000원 — v1.0
+- ✓ 구사(4+9) 재경기: 생존자 최고패 알리 이하 → gusa-pending phase — v1.0
+- ✓ 멍텅구리구사 재경기: 생존자 최고패 팔땡 이하 → 재경기 트리거 — v1.0
+- ✓ 재경기 시 다이 플레이어 판돈 절반 재참여 (15초 카운트다운) — v1.0
+- ✓ 땡잡이/암행어사 승리 시 땡값 없음 (D-07 면제) — v1.0
+
+**소셜/기능 (Phase 11에서 검증)**
+- ✓ 텍스트 채팅 실시간 동작 — v1.0
+- ✓ 세션 내 판별 칩 증감 이력 (HistoryModal) — v1.0
+- ✓ 학교 대신 가주기 — 승자가 다른 플레이어 다음 판 앤티 대납 — v1.0
+- ✓ 뒤늦게 입장 Observer 처리 — 판 교체 시 자동 참여 — v1.0
+- ✓ 세션 종료 시 PlayerSeat 재접속 대기 시각 표시 — v1.0
+
+**배포 / 보안 (Phase 12, 12.1에서 검증)**
+- ✓ Oracle VM + nginx + PM2 + DuckDNS SSL 배포 — v1.0
+- ✓ OWASP Top 10 Critical/High 취약점 전체 해소 — v1.0
+- ✓ 방 생성 패스워드 (서버 권위, 환경변수 관리) — v1.0
+
+**부가기능 (Phase 13~16에서 검증)**
+- ✓ BGM 반복 재생 + 볼륨 조절/음소거 (로컬스토리지 영속) — v1.0
+- ✓ SFX 17개 이벤트 매핑 — v1.0
+- ✓ 기리 실시간 스트리밍 (모든 플레이어 동기화) — v1.0
+- ✓ BET-07 체크 기능 — v1.0
+- ✓ 카드 한장씩 공개 플로우 (card-reveal phase) — v1.0
 
 ### Active
 
-**핵심 인프라**
-- [ ] 2~6인 지원, 원형 자리 배치 (UI)
-
-**족보 및 판정**
-- [x] 전체 족보 판정: 광땡 3종 > 장땡~일땡 > 알리~새륙 > 끗(망통~아홉끗) — Phase 02 완료
-- [x] 구사·멍텅구리구사 재경기 트리거 로직 — Phase 02 완료
-- [x] 땡잡이·암행어사 처리 (땡값 없음) — Phase 02 완료
-
-**베팅 시스템**
-- [x] 칩/포인트 추적 (만원 단위, 기본 100,000원) — Phase 05 완료
-- [x] 금액 소진 시 만원 단위로 재충전 (다른 플레이어 동의 필요) — Phase 05 완료
-- [ ] 땡값: 오리지날 모드 한정, 다이한 땡 보유자 → 승자에게 일땡~구땡 500원, 광땡·장땡 1000원
-
-**게임 모드 (5종)**
-- [x] 오리지날: 2장 + 베팅 + 족보 비교 — Phase 04 완료
-- [ ] 세장섯다: 2장 → 베팅 → 1장 추가 → 3장 중 2장 조합
-- [ ] 한장공유: 선이 공유패 1장 지정 → 각자 1장 받아 조합
-- [x] 골라골라: 전 20장 공개 → 자유롭게 2장 선착순 선택 → 베팅 — Validated in Phase 08: huhwi-indian-modes
-- [x] 인디언섯다: 1장 앞면 반대(나만 못 봄) → 베팅 → 1장 추가(나만 봄) → 최종 베팅 — Validated in Phase 08: huhwi-indian-modes
-
-**선 결정**
-- [ ] 첫판 밤일낮장: 서울 기준 18:00~05:59는 낮은 숫자, 06:00~17:59는 높은 숫자가 선
-
-**94재경기**
-- [ ] 일반 구사(4+9): 생존자 중 최고패가 알리 이하일 때 재경기, 죽은 플레이어는 판돈 절반 내고 재참여 가능
-- [ ] 멍텅구리구사(열끗4+열끗9): 생존자 중 최고패가 팔땡 이하일 때 재경기
-
-**UI / UX (와이어프레임 우선)**
-- [ ] 게임 테이블: 원형 플레이어 배치, 각자 카드/칩 표시
-- [ ] 베팅 액션 UI
-- [ ] 족보 안내/힌트
-- [ ] 이미지 에셋은 최후 단계에서 교체 (와이어프레임으로 시작)
+_다음 마일스톤에서 정의됨 — `/gsd:new-milestone` 실행으로 v1.1 요구사항 도출_
 
 ### Out of Scope
 
-- 실제 현금 결제/송금 — 친구들끼리 오프라인 정산을 전제로 하는 칩 추적만 구현
-- 모바일 네이티브 앱 (iOS/Android) — 웹 앱의 모바일 브라우저 대응으로 충분
-- 관전자 모드 — v1 범위 밖
-- AI/봇 플레이어 — 친구들끼리 플레이가 목적
-- 영구 계정/전적 저장 — 방 세션 단위로만 운영
+| Feature | Reason |
+|---------|--------|
+| 회원가입/로그인 | 친구끼리 닉네임으로 참여가 목적, 마찰 없애기 위해 제외 |
+| 실제 현금 결제/송금 | 법적 리스크, 오프라인 정산 전제 |
+| AI 봇 플레이어 | 친구끼리 플레이 목적, 복잡도 증가 불필요 |
+| 모바일 네이티브 앱 | 웹 앱의 모바일 브라우저 대응으로 충분 |
+| 영구 계정/전적 저장 | 방 세션 단위 운영, DB 불필요 |
+| 글로벌 로비/매치메이킹 | 친구 전용, 공개 방 목록 불필요 |
 
 ## Context
 
-- 한국 화투 카드 게임 섯다를 온라인으로 구현
-- 하우스룰 원본은 `rule_draft.md` 참조 (족보·베팅·게임모드 상세 정의)
-- 카드 구성: 1~10 각 2장 = 20장. 광: 1, 3, 8. 열끗 특수패 있는 숫자: 4, 7, 9
-- 실시간 멀티플레이어가 핵심이므로 WebSocket 기반 서버 필수
-- 와이어프레임으로 시작 → 화투 이미지 에셋은 마지막 단계에서 교체
-- 배포 대상: 소수 친구들 전용, 고가용성·글로벌 스케일 불필요
+- v1.0 실서비스 운영 중: sutda.duckdns.org
+- 기술 스택: TypeScript 모노레포 (pnpm + turborepo), React 19 + Vite 6, Socket.IO 4.x, Node.js + nginx
+- 코드베이스: ~15,000 LOC (TypeScript 9,530 + TSX 5,439)
+- 배포 인프라: Oracle VM (Always Free), PM2 process manager, DuckDNS SSL
+- 알려진 기술 부채:
+  - Medium: A03 innerHTML XSS (main.tsx window.onerror 핸들러)
+  - Medium: D-06 닉네임 길이 제한 없음 (서버 사이드)
+  - Low: A09 에러 로깅 부재 (PM2 기본 로그만 사용)
+  - TypeScript as-any 캐스팅 일부 잔존 (Phase 07)
 
 ## Constraints
 
 - **플랫폼**: 웹 앱 — 설치 없이 링크로 접속 가능해야 함
 - **인증**: 없음 — 닉네임만으로 입장 (회원가입 불필요)
-- **UI 단계**: 와이어프레임 → 이미지 교체는 별도 마지막 페이즈
 - **스케일**: 소규모 (최대 6인 방, 친구 그룹 수 개)
+- **인프라**: Oracle VM Always Free tier 유지
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| 웹 앱 선택 | 설치 없이 링크 공유만으로 친구들이 즉시 접속 가능 | — Pending |
-| 링크 공유 입장 | 회원가입 없이 닉네임만으로 참여, 마찰 최소화 | — Pending |
-| 와이어프레임 우선 | UI 이미지 준비 전에 게임 로직 먼저 완성 | — Pending |
-| 5가지 모드 모두 v1 포함 | rule_draft에 정의된 하우스룰 전체 구현 | — Pending |
-| 칩/포인트 추적 | 가상 칩으로 게임 내 금액 추적, 실제 정산은 플레이어 간 | — Pending |
+| 웹 앱 선택 | 설치 없이 링크 공유만으로 친구들이 즉시 접속 가능 | ✓ Good — 링크 공유 모델 완벽 작동 |
+| TypeScript 모노레포 (pnpm + turborepo) | shared/server/client 타입 계약 공유 | ✓ Good — 타입 안전성 전 계층 확보 |
+| 서버 권위 모델 | 모든 게임 상태를 서버에서 관리, 클라이언트는 렌더링만 | ✓ Good — 치트 방지, 동기화 단순화 |
+| Strategy 패턴으로 5가지 모드 확장 | GameModeStrategy 인터페이스, deal()+showdown()만 위임 | ✓ Good — 모드 추가 용이, 베팅/정산 공유 |
+| 족보 판정 엔진 먼저 구현 (TDD) | 순수 함수로 분리, 네트워크보다 먼저 | ✓ Good — 족보 버그 조기 발견, 회귀 방지 |
+| 와이어프레임 우선 → 화투 이미지 교체 | UI 이미지 준비 전에 게임 로직 먼저 완성 | ✓ Good — Phase 10에서 자연스럽게 전환 |
+| Oracle VM + DuckDNS SSL 배포 | Always Free tier, 비용 없이 실서비스 운영 | ✓ Good — 실서비스 안정 운영 중 |
+| gusa-pending과 rematch-pending 분리 | 구사 재경기는 다이 플레이어 재참여 결정이 필요 | ✓ Good — 복잡한 FSM 명확히 분리 |
+| 5가지 모드 모두 v1 포함 | rule_draft에 정의된 하우스룰 전체 구현 | ✓ Good — 친구들에게 즉시 전체 경험 제공 |
+| card-reveal phase 도입 | 베팅 완료 후 플레이어가 직접 카드를 한장씩 공개 | ✓ Good — 극적인 공개 경험 향상 |
 
 ## Evolution
 
-This document evolves at phase transitions and milestone boundaries.
-
-**After each phase transition** (via `/gsd:transition`):
-1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
-3. New requirements emerged? → Add to Active
-4. Decisions to log? → Add to Key Decisions
-5. "What This Is" still accurate? → Update if drifted
-
-**After each milestone** (via `/gsd:complete-milestone`):
-1. Full review of all sections
-2. Core Value check — still the right priority?
-3. Audit Out of Scope — reasons still valid?
-4. Update Context with current state
+다음 마일스톤 시작 시 `/gsd:new-milestone` 실행.
 
 ---
-*Last updated: 2026-04-04 — Phase 15 complete: BET-07 체크 기능 공식 추적 등록 완료 (REQUIREMENTS.md 업데이트 + VERIFICATION.md 생성, orphaned gap 해소)
+*Last updated: 2026-04-04 — v1.0 마일스톤 완료 아카이브*
