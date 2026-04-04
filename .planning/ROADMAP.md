@@ -23,6 +23,8 @@
 - [x] **Phase 11: 소셜/기능 완성** - 채팅, 게임 이력, 학교 대신 가주기, 뒤늦게 입장(Observer), 세션종료 표시, 올인 POT (completed 2026-04-01)
 - [x] **Phase 12: 통합 테스트 + 배포** - E2E 검증, Railway/Render 배포, 모바일 브라우저 대응 (completed 2026-04-02)
 - [ ] **Phase 13: 부가기능** - 기리 실시간 스트리밍, 효과음/배경음악 삽입
+- [ ] **Phase 15: BET-07 체크 기능 공식 검증** - 체크 기능 Traceability 등록 및 VERIFICATION 작성 (gap closure)
+- [ ] **Phase 16: SESSION-END 재접속 시각 표시 수정** - PlayerSeat isConnected prop 전달 + 시각 표시 활성화 (gap closure)
 
 ## Phase Details
 
@@ -286,6 +288,30 @@ Plans:
   4. 효과음/배경음악은 `sfx/` 폴더의 기존 파일을 활용한다
   5. 음소거 상태는 로컬 스토리지에 저장되어 새로고침 후에도 유지된다
 
+### Phase 15: BET-07 체크 기능 공식 검증
+
+**Goal:** BET-07 체크 기능이 공식적으로 추적되고 검증된다 — 코드에 구현된 체크 기능을 Traceability 테이블에 등록하고 VERIFICATION.md를 작성하여 v1 요구사항 커버리지를 완성한다.
+**Gap Closure:** v1-MILESTONE-AUDIT.md BET-07 orphaned gap 해소
+**Requirements:** BET-07
+**Depends on:** Phase 4 (구현 이미 존재)
+**Plans:** 0/2 plans complete
+
+Plans:
+- [ ] 15-01-PLAN.md — BET-07 Traceability 등록 + 코드 구현 확인 (BettingPanel.tsx + processBetAction)
+- [ ] 15-02-PLAN.md — Phase 15 VERIFICATION.md 작성
+
+### Phase 16: SESSION-END 재접속 시각 표시 수정
+
+**Goal:** 플레이어가 재접속 대기 중임을 시각적으로 확인할 수 있다 — GameTable/RoomPage에서 PlayerSeat에 `isConnected` prop을 전달하여 `opacity-50` 시각 표시가 정상 동작한다.
+**Gap Closure:** v1-MILESTONE-AUDIT.md SESSION-END partial gap 해소
+**Requirements:** SESSION-END
+**Depends on:** Phase 11 (SESSION-END 구현 이미 존재)
+**Plans:** 0/2 plans complete
+
+Plans:
+- [ ] 16-01-PLAN.md — GameTable/RoomPage → PlayerSeat isConnected prop 전달 수정
+- [ ] 16-02-PLAN.md — Phase 16 VERIFICATION.md 작성
+
 ## Progress
 
 **실행 순서:**
@@ -307,4 +333,6 @@ Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 
 | 12. 통합 테스트 + 배포 | 2/2 | Complete    | 2026-04-02 |
 | 13. 부가기능 | 0/2 | Planned | - |
 | 14. 서버 레벨 방 생성 패스워드 | 0/1 | Complete    | 2026-04-02 |
+| 15. BET-07 체크 기능 공식 검증 | 0/2 | Planned | - |
+| 16. SESSION-END 재접속 시각 표시 수정 | 0/2 | Planned | - |
 

@@ -253,7 +253,8 @@
 | HIST-02 | Phase 11 | Complete |
 | SCHOOL-PROXY | Phase 11 | Complete |
 | LATE-JOIN | Phase 11 | Complete |
-| SESSION-END | Phase 11 | Complete |
+| BET-07 | Phase 15 | Pending |
+| SESSION-END | Phase 16 | Pending |
 | ALLIN-POT | Phase 11 | Complete |
 
 ---
