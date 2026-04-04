@@ -1,4 +1,5 @@
 import { useGameStore } from '@/store/gameStore';
+import { useSfxPlayer } from '@/hooks/useSfxPlayer';
 import {
   Dialog,
   DialogContent,
@@ -15,6 +16,7 @@ interface DealerSelectModalProps {
 
 export function DealerSelectModal({ open, roomId }: DealerSelectModalProps) {
   const { socket, gameState, myPlayerId } = useGameStore();
+  const { play } = useSfxPlayer();
 
   const dealerSelectCards = gameState?.dealerSelectCards ?? [];
   const eligibleIds = gameState?.dealerSelectEligibleIds;  // undefined = 전원, 배열 = 재추첨 대상
@@ -27,6 +29,7 @@ export function DealerSelectModal({ open, roomId }: DealerSelectModalProps) {
 
   const handleSelect = (cardIndex: number) => {
     if (!amEligible || hasSelected || takenIndices.has(cardIndex)) return;
+    play('flip');
     socket?.emit('select-dealer-card', { roomId, cardIndex });
   };
 

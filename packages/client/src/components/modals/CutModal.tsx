@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useMemo } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import { useGiriStore, Pile } from '@/store/giriStore';
+import { useSfxPlayer } from '@/hooks/useSfxPlayer';
 import {
   Dialog,
   DialogContent,
@@ -88,6 +89,7 @@ function getFixedLayout(
 
 export function CutModal({ open, roomId }: CutModalProps) {
   const { socket } = useGameStore();
+  const { play } = useSfxPlayer();
   const {
     phase, piles, tapOrder, isTtong,
     initSplit, addSplitPile, splitAll,
@@ -269,6 +271,7 @@ export function CutModal({ open, roomId }: CutModalProps) {
               id: i, cardCount: count,
               x: positions[i]?.x ?? 0, y: positions[i]?.y ?? 0,
             }));
+            play('giri');
             splitAll(newPiles);
           } else if (swipeDir < 0 && piles.length >= 2) {
             // 왼쪽 스와이프: 더미 감소
@@ -278,6 +281,7 @@ export function CutModal({ open, roomId }: CutModalProps) {
               id: i, cardCount: count,
               x: positions[i]?.x ?? 0, y: positions[i]?.y ?? 0,
             }));
+            play('giri');
             splitAll(newPiles);
           }
         } else if (!ps.isDragging && piles.length >= 2) {
@@ -494,7 +498,7 @@ export function CutModal({ open, roomId }: CutModalProps) {
             </Button>
           )}
           {piles.length > 1 && phase !== 'merging' && phase !== 'done' && (
-            <Button size="sm" disabled={!allTapped} onClick={() => setMerging()}>
+            <Button size="sm" disabled={!allTapped} onClick={() => { play('giri'); setMerging(); }}>
               합치기
             </Button>
           )}

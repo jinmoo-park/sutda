@@ -1,5 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { useGameStore } from '@/store/gameStore';
+import { useSfxPlayer } from '@/hooks/useSfxPlayer';
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,7 @@ function easeOut(t: number) { return 1 - (1 - t) * (1 - t); }
 
 export function ShuffleModal({ open, roomId, readOnly = false }: ShuffleModalProps) {
   const { socket, gameState } = useGameStore();
+  const { play } = useSfxPlayer();
   const [isShuffling, setIsShuffling] = useState(false);
   const [hasShuffled, setHasShuffled] = useState(false);
   const dealerName = gameState?.players.find((p) => p.isDealer)?.nickname ?? '딜러';
@@ -159,6 +161,7 @@ export function ShuffleModal({ open, roomId, readOnly = false }: ShuffleModalPro
     a.shuffling = true;
     setIsShuffling(true);
     setHasShuffled(true);
+    play('shuffle');
     pickNext();
     a.rafId = requestAnimationFrame(tick);
   }
@@ -176,6 +179,7 @@ export function ShuffleModal({ open, roomId, readOnly = false }: ShuffleModalPro
   useEffect(() => {
     if (open) {
       setHasShuffled(false);
+      if (readOnly) play('shuffle');
       requestAnimationFrame(() => {
         buildDeck();
         if (readOnly) startShuffle();
