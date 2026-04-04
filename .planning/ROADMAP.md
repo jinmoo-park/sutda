@@ -294,10 +294,10 @@ Plans:
 **Gap Closure:** v1-MILESTONE-AUDIT.md BET-07 orphaned gap 해소
 **Requirements:** BET-07
 **Depends on:** Phase 4 (구현 이미 존재)
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
-- [ ] 15-01-PLAN.md — BET-07 Traceability 등록 + 코드 구현 확인 (BettingPanel.tsx + processBetAction)
+- [x] 15-01-PLAN.md — BET-07 Traceability 등록 + 코드 구현 확인 (BettingPanel.tsx + processBetAction)
 - [ ] 15-02-PLAN.md — Phase 15 VERIFICATION.md 작성
 
 ### Phase 16: SESSION-END 재접속 시각 표시 수정
@@ -333,6 +333,6 @@ Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 
 | 12. 통합 테스트 + 배포 | 2/2 | Complete    | 2026-04-02 |
 | 13. 부가기능 | 0/2 | Planned | - |
 | 14. 서버 레벨 방 생성 패스워드 | 0/1 | Complete    | 2026-04-02 |
-| 15. BET-07 체크 기능 공식 검증 | 0/2 | Planned | - |
+| 15. BET-07 체크 기능 공식 검증 | 1/2 | In Progress|  |
 | 16. SESSION-END 재접속 시각 표시 수정 | 0/2 | Planned | - |
 
