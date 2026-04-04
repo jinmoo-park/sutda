@@ -23,14 +23,18 @@ img/
 # 루트 HTML 파일 (stitch 목업, 예시 파일)
 /*.html
 
-# 루트 MD 파일 (stitch 문서 등)
+# 루트 MD 파일 (stitch 문서 등) — CLAUDE.md는 예외
 /*.md
+!CLAUDE.md
 
 # Stitch 관련 파일
 .planning/ui-reviews/
 
 # 디자인 테스트 페이지
 **/design_tests/
+
+# AI Watchdog 분석 결과 (커밋 대상 아님 — VM에서 동기화)
+.debug/
 
 # 환경 변수 및 MCP 설정 (API 키 포함)
 .env
