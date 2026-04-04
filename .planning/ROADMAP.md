@@ -61,5 +61,5 @@
 **Plans:** 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — VM Watchdog 핵심 스크립트 + 실행 환경 (watchdog.py + run-watchdog.sh + cron)
-- [ ] 01-02-PLAN.md — 로컬 pull-debug.sh + Claude Code 세션 훅
+- [x] 01-01-PLAN.md — VM Watchdog 핵심 스크립트 + 실행 환경 (watchdog.py + run-watchdog.sh + cron)
+- [x] 01-02-PLAN.md — 로컬 pull-debug.sh + Claude Code 세션 훅

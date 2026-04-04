@@ -51,8 +51,8 @@ requirements: [WD-01, WD-02, WD-03]
 
 VM에서 동작하는 AI Watchdog Python 스크립트와 실행 환경 구성 완료.
 
-`run-watchdog.sh` 실행 시 PM2 sutda 로그 + nginx error.log에서 크리티컬 패턴을 수집하고,
-Claude Haiku(claude-haiku-4-5)로 분석하여 `/opt/ai-watchdog/.debug/YYYY-MM-DD-HH.md`로 덤프.
+`run-watchdog.sh` 실행 시 PM2 sutda 로그 + nginx error.log에서 크리티컬 패턴을 수집하고,  
+Claude Haiku(claude-haiku-4-5)로 분석하여 `/opt/ai-watchdog/.debug/YYYY-MM-DD-HH.md`로 덤프.  
 수동 실행과 cron 매시간 자동 실행(0 * * * *) 모두 지원.
 
 ## 완료된 태스크
