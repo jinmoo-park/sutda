@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import {
   Dialog,
@@ -18,6 +18,12 @@ interface SharedCardSelectModalProps {
 export function SharedCardSelectModal({ open, roomId }: SharedCardSelectModalProps) {
   const { socket, gameState, myPlayerId } = useGameStore();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setSelectedIndex(null);
+    }
+  }, [open]);
 
   const deck = gameState?.deck ?? [];
   const isDealer =
