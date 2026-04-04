@@ -142,6 +142,15 @@ export function CutModal({ open, roomId }: CutModalProps) {
     }
   }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  function emitGiriUpdate(nextPhase: GiriPhase, currentPiles: Pile[], currentTapOrder: number[]) {
+    socket?.emit('giri-phase-update', {
+      roomId,
+      phase: nextPhase,
+      piles: currentPiles.map(p => ({ id: p.id, cardCount: p.cardCount, x: p.x, y: p.y })),
+      tapOrder: currentTapOrder,
+    });
+  }
+
   function emitCutResult() {
     if (isTtong) {
       socket?.emit('declare-ttong', { roomId });
@@ -273,6 +282,7 @@ export function CutModal({ open, roomId }: CutModalProps) {
             }));
             play('giri');
             splitAll(newPiles);
+            emitGiriUpdate('split', newPiles, []);
           } else if (swipeDir < 0 && piles.length >= 2) {
             // 왼쪽 스와이프: 더미 감소
             const newCount = piles.length - 1;
@@ -283,14 +293,20 @@ export function CutModal({ open, roomId }: CutModalProps) {
             }));
             play('giri');
             splitAll(newPiles);
+            emitGiriUpdate('split', newPiles, []);
           }
         } else if (!ps.isDragging && piles.length >= 2) {
           // 탭: 순서 지정
           const pile = piles[ps.pi];
           if (!pile) return;
           const isAlreadyTapped = tapOrder.includes(pile.id);
-          if (isAlreadyTapped) untapPile(pile.id);
-          else tapPile(pile.id);
+          if (isAlreadyTapped) {
+            untapPile(pile.id);
+            emitGiriUpdate('tap', piles, tapOrder.filter(id => id !== pile.id));
+          } else {
+            tapPile(pile.id);
+            emitGiriUpdate('tap', piles, [...tapOrder, pile.id]);
+          }
         }
       } else {
         if (ps.isDragging) {
@@ -302,13 +318,27 @@ export function CutModal({ open, roomId }: CutModalProps) {
             const dropY = Math.max(0, Math.min(TABLE_H - 80, e.clientY - tableRect.top - 20));
             const pile = piles[ps.pi];
             addSplitPile(pile.id, ps.cutCount, dropX, dropY);
+            // addSplitPile은 zustand set이므로 즉시 반영되지 않음 — 수동으로 계산하여 emit
+            const updatedPiles = [...piles];
+            const idx = updatedPiles.findIndex(p => p.id === pile.id);
+            if (idx !== -1) {
+              updatedPiles[idx] = { ...updatedPiles[idx], cardCount: updatedPiles[idx].cardCount - ps.cutCount };
+              const newId = Math.max(...updatedPiles.map(p => p.id)) + 1;
+              updatedPiles.push({ id: newId, cardCount: ps.cutCount, x: dropX, y: dropY });
+            }
+            emitGiriUpdate('split', updatedPiles, []);
           }
         } else {
           if (piles.length >= 2) {
             const pile = piles[ps.pi];
             const isAlreadyTapped = tapOrder.includes(pile.id);
-            if (isAlreadyTapped) untapPile(pile.id);
-            else tapPile(pile.id);
+            if (isAlreadyTapped) {
+              untapPile(pile.id);
+              emitGiriUpdate('tap', piles, tapOrder.filter(id => id !== pile.id));
+            } else {
+              tapPile(pile.id);
+              emitGiriUpdate('tap', piles, [...tapOrder, pile.id]);
+            }
           }
         }
       }
@@ -498,7 +528,7 @@ export function CutModal({ open, roomId }: CutModalProps) {
             </Button>
           )}
           {piles.length > 1 && phase !== 'merging' && phase !== 'done' && (
-            <Button size="sm" disabled={!allTapped} onClick={() => { play('giri'); setMerging(); }}>
+            <Button size="sm" disabled={!allTapped} onClick={() => { play('giri'); setMerging(); emitGiriUpdate('merging', piles, tapOrder); }}>
               합치기
             </Button>
           )}
