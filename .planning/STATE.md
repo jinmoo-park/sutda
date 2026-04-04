@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 Phase: 16
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-04 - Completed quick task 260404-tat: SharedCardSelectModal 카드 선택 막힘 버그 수정
+Last activity: 2026-04-04 - Completed quick task 260404-tgm: 세장섯다 3장 카드 표시 버그 수정
 
 Progress: [████░░░░░░] 44%
 
@@ -227,6 +227,7 @@ None yet.
 | 260404-svi | sfx 트리거 조건 및 맵핑 문서화 | 2026-04-04 | a4d3e7c | [260404-svi-sfx](./quick/260404-svi-sfx/) |
 | 260404-t1o | SFX 버그 수정 5종 | 2026-04-04 | 27e55c2 | [260404-t1o-sfx-5](./quick/260404-t1o-sfx-5/) |
 | 260404-tat | SharedCardSelectModal 카드 선택 막힘 버그 수정 — selectedIndex 라운드 간 리셋 useEffect 추가 | 2026-04-04 | 4b0e281 | [260404-tat-shared-card-selection-stuck-bug](./quick/260404-tat-shared-card-selection-stuck-bug/) |
+| 260404-tgm | 세장섯다 3장 카드 표시 버그 수정 — GameTable PlayerSeat 3장 표시 + HandPanel 공개 카드 맨앞 정렬 + 시각 구분 | 2026-04-04 | 6671d0a | [260404-tgm-sejang-3card-display-fix](./quick/260404-tgm-sejang-3card-display-fix/) |
 
 ### Blockers/Concerns
 
