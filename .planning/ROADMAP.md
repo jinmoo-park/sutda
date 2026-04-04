@@ -24,7 +24,7 @@
 - [x] **Phase 12: 통합 테스트 + 배포** - E2E 검증, Railway/Render 배포, 모바일 브라우저 대응 (completed 2026-04-02)
 - [ ] **Phase 13: 부가기능** - 기리 실시간 스트리밍, 효과음/배경음악 삽입
 - [x] **Phase 15: BET-07 체크 기능 공식 검증** - 체크 기능 Traceability 등록 및 VERIFICATION 작성 (gap closure) (completed 2026-04-04)
-- [ ] **Phase 16: SESSION-END 재접속 시각 표시 수정** - PlayerSeat isConnected prop 전달 + 시각 표시 활성화 (gap closure)
+- [x] **Phase 16: SESSION-END 재접속 시각 표시 수정** - PlayerSeat isConnected prop 전달 + 시각 표시 활성화 (gap closure) (completed 2026-04-04)
 
 ## Phase Details
 
@@ -306,11 +306,11 @@ Plans:
 **Gap Closure:** v1-MILESTONE-AUDIT.md SESSION-END partial gap 해소
 **Requirements:** SESSION-END
 **Depends on:** Phase 11 (SESSION-END 구현 이미 존재)
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 16-01-PLAN.md — GameTable/RoomPage → PlayerSeat isConnected prop 전달 수정
-- [ ] 16-02-PLAN.md — Phase 16 VERIFICATION.md 작성
+- [x] 16-02-PLAN.md — Phase 16 VERIFICATION.md 작성
 
 ## Progress
 
@@ -334,5 +334,5 @@ Phase 1 -> 2, 3 (병렬 가능) -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12 
 | 13. 부가기능 | 0/2 | Planned | - |
 | 14. 서버 레벨 방 생성 패스워드 | 0/1 | Complete    | 2026-04-02 |
 | 15. BET-07 체크 기능 공식 검증 | 2/2 | Complete    | 2026-04-04 |
-| 16. SESSION-END 재접속 시각 표시 수정 | 1/2 | In Progress|  |
+| 16. SESSION-END 재접속 시각 표시 수정 | 2/2 | Complete   | 2026-04-04 |
 

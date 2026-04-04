@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 16-01-PLAN.md
-last_updated: "2026-04-04T08:33:41.518Z"
+status: verifying
+stopped_at: Completed 16-02-PLAN.md
+last_updated: "2026-04-04T08:36:16.037Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 17
-  completed_phases: 16
+  completed_phases: 17
   total_plans: 39
-  completed_plans: 38
+  completed_plans: 39
   percent: 44
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 
 Phase: 16 (session-end-visual-fix) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-04
 
 Progress: [████░░░░░░] 44%
@@ -91,6 +91,7 @@ Progress: [████░░░░░░] 44%
 | Phase 15 P01 | 34 | 1 tasks | 1 files |
 | Phase 15-bet07-check-verification P02 | 6 | 2 tasks | 1 files |
 | Phase 16-session-end-visual-fix P01 | 5 | 1 tasks | 1 files |
+| Phase 16-session-end-visual-fix P02 | 5 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -198,6 +199,7 @@ Recent decisions affecting current work:
 - [Phase 15]: BET-07 구현은 이미 코드베이스에 완전히 구현되어 있었으며, 추적 기록(REQUIREMENTS.md)만 누락된 orphaned gap 상태였음
 - [Phase 15-bet07-check-verification]: '종료: 전원 체크 시 showdown 전환' 테스트 실패는 pre-existing 테스트 로직 오류 — 구현은 올바름 (openingBettorSeatIndex 기반 선 권한 검증)
 - [Phase 16-session-end-visual-fix]: getRoom() undefined 방어: updatedRoomAfterDisconnect null check guard 패턴 (기존 index.ts 패턴과 일치)
+- [Phase 16-session-end-visual-fix]: Phase 15 VERIFICATION.md 포맷을 그대로 적용 (per D-04) — 코드 트레이서빌리티 + 구현 증거 문서화, 수동 테스트 절차 생략
 
 ### Pending Todos
 
@@ -226,6 +228,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T08:33:41.512Z
-Stopped at: Completed 16-01-PLAN.md
+Last session: 2026-04-04T08:36:16.031Z
+Stopped at: Completed 16-02-PLAN.md
 Resume file: None
