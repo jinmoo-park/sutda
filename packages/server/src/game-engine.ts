@@ -581,10 +581,12 @@ export class GameEngine {
     const alivePlayers = this.state.players.filter(p => p.isAlive);
     const allSelected = alivePlayers.every(p => (p as any).selectedCards && (p as any).selectedCards.length === 2);
     if (allSelected) {
-      // 카드 선택 완료 -> 자동 쇼다운 (선택 카드로 족보 판정)
-      alivePlayers.forEach(p => { p.isRevealed = true; });
-      const strategy = this.getModeStrategy();
-      strategy.showdown(this, this.state);
+      // 카드 선택 완료 -> card-reveal phase로 전환 — 플레이어가 직접 카드 공개
+      alivePlayers.forEach(p => {
+        p.isRevealed = false;
+        p.revealedCardIndices = [];
+      });
+      this.state.phase = 'card-reveal';
     }
   }
 
@@ -739,7 +741,7 @@ export class GameEngine {
     }
 
     const phase = state.phase;
-    const isResultPhase = phase === 'result' || phase === 'showdown';
+    const isResultPhase = phase === 'result' || phase === 'showdown' || phase === 'card-reveal';
 
     if (isResultPhase) {
       return state as GameState;
@@ -1350,10 +1352,12 @@ export class GameEngine {
         this.state.phase = 'card-select';
         return;
       }
-      // betting / betting-2(non-sejang): 자동 쇼다운 — Strategy 위임
-      this.state.players.filter(p => p.isAlive).forEach(p => { p.isRevealed = true; });
-      const strategy = this.getModeStrategy();
-      strategy.showdown(this, this.state);
+      // betting / betting-2(non-sejang): card-reveal phase로 전환 — 플레이어가 직접 카드 공개
+      this.state.players.filter(p => p.isAlive).forEach(p => {
+        p.isRevealed = false;
+        p.revealedCardIndices = [];
+      });
+      this.state.phase = 'card-reveal';
       return;
     }
 
@@ -1465,6 +1469,53 @@ export class GameEngine {
     this.settleChipsWithAllIn();
     this._generateRoundHistory(chipsSnapshotMuck);
     this.state.phase = 'result';
+  }
+
+  /**
+   * card-reveal phase에서 플레이어가 자신의 카드 한장을 공개
+   * - 자기 카드만 공개 가능
+   * - 모든 생존 플레이어의 모든 카드가 공개되면 자동으로 showdown 진행
+   */
+  revealMyCard(playerId: string, cardIndex: number): void {
+    if (this.state.phase !== 'card-reveal') {
+      throw new Error('INVALID_PHASE');
+    }
+
+    const player = this.state.players.find(p => p.id === playerId);
+    if (!player || !player.isAlive) {
+      throw new Error('INVALID_ACTION');
+    }
+
+    // 유효한 카드 인덱스 확인
+    const maxIndex = player.cards.length - 1;
+    if (cardIndex < 0 || cardIndex > maxIndex || player.cards[cardIndex] == null) {
+      throw new Error('INVALID_CARD_INDEX');
+    }
+
+    // 이미 공개된 카드인지 확인
+    if (!player.revealedCardIndices) player.revealedCardIndices = [];
+    if (player.revealedCardIndices.includes(cardIndex)) {
+      return; // 중복 공개 무시 (에러 아님)
+    }
+
+    player.revealedCardIndices.push(cardIndex);
+
+    // 해당 플레이어의 모든 카드가 공개되었는지 확인
+    // 세장섯다: selectedCards 기준 2장, 그 외: cards 배열 길이
+    const totalCards = (player as any).selectedCards?.length === 2 ? 2 : player.cards.filter(c => c != null).length;
+    if (player.revealedCardIndices.length >= totalCards) {
+      player.isRevealed = true;
+    }
+
+    // 모든 생존 플레이어가 완전 공개되었는지 확인
+    const alivePlayers = this.state.players.filter(p => p.isAlive);
+    const allFullyRevealed = alivePlayers.every(p => p.isRevealed);
+
+    if (allFullyRevealed) {
+      // 기존 showdown 로직 실행 (Strategy 위임)
+      const strategy = this.getModeStrategy();
+      strategy.showdown(this, this.state);
+    }
   }
 
   /**
@@ -1708,6 +1759,7 @@ export class GameEngine {
       const isTied = tiedIds.includes(p.id);
       p.isAlive = isTied;
       p.isRevealed = false;
+      p.revealedCardIndices = undefined;
       p.currentBet = 0;
       // totalBet 리셋 안 함 — 원래 판 베팅액 유지하여 재경기 베팅과 누적
       p.lastBetAction = undefined;
@@ -1808,6 +1860,7 @@ export class GameEngine {
     this.state.players.forEach(p => {
       p.cards = [];
       p.isRevealed = false;
+      p.revealedCardIndices = undefined;
       p.currentBet = 0;
       // totalBet 리셋 안 함 — 원래 판 베팅액 유지하여 재경기 베팅과 누적
       p.lastBetAction = undefined;
@@ -1991,6 +2044,7 @@ export class GameEngine {
       p.cards = [];
       p.isAlive = !p.isAbsent;  // absent이면 isAlive = false 유지
       p.isRevealed = false;
+      p.revealedCardIndices = undefined;
       p.currentBet = 0;
       p.totalBet = 0;
       p.lastBetAction = undefined;

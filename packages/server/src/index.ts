@@ -524,6 +524,12 @@ io.on('connection', (socket) => {
     });
   });
 
+  socket.on('reveal-my-card', ({ roomId, cardIndex }) => {
+    handleGameAction(socket, roomId, () => {
+      getEngine(roomId).revealMyCard(socket.data.playerId, cardIndex as number);
+    });
+  });
+
   socket.on('reveal-card', ({ roomId }) => {
     handleGameAction(socket, roomId, () => {
       getEngine(roomId).revealCard(socket.data.playerId);

@@ -38,6 +38,7 @@ export interface ClientToServerEvents {
   'cut': (data: { roomId: string; cutPoints: number[]; order: number[] }) => void;
   'declare-ttong': (data: { roomId: string }) => void;
   'bet-action': (data: { roomId: string; action: BetAction }) => void;
+  'reveal-my-card': (data: { roomId: string; cardIndex: number }) => void;
   'reveal-card': (data: { roomId: string }) => void;
   'muck-hand': (data: { roomId: string }) => void;
   'next-round': (data: { roomId: string }) => void;
