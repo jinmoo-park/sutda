@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 Phase: 16
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-04
+Last activity: 2026-04-04 - Completed quick task 260404-pyv: master push + Oracle VM 배포
 
 Progress: [████░░░░░░] 44%
 
@@ -221,6 +221,7 @@ None yet.
 | 260404-o0y | 내차례 알림 전체화면 반투명 모달+3초, BGM볼륨 0.1 | 2026-04-04 | 6c23917 | [260404-o0y-3-bgm-0-1](./quick/260404-o0y-3-bgm-0-1/) |
 | 260404-jdp | SFX 이중 재생 버그 수정 — ShuffleModal readOnly 경로, CutModal 터치 split 경로 | 2026-04-04 | c4bddeb | [260404-jdp-sfx-double-play-fix](./quick/260404-jdp-sfx-double-play-fix/) |
 | 260404-pn6 | SFX 버그 수정 2종 — card-reveal 즉시 정지 + 패배자 win-ddaeng-loser SFX | 2026-04-04 | 634a7df | [260404-pn6-10-sfx-12-sfx](./quick/260404-pn6-10-sfx-12-sfx/) |
+| 260404-pyv | master push + Oracle VM 배포 (PM2 restart) | 2026-04-04 | d3d5d37 | [260404-pyv-master-origin-push-oracle-vm-pm2-reload](./quick/260404-pyv-master-origin-push-oracle-vm-pm2-reload/) |
 
 ### Blockers/Concerns
 
