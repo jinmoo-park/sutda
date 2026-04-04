@@ -1,0 +1,11 @@
+# 실제 환경변수 파일 (API 키 포함) — 절대 커밋 금지
+.env
+
+# venv 디렉토리
+.venv/
+
+# 분석 결과 MD 파일
+.debug/
+
+# 실행 로그
+watchdog.log
