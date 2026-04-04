@@ -116,6 +116,8 @@ export function RoomPage() {
   } | null>(null);
   const [visibleCardCounts, setVisibleCardCounts] = useState<Record<string, number>>({});
   const dealingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // 상대방 베팅 SFX 감지용 — key: `${roundNumber}-${JSON.stringify(lastBetAction)}`
+  const prevBetActionsRef = useRef<Record<string, string>>({});
   // 모달 포털 컨테이너 (게임 테이블 영역)
   const [modalContainer, setModalContainer] = useState<HTMLElement | null>(null);
   const modalContainerRef = useCallback((node: HTMLElement | null) => { if (node && node.offsetWidth > 0) setModalContainer(node); }, []);
@@ -371,6 +373,27 @@ export function RoomPage() {
       stopSfx('card-reveal');
     }
   }, [gameState?.phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 상대방 베팅 액션 SFX — lastBetAction 변화 감지 (상대 플레이어만, 본인은 BettingPanel에서 처리)
+  useEffect(() => {
+    if (!gameState) return;
+    const roundNum = gameState.roundNumber;
+    gameState.players.forEach(player => {
+      if (player.id === myPlayerId) return;
+      const prevKey = prevBetActionsRef.current[player.id] ?? '';
+      const currKey = player.lastBetAction
+        ? `${roundNum}-${JSON.stringify(player.lastBetAction)}`
+        : '';
+      if (currKey && currKey !== prevKey) {
+        const type = player.lastBetAction!.type;
+        if (type === 'check') playSfx('bet-check');
+        else if (type === 'call') playSfx('bet-call');
+        else if (type === 'raise') playSfx('bet-raise');
+        else if (type === 'die') playSfx('bet-die');
+      }
+      prevBetActionsRef.current[player.id] = currKey;
+    });
+  }, [gameState?.players]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // dealer-select → attend-school 전환 감지 → 결과 오버레이 3초 표시
   useEffect(() => {

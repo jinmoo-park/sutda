@@ -79,6 +79,14 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
     socket?.emit('take-break', { roomId });
   };
 
+  // school-proxy SFX: proxy-ante-applied 이벤트 수신 시 전 플레이어 재생
+  useEffect(() => {
+    if (!socket) return;
+    const handler = () => { play('school-proxy'); };
+    socket.on('proxy-ante-applied', handler);
+    return () => { socket.off('proxy-ante-applied', handler); };
+  }, [socket]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // result phase 진입 시 1회 SFX 재생
   useEffect(() => {
     if (gameState.phase !== 'result' || !myPlayerId) return;
@@ -89,12 +97,19 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
     const me = gameState.players.find(p => p.id === myPlayerId);
     if (!me) return;
     const iAmWinner = gameState.winnerId === myPlayerId;
-    const myCards = me.cards?.filter((c): c is Card => c != null);
+
+    // 세장섯다: selectedCards 우선 사용 (me.cards[0,1]이 선택한 2장이 아닐 수 있음)
+    const getHandCards = (player: typeof me) => {
+      if (player.selectedCards && player.selectedCards.length >= 2) return player.selectedCards;
+      return player.cards?.filter((c): c is Card => c != null) ?? [];
+    };
+
+    const myHandCards = getHandCards(me);
 
     if (iAmWinner) {
-      if (myCards && myCards.length >= 2) {
+      if (myHandCards.length >= 2) {
         try {
-          const result = evaluateHand(myCards[0]!, myCards[1]!);
+          const result = evaluateHand(myHandCards[0]!, myHandCards[1]!);
           const isDdaeng = result.handType.includes('ttaeng');
           play(isDdaeng ? 'win-ddaeng' : 'win-normal');
         } catch {
@@ -107,9 +122,9 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
       const hasDdaengPenalty = gameState.ttaengPayments?.some(t => t.playerId === myPlayerId);
       if (hasDdaengPenalty) {
         play('lose-ddaeng-penalty');
-      } else if (myCards && myCards.length >= 2) {
+      } else if (myHandCards.length >= 2) {
         try {
-          const result = evaluateHand(myCards[0]!, myCards[1]!);
+          const result = evaluateHand(myHandCards[0]!, myHandCards[1]!);
           const isDdaeng = result.handType.includes('ttaeng');
           if (isDdaeng) {
             play('lose-ddaeng-but-lost');
@@ -123,15 +138,17 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
         play('lose-normal');
       }
       // 승자 카드가 땡인 경우 win-ddaeng-loser 추가 재생
-      const winnerCards = winner?.cards?.filter((c): c is Card => c != null);
-      if (winnerCards && winnerCards.length >= 2) {
-        try {
-          const winnerResult = evaluateHand(winnerCards[0]!, winnerCards[1]!);
-          if (winnerResult.handType.includes('ttaeng')) {
-            play('win-ddaeng-loser');
+      if (winner) {
+        const winnerHandCards = getHandCards(winner);
+        if (winnerHandCards.length >= 2) {
+          try {
+            const winnerResult = evaluateHand(winnerHandCards[0]!, winnerHandCards[1]!);
+            if (winnerResult.handType.includes('ttaeng')) {
+              play('win-ddaeng-loser');
+            }
+          } catch {
+            // 평가 실패 시 무시
           }
-        } catch {
-          // 평가 실패 시 무시
         }
       }
     }
@@ -365,21 +382,8 @@ function ProxyAnteSection({
   myPlayerId: string | null;
   socket: ReturnType<typeof useGameStore.getState>['socket'];
 }) {
-  const { play } = useSfxPlayer();
-  const prevBeneficiaryCountRef = useRef(0);
   const [proxyOpen, setProxyOpen] = useState(false);
   const [selectedBeneficiaries, setSelectedBeneficiaries] = useState<string[]>([]);
-
-  // 수혜자 측: schoolProxyBeneficiaryIds에 내 ID가 추가되면 play('school-proxy')
-  useEffect(() => {
-    const ids = gameState.schoolProxyBeneficiaryIds ?? [];
-    const prevCount = prevBeneficiaryCountRef.current;
-    const amBeneficiary = myPlayerId && ids.includes(myPlayerId);
-    if (amBeneficiary && ids.length > prevCount) {
-      play('school-proxy');
-    }
-    prevBeneficiaryCountRef.current = ids.length;
-  }, [gameState.schoolProxyBeneficiaryIds]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (gameState.winnerId !== myPlayerId) return null;
 
@@ -387,7 +391,7 @@ function ProxyAnteSection({
 
   const handleProxyConfirm = () => {
     if (selectedBeneficiaries.length === 0) return;
-    play('school-proxy');
+    // school-proxy SFX는 proxy-ante-applied 이벤트 수신 시 ResultScreen에서 전체 재생
     socket?.emit('proxy-ante', { roomId: gameState.roomId, beneficiaryIds: selectedBeneficiaries });
     setProxyOpen(false);
     setSelectedBeneficiaries([]);

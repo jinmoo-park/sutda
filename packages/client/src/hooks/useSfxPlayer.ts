@@ -13,7 +13,7 @@ const SFX_MAP: Record<string, SfxEntry> = {
   'bet-raise':            { file: 'bet-raise.mp3',            volume: 0.7 },
   'bet-die':              { file: 'bet-die.mp3',              volume: 0.7 },
   'card-reveal':          { file: 'card-reveal.mp3',          volume: 0.6 },
-  'win-normal':           { file: 'win-normal.mp3',           volume: 0.6 },
+  'win-normal':           { file: 'win-normal.mp3',           volume: 0.2 },
   'win-ddaeng':           { file: 'win-ddaeng.mp3',           volume: 0.6 },
   'win-ddaeng-loser':     { file: 'win-ddaeng.mp3',           volume: 0.3 },
   'lose-normal':          { file: 'lose-normal.mp3',          volume: 0.6 },
