@@ -28,7 +28,8 @@
 
 ### SFX 이벤트 매핑
 
-- **D-07:** 플래너는 `sfx/sfx-mapping.md` 템플릿 파일을 생성한다. 이 파일에는 게임 이벤트 목록(콜, 레이즈, 다이, 체크, 카드배분, 셔플, 땡값, 학교대납, 칩 교환, 승리/결과공개)과 빈 파일명 칸이 있다. **사용자가 직접 파일명을 채워넣는다.**
+- **D-07:** 플래너는 `sfx/sfx-mapping.md` 템플릿 파일을 생성한다. 이 파일에는 게임 이벤트 목록(콜, 레이즈, 다이, 체크, 카드배분, 셔플, 땡값, 학교대납, 칩 교환, 승리/결과공개, **카드 한장 공개, 모든 카드 공개 완료**)과 빈 파일명 칸이 있다. **사용자가 직접 파일명을 채워넣는다.**
+  - *[Quick-260404-i8w 추가]* `card-reveal` phase 도입으로 SFX 이벤트 2건 추가: `reveal-my-card` (카드 한장 클릭 공개), 모든 플레이어 카드 전부 공개 완료 시점
 - **D-08:** 구현 코드는 `sfx-mapping.md`가 아닌 `sfx/sfx-mapping.json`을 읽는다. 플래너는 `sfx-mapping.md` 작성 완료 후 JSON으로 변환하는 단계를 포함한다. (또는 별도 단계로 분리)
 - **D-09:** SFX 파일은 `sfx/` 폴더에서 정적으로 서빙. 클라이언트에서 `new Audio()`로 재생. 이벤트 수신 시 즉시 재생.
 
@@ -85,6 +86,13 @@
 - 관전자 UI: `RoomPage.tsx:742`의 빈 `<Dialog open={phase === 'cutting' && !isMyTurn}>` 교체
 - BGM/SFX 버튼: 레이아웃 우상단 — `packages/client/src/components/layout/` 확인 필요
 - SFX 트리거: 기존 소켓 이벤트 수신 위치(`RoomPage.tsx` `socket.on` 블록)에 훅 추가
+
+### [Quick-260404-i8w] card-reveal phase 도입 변경 사항
+- `packages/shared/src/types/game.ts`: `GamePhase`에 `'card-reveal'` 추가됨. Phase 13 구현 시 SFX 트리거 로직에서 `card-reveal` 케이스 처리 필요
+- `packages/shared/src/types/game.ts`: `PlayerState.revealedCardIndices?: number[]` 추가됨 — 어떤 카드가 공개됐는지 추적
+- `packages/shared/src/types/protocol.ts`: `ClientToServerEvents`에 `reveal-my-card` 이벤트 추가됨
+- `packages/client/src/components/layout/ResultScreen.tsx`: `card-reveal` / `result` 이중 모드로 변경됨. SFX 트리거를 여기에 추가하거나 `RoomPage.tsx` 소켓 핸들러에서 처리 가능
+- `packages/client/src/pages/RoomPage.tsx`: `isResultPhase`에 `'card-reveal'` 포함됨 — ResultScreen이 두 phase 모두에서 렌더됨
 
 </code_context>
 

@@ -187,6 +187,11 @@ Recent decisions affecting current work:
 - [Phase 14-room-password]: password 필드를 optional로 정의 — 기존 클라이언트 및 테스트 코드 변경 없이 호환
 - [Phase 12.1]: CSP connect-src에 wss://sutda.duckdns.org 명시 — self만으로는 WebSocket wss:// 차단됨
 - [Phase 12.1]: Medium/Low 잔여 항목 3건(innerHTML XSS, 닉네임 길이, 에러 로깅) 보고서 기록만 — D-01 결정 준수
+- [Quick-260404-i8w]: 베팅 완료 후 자동 showdown 대신 `card-reveal` phase 도입 — 플레이어가 클릭으로 한장씩 공개, 전원 공개 완료 시 서버 자동 showdown
+- [Quick-260404-i8w]: `PlayerState.revealedCardIndices?: number[]` 추가 — 개별 카드 공개 상태 추적
+- [Quick-260404-i8w]: `reveal-my-card` 소켓 이벤트 추가 (`ClientToServerEvents`) — 카드 인덱스 전달
+- [Quick-260404-i8w]: ResultScreen이 `card-reveal` / `result` 이중 모드로 동작 — `card-reveal`에서는 카드 뒷면 표시 + 클릭 공개, `result`에서만 승패 + 버튼 표시
+- [Quick-260404-i8w]: 전원 다이 muck/reveal 선택 플로우는 기존 그대로 유지 — card-reveal phase 미적용
 
 ### Pending Todos
 

@@ -202,6 +202,10 @@ Accent 예약 사용처 (이 외에는 사용 금지):
 | 학교 대납 | `school-proxy` | `학교가자.mp3` |
 | 결과 공개 | `round-result` (winner) | `포인트, 두두둥탁, 드럼, 강조.mp3` |
 | 기리 탭 | `giri-phase-update` (tap) | `쉭, 퍽, 타격음, 채찍.mp3` |
+| 카드 한장 공개 *(신규)* | `reveal-my-card` 소켓 수신 시 | `sfx-mapping.json` 참조 |
+| 전원 카드 공개 완료 *(신규)* | `game-state` phase=`result` 전환 감지 (card-reveal→result) | `sfx-mapping.json` 참조 |
+
+> **[Quick-260404-i8w]** `card-reveal` phase 도입으로 SFX 이벤트 2건 추가. `reveal-my-card`는 클라이언트→서버 이벤트이므로 내 카드를 클릭할 때 로컬에서 즉시 재생하고, 다른 플레이어 카드 공개 시에는 서버 브로드캐스트(`game-state` 업데이트)로 감지한다.
 
 주의: 최종 파일명은 `sfx/sfx-mapping.json`에서 읽는다. 위 표는 기본값이며 사용자가 `sfx-mapping.md`를 편집하여 덮어쓸 수 있다.
 
