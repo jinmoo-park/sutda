@@ -19,12 +19,13 @@ interface ResultScreenProps {
   myPlayerId: string | null;
   roomId: string;
   isRematch?: boolean;
+  isRematchPending?: boolean;
   onEject?: () => void;
 }
 
 const AUTO_NEXT_SECONDS = 5;
 
-export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, onEject }: ResultScreenProps) {
+export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRematchPending, onEject }: ResultScreenProps) {
   const { socket } = useGameStore();
   const { play } = useSfxPlayer();
   const navigate = useNavigate();
@@ -149,7 +150,7 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, onEject
 
   return (
     <div className="relative flex h-full flex-col items-center justify-center bg-background text-foreground gap-4 p-3 md:gap-6 md:p-6 overflow-y-auto">
-      {isRematch && !isCardRevealPhase && (
+      {isRematch && !isCardRevealPhase && !isRematchPending && (
         <div
           className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center"
           style={{ animation: 'fadeIn 0.4s ease-in' }}
@@ -164,6 +165,8 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, onEject
       )}
       {isCardRevealPhase ? (
         <h2 className="text-xl font-semibold">패를 공개하세요!</h2>
+      ) : isRematchPending ? (
+        <h2 className="text-xl font-semibold">동점!</h2>
       ) : (
         <h2 className="text-xl font-semibold">{winnerNickname} 승리!</h2>
       )}
@@ -254,7 +257,7 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, onEject
                   <Badge variant="secondary" className="text-[10px] md:text-xs">{handLabel}</Badge>
                 )
               )}
-              {!isCardRevealPhase && (
+              {!isCardRevealPhase && !isRematchPending && (
                 <>
                   <Badge
                     className={`text-[10px] md:text-xs ${
@@ -286,7 +289,23 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, onEject
       </div>
 
       {!isCardRevealPhase && <div className="flex flex-col items-center gap-2">
-        {amAbsent ? (
+        {isRematchPending ? (() => {
+          const tiedIds = gameState.tiedPlayerIds ?? [];
+          const confirmedIds = gameState.rematchConfirmedIds ?? [];
+          const amTied = myPlayerId ? tiedIds.includes(myPlayerId) : false;
+          const alreadyConfirmed = myPlayerId ? confirmedIds.includes(myPlayerId) : false;
+          if (!amTied) {
+            return <p className="text-sm text-muted-foreground">동점 플레이어들의 재경기 준비를 기다리는 중...</p>;
+          }
+          if (alreadyConfirmed) {
+            return <p className="text-sm text-muted-foreground">다른 플레이어를 기다리는 중...</p>;
+          }
+          return (
+            <Button onClick={() => socket?.emit('start-rematch', { roomId })}>
+              재경기
+            </Button>
+          );
+        })() : amAbsent ? (
           hasReturnedFromBreak ? (
             <p className="text-sm text-muted-foreground">복귀 완료 — 다음 판부터 참여합니다</p>
           ) : (
@@ -318,7 +337,7 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, onEject
           </div>
         )}
 
-        {!anyPlayerBroke && <ProxyAnteSection gameState={gameState} myPlayerId={myPlayerId} socket={socket} />}
+        {!isRematchPending && !anyPlayerBroke && <ProxyAnteSection gameState={gameState} myPlayerId={myPlayerId} socket={socket} />}
       </div>}
     </div>
   );

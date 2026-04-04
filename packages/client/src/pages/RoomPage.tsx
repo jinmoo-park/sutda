@@ -600,39 +600,8 @@ export function RoomPage() {
     );
   }
 
-  // 동점 재경기 대기
-  if (phase === 'rematch-pending') {
-    const tiedIds = gameState?.tiedPlayerIds ?? [];
-    const confirmedIds = gameState?.rematchConfirmedIds ?? [];
-    const tiedPlayers = gameState?.players.filter(p => tiedIds.includes(p.id)) ?? [];
-    const amTied = myPlayerId ? tiedIds.includes(myPlayerId) : false;
-    const alreadyConfirmed = myPlayerId ? confirmedIds.includes(myPlayerId) : false;
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
-        <div className="text-center space-y-4 p-6">
-          <h2 className="text-xl font-semibold">동점!</h2>
-          <p className="text-muted-foreground">
-            {tiedPlayers.map(p => p.nickname).join(' vs ')} — 재경기
-          </p>
-          {amTied ? (
-            alreadyConfirmed ? (
-              <p className="text-sm text-muted-foreground">다른 동점 플레이어를 기다리는 중...</p>
-            ) : (
-              <Button onClick={() => socket?.emit('start-rematch', { roomId: roomId! })}>
-                재경기 시작
-              </Button>
-            )
-          ) : (
-            <p className="text-sm text-muted-foreground">동점 플레이어들의 재경기 준비를 기다리는 중...</p>
-          )}
-        </div>
-        <Toaster />
-      </div>
-    );
-  }
-
   // 게임 진행 중
-  const isResultPhase = phase === 'result' || phase === 'finished' || phase === 'card-reveal';
+  const isResultPhase = phase === 'result' || phase === 'finished' || phase === 'card-reveal' || phase === 'rematch-pending';
   const isRematch = ['gusa-pending', 'gusa-announce', 'rematch-pending'].includes(prevPhaseRef.current ?? '');
 
   const handPanelNode = (
@@ -694,6 +663,7 @@ export function RoomPage() {
       myPlayerId={myPlayerId}
       roomId={roomId!}
       isRematch={isRematch}
+      isRematchPending={phase === 'rematch-pending'}
       onEject={() => { setNickname(''); setHasJoined(false); }}
     />
   ) : gameTableNode;
