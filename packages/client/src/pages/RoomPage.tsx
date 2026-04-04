@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { toast, Toaster } from 'sonner';
 import { useGameStore } from '@/store/gameStore';
+import { useSfxPlayer } from '@/hooks/useSfxPlayer';
+import { AudioControlBar } from '@/components/layout/AudioControlBar';
 import { WaitingTable } from '@/components/layout/WaitingTable';
 import { GameTable } from '@/components/layout/GameTable';
 import { HandPanel } from '@/components/layout/HandPanel';
@@ -79,6 +81,7 @@ export function RoomPage() {
   const navigate = useNavigate();
   const locationState = location.state as { nickname?: string; initialChips?: number; isHost?: boolean } | null;
   const { socket, connect, gameState, roomState, myPlayerId, error, clearError } = useGameStore();
+  const { play: playSfx } = useSfxPlayer();
   const serverUrl = import.meta.env.VITE_SERVER_URL || '';
 
   // location.state → sessionStorage 순서로 입장 정보 복원 (새로고침 대응)
@@ -195,6 +198,7 @@ export function RoomPage() {
       }
 
       // 배분 시작: dealingComplete → false (flip 인터랙션 잠금)
+      playSfx('deal');
       setDealingComplete(false);
 
       // 골라골라: 직접 선택이므로 딜링 애니메이션 없음 — visibleCardCounts 즉시 최종값으로 설정
@@ -311,6 +315,15 @@ export function RoomPage() {
       setSejangThirdCardDismissed(false);
     }
   }, [gameState?.phase]);
+
+  // card-reveal phase 진입 감지 → play('card-reveal')
+  useEffect(() => {
+    const currentPhase = (gameState?.phase ?? null) as string | null;
+    const BETTING_PHASES = ['betting', 'betting-1', 'betting-2', 'card-select'];
+    if (BETTING_PHASES.includes(prevPhaseRef.current ?? '') && currentPhase === 'card-reveal') {
+      playSfx('card-reveal');
+    }
+  }, [gameState?.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // dealer-select → attend-school 전환 감지 → 결과 오버레이 3초 표시
   useEffect(() => {
@@ -585,7 +598,7 @@ export function RoomPage() {
       }
       nickname={myPlayer?.nickname}
       flippedIndices={myFlippedIndices}
-      onFlip={(idx) => setMyFlippedIndices(prev => { const n = new Set(prev); n.add(idx); return n; })}
+      onFlip={(idx) => { playSfx('flip'); setMyFlippedIndices(prev => { const n = new Set(prev); n.add(idx); return n; }); }}
       dealingComplete={dealingComplete}
     />
   );
@@ -645,6 +658,7 @@ export function RoomPage() {
   return (
     <ModalContainerContext.Provider value={modalContainer}>
     <div className="bg-background text-foreground">
+      <AudioControlBar />
       {/* 데스크탑: 2열 그리드 */}
       <div className="hidden md:grid grid-cols-[1fr_clamp(256px,calc(100vw-1408px),512px)] h-dvh overflow-hidden">
         {/* 중앙: GameTable or ResultScreen — 모달 포털 대상 영역 */}

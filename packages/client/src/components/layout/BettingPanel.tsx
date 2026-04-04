@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { BetAction } from '@sutda/shared';
 import { Button } from '@/components/ui/button';
 import { useGameStore } from '@/store/gameStore';
+import { useSfxPlayer } from '@/hooks/useSfxPlayer';
 import { cn } from '@/lib/utils';
 
 interface BettingPanelProps {
@@ -33,6 +34,7 @@ export function BettingPanel({
 }: BettingPanelProps) {
   const [raiseAmount, setRaiseAmount] = useState(0);
   const { gameState, myPlayerId } = useGameStore();
+  const { play } = useSfxPlayer();
   const me = gameState?.players.find(p => p.id === myPlayerId);
   const isMyAllIn = me?.isAllIn ?? false;
 
@@ -97,7 +99,7 @@ export function BettingPanel({
               variant="secondary"
               size="sm"
               disabled={chipDisabled}
-              onClick={() => setRaiseAmount((prev) => Math.min(prev + amount, maxRaiseAmount))}
+              onClick={() => { play('chip'); setRaiseAmount((prev) => Math.min(prev + amount, maxRaiseAmount)); }}
               className={cn('h-auto py-3 md:py-2.5 flex-col gap-1 text-xs px-1', chipDisabled && 'opacity-20 pointer-events-none')}
             >
               <span className={`w-3 h-3 rounded-full shrink-0 ${color}`} />
@@ -129,7 +131,7 @@ export function BettingPanel({
         <Button
           variant="outline"
           disabled={!isMyTurn || !canCheck}
-          onClick={() => emitAction({ type: 'check' })}
+          onClick={() => { play('bet-check'); emitAction({ type: 'check' }); }}
           className={cn('h-14 md:h-12 text-sm', !isMyTurn && 'opacity-20')}
         >
           체크
@@ -137,7 +139,7 @@ export function BettingPanel({
 
         <Button
           disabled={!isMyTurn || !canCall}
-          onClick={() => emitAction({ type: 'call' })}
+          onClick={() => { play('bet-call'); emitAction({ type: 'call' }); }}
           className={cn('h-14 md:h-12 text-sm', !isMyTurn && 'opacity-20')}
         >
           콜{callAmount > 0 ? ` ${callAmount.toLocaleString()}` : ''}
@@ -146,7 +148,7 @@ export function BettingPanel({
         <Button
           variant="secondary"
           disabled={!isMyTurn || raiseAmount === 0}
-          onClick={() => emitAction({ type: 'raise', amount: raiseAmount })}
+          onClick={() => { play('bet-raise'); emitAction({ type: 'raise', amount: raiseAmount }); }}
           className={cn('h-14 md:h-12 text-sm bg-yellow-400 hover:bg-yellow-500 text-black', (!isMyTurn || raiseAmount === 0) && 'opacity-20')}
         >
           레이즈
@@ -155,7 +157,7 @@ export function BettingPanel({
         <Button
           variant="destructive"
           disabled={!isMyTurn || !canDie}
-          onClick={() => emitAction({ type: 'die' })}
+          onClick={() => { play('bet-die'); emitAction({ type: 'die' }); }}
           className={cn('h-14 md:h-12 text-sm', (!isMyTurn || !canDie) && 'opacity-20')}
         >
           다이

@@ -1,11 +1,12 @@
-import { useState, useEffect, useSyncExternalStore } from 'react';
+import { useState, useEffect, useSyncExternalStore, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { GameState } from '@sutda/shared';
+import type { Card, GameState } from '@sutda/shared';
 import { evaluateHand } from '@sutda/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { HwatuCard } from '@/components/game/HwatuCard';
 import { useGameStore } from '@/store/gameStore';
+import { useSfxPlayer } from '@/hooks/useSfxPlayer';
 import { getHandLabel } from '@/lib/handLabels';
 
 const mdQuery = typeof window !== 'undefined' ? window.matchMedia('(min-width: 768px)') : null;
@@ -25,8 +26,10 @@ const AUTO_NEXT_SECONDS = 5;
 
 export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, onEject }: ResultScreenProps) {
   const { socket } = useGameStore();
+  const { play } = useSfxPlayer();
   const navigate = useNavigate();
   const [hasVotedNextRound, setHasVotedNextRound] = useState(false);
+  const resultSfxPlayedRef = useRef<string | null>(null);
   const [hasReturnedFromBreak, setHasReturnedFromBreak] = useState(false);
   const [hasTakenBreak, setHasTakenBreak] = useState(false);
   const [countdown, setCountdown] = useState(AUTO_NEXT_SECONDS);
@@ -74,6 +77,52 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, onEject
     setHasTakenBreak(true);
     socket?.emit('take-break', { roomId });
   };
+
+  // result phase 진입 시 1회 SFX 재생
+  useEffect(() => {
+    if (gameState.phase !== 'result' || !myPlayerId) return;
+    const phaseKey = `${gameState.phase}-${gameState.winnerId}`;
+    if (resultSfxPlayedRef.current === phaseKey) return;
+    resultSfxPlayedRef.current = phaseKey;
+
+    const me = gameState.players.find(p => p.id === myPlayerId);
+    if (!me) return;
+    const iAmWinner = gameState.winnerId === myPlayerId;
+    const myCards = me.cards?.filter((c): c is Card => c != null);
+
+    if (iAmWinner) {
+      if (myCards && myCards.length >= 2) {
+        try {
+          const result = evaluateHand(myCards[0]!, myCards[1]!);
+          const isDdaeng = result.handType.includes('ttaeng');
+          play(isDdaeng ? 'win-ddaeng' : 'win-normal');
+        } catch {
+          play('win-normal');
+        }
+      } else {
+        play('win-normal');
+      }
+    } else {
+      const hasDdaengPenalty = gameState.ttaengPayments?.some(t => t.playerId === myPlayerId);
+      if (hasDdaengPenalty) {
+        play('lose-ddaeng-penalty');
+      } else if (myCards && myCards.length >= 2) {
+        try {
+          const result = evaluateHand(myCards[0]!, myCards[1]!);
+          const isDdaeng = result.handType.includes('ttaeng');
+          if (isDdaeng) {
+            play('lose-ddaeng-but-lost');
+          } else {
+            play('lose-normal');
+          }
+        } catch {
+          play('lose-normal');
+        }
+      } else {
+        play('lose-normal');
+      }
+    }
+  }, [gameState.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 자리비움 상태: 카운트다운 후 자동으로 next-round 투표
   useEffect(() => {
@@ -229,7 +278,7 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, onEject
           <p className="text-sm text-muted-foreground">다른 플레이어를 기다리는 중...</p>
         ) : (
           <div className="flex gap-2">
-            <Button variant="secondary" onClick={handleNextRound}>
+            <Button variant="secondary" onClick={() => { play('school-go'); handleNextRound(); }}>
               학교 가기
             </Button>
             {canSkip && myPlayerId !== gameState.winnerId && (
@@ -256,8 +305,21 @@ function ProxyAnteSection({
   myPlayerId: string | null;
   socket: ReturnType<typeof useGameStore.getState>['socket'];
 }) {
+  const { play } = useSfxPlayer();
+  const prevBeneficiaryCountRef = useRef(0);
   const [proxyOpen, setProxyOpen] = useState(false);
   const [selectedBeneficiaries, setSelectedBeneficiaries] = useState<string[]>([]);
+
+  // 수혜자 측: schoolProxyBeneficiaryIds에 내 ID가 추가되면 play('school-proxy')
+  useEffect(() => {
+    const ids = gameState.schoolProxyBeneficiaryIds ?? [];
+    const prevCount = prevBeneficiaryCountRef.current;
+    const amBeneficiary = myPlayerId && ids.includes(myPlayerId);
+    if (amBeneficiary && ids.length > prevCount) {
+      play('school-proxy');
+    }
+    prevBeneficiaryCountRef.current = ids.length;
+  }, [gameState.schoolProxyBeneficiaryIds]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (gameState.winnerId !== myPlayerId) return null;
 
@@ -265,6 +327,7 @@ function ProxyAnteSection({
 
   const handleProxyConfirm = () => {
     if (selectedBeneficiaries.length === 0) return;
+    play('school-proxy');
     socket?.emit('proxy-ante', { roomId: gameState.roomId, beneficiaryIds: selectedBeneficiaries });
     setProxyOpen(false);
     setSelectedBeneficiaries([]);
