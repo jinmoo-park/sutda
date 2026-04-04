@@ -141,23 +141,21 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
       } else {
         play('lose-normal');
       }
-      // 승자 카드가 땡인 경우 win-ddaeng-loser 추가 재생
-      // 단, 승자가 패를 공개하지 않은 경우(isRevealed=false)에는 재생하지 않음
-      if (winner && winner.isRevealed) {
+      // 승자가 땡이고 패를 볼 수 있는 경우 win-ddaeng-loser 추가 재생 (낮은 볼륨, 겹침 허용)
+      // 오리지날 모드만 패 공개/미공개 선택이 있음. 나머지 모드는 result phase에서 자동 공개
+      const winnerCardsVisible = gameState.mode === 'original' ? (winner?.isRevealed ?? false) : !!winner;
+      if (winnerCardsVisible) {
         const winnerHandCards = getHandCards(winner);
         if (winnerHandCards.length >= 2) {
           try {
-            const winnerResult = evaluateHand(winnerHandCards[0]!, winnerHandCards[1]!);
-            if (winnerResult.handType.includes('ttaeng')) {
+            if (evaluateHand(winnerHandCards[0]!, winnerHandCards[1]!).handType.includes('ttaeng')) {
               play('win-ddaeng-loser');
             }
-          } catch {
-            // 평가 실패 시 무시
-          }
+          } catch { /* 평가 실패 시 무시 */ }
         }
       }
     }
-  }, [gameState.phase]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [gameState.phase, gameState.winnerId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 자리비움 상태: 카운트다운 후 자동으로 next-round 투표
   useEffect(() => {
