@@ -6,7 +6,7 @@ export function AudioControlBar() {
   const { isMuted: sfxMuted, toggleMute: toggleSfx } = useSfxPlayer();
 
   return (
-    <div className="fixed top-4 right-4 z-50 flex gap-2">
+    <div className="hidden md:flex fixed bottom-4 right-4 z-50 gap-2">
       <button
         onClick={toggleBgm}
         title={bgmMuted ? 'BGM 켜기' : 'BGM 끄기'}
