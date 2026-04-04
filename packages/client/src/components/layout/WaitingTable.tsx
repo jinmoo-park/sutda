@@ -31,7 +31,7 @@ export function WaitingTable({ roomState, myPlayerId, roomId }: WaitingTableProp
   };
 
   const bgStyle = {
-    backgroundImage: "url('/img/background.jpg')",
+    backgroundImage: "url('/img/background.webp')",
     backgroundSize: 'cover' as const,
     backgroundPosition: 'center',
   };

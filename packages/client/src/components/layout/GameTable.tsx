@@ -28,7 +28,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
       <div
         className="absolute inset-0 hidden md:flex items-center justify-center overflow-hidden"
         style={{
-          backgroundImage: "url('/img/background.jpg')",
+          backgroundImage: "url('/img/background.webp')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
@@ -89,7 +89,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
       <div
         className="md:hidden h-full relative"
         style={{
-          backgroundImage: "url('/img/background.jpg')",
+          backgroundImage: "url('/img/background.webp')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
