@@ -48,7 +48,7 @@
 - [x] **BET-04**: 다이는 패를 포기하며 해당 판의 베팅에서 제외된다
 - [x] **BET-05**: 베팅 순서는 선 플레이어 기준 반시계 방향이다
 - [x] **BET-06**: 모든 생존 플레이어의 베팅액이 같아지면 베팅이 종료된다 (전원 체크 시도 종료)
-- [ ] **BET-07**: 아직 아무도 베팅하지 않은 상태에서 선 플레이어(및 해당 순서의 플레이어)는 "체크"를 선택할 수 있다. 체크는 베팅 없이 다음 플레이어로 넘기며, 이후 레이즈 발생 시 다시 콜/레이즈 기회가 주어진다
+- [x] **BET-07**: 아직 아무도 베팅하지 않은 상태에서 선 플레이어(및 해당 순서의 플레이어)는 "체크"를 선택할 수 있다. 체크는 베팅 없이 다음 플레이어로 넘기며, 이후 레이즈 발생 시 다시 콜/레이즈 기회가 주어진다 — Validated in Phase 15: BettingPanel.tsx canCheck + processBetAction check case
 
 ### 칩 추적 (CHIP)
 
@@ -253,7 +253,7 @@
 | HIST-02 | Phase 11 | Complete |
 | SCHOOL-PROXY | Phase 11 | Complete |
 | LATE-JOIN | Phase 11 | Complete |
-| BET-07 | Phase 15 | Pending |
+| BET-07 | Phase 15 | Complete |
 | SESSION-END | Phase 16 | Pending |
 | ALLIN-POT | Phase 11 | Complete |
 
