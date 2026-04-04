@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 Phase: 16
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-04 - Completed quick task 260404-qk2: HandPanel 손패 패널 힌트 문구 제거
+Last activity: 2026-04-04 - Completed quick task 260404-qni: master push + Oracle VM 배포 (PM2 restart)
 
 Progress: [████░░░░░░] 44%
 
@@ -223,6 +223,7 @@ None yet.
 | 260404-pn6 | SFX 버그 수정 2종 — card-reveal 즉시 정지 + 패배자 win-ddaeng-loser SFX | 2026-04-04 | 634a7df | [260404-pn6-10-sfx-12-sfx](./quick/260404-pn6-10-sfx-12-sfx/) |
 | 260404-pyv | master push + Oracle VM 배포 (PM2 restart) | 2026-04-04 | d3d5d37 | [260404-pyv-master-origin-push-oracle-vm-pm2-reload](./quick/260404-pyv-master-origin-push-oracle-vm-pm2-reload/) |
 | 260404-qk2 | HandPanel 손패 패널 힌트 문구 제거 — 나머지 카드를 탭하세요 스팬 삭제 | 2026-04-04 | c32396e | [260404-qk2-handpanel](./quick/260404-qk2-handpanel/) |
+| 260404-qni | master push + Oracle VM 배포 (PM2 restart) | 2026-04-04 | 834d4bc | [260404-qni-master-push-oracle-vm-pm2-restart](./quick/260404-qni-master-push-oracle-vm-pm2-restart/) |
 
 ### Blockers/Concerns
 
