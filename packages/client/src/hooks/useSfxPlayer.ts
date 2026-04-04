@@ -45,6 +45,14 @@ export function useSfxPlayer() {
     }
   };
 
+  const stop = (key: string) => {
+    const audio = audioCache.current.get(key);
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+  };
+
   const toggleMute = () => {
     setIsMuted(prev => {
       const next = !prev;
@@ -53,5 +61,5 @@ export function useSfxPlayer() {
     });
   };
 
-  return { play, isMuted, toggleMute };
+  return { play, stop, isMuted, toggleMute };
 }

@@ -83,7 +83,7 @@ export function RoomPage() {
   const navigate = useNavigate();
   const locationState = location.state as { nickname?: string; initialChips?: number; isHost?: boolean } | null;
   const { socket, connect, gameState, roomState, myPlayerId, error, clearError } = useGameStore();
-  const { play: playSfx, isMuted: sfxMuted, toggleMute: toggleSfx } = useSfxPlayer();
+  const { play: playSfx, stop: stopSfx, isMuted: sfxMuted, toggleMute: toggleSfx } = useSfxPlayer();
   const { isMuted: bgmMuted, toggleMute: toggleBgm } = useBgmPlayer();
   const serverUrl = import.meta.env.VITE_SERVER_URL || '';
 
@@ -359,11 +359,16 @@ export function RoomPage() {
   }, [gameState?.phase]);
 
   // card-reveal phase 진입 감지 → play('card-reveal')
+  // 새 라운드 phase 진입 시 card-reveal SFX 즉시 정지
   useEffect(() => {
     const currentPhase = (gameState?.phase ?? null) as string | null;
     const BETTING_PHASES = ['betting', 'betting-1', 'betting-2', 'card-select'];
+    const NEW_ROUND_PHASES = ['dealer-select', 'attend-school', 'mode-select', 'shuffling'];
     if (BETTING_PHASES.includes(prevPhaseRef.current ?? '') && currentPhase === 'card-reveal') {
       playSfx('card-reveal');
+    }
+    if (NEW_ROUND_PHASES.includes(currentPhase ?? '')) {
+      stopSfx('card-reveal');
     }
   }, [gameState?.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
