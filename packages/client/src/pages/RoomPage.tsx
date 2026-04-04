@@ -3,6 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { toast, Toaster } from 'sonner';
 import { useGameStore } from '@/store/gameStore';
 import { useSfxPlayer } from '@/hooks/useSfxPlayer';
+import { useBgmPlayer } from '@/hooks/useBgmPlayer';
 import { AudioControlBar } from '@/components/layout/AudioControlBar';
 import { WaitingTable } from '@/components/layout/WaitingTable';
 import { GameTable } from '@/components/layout/GameTable';
@@ -82,7 +83,8 @@ export function RoomPage() {
   const navigate = useNavigate();
   const locationState = location.state as { nickname?: string; initialChips?: number; isHost?: boolean } | null;
   const { socket, connect, gameState, roomState, myPlayerId, error, clearError } = useGameStore();
-  const { play: playSfx } = useSfxPlayer();
+  const { play: playSfx, isMuted: sfxMuted, toggleMute: toggleSfx } = useSfxPlayer();
+  const { isMuted: bgmMuted, toggleMute: toggleBgm } = useBgmPlayer();
   const serverUrl = import.meta.env.VITE_SERVER_URL || '';
 
   // location.state → sessionStorage 순서로 입장 정보 복원 (새로고침 대응)
@@ -639,6 +641,10 @@ export function RoomPage() {
       flippedIndices={myFlippedIndices}
       onFlip={(idx) => { playSfx('flip'); setMyFlippedIndices(prev => { const n = new Set(prev); n.add(idx); return n; }); }}
       dealingComplete={dealingComplete}
+      bgmMuted={bgmMuted}
+      onToggleBgm={toggleBgm}
+      sfxMuted={sfxMuted}
+      onToggleSfx={toggleSfx}
     />
   );
 

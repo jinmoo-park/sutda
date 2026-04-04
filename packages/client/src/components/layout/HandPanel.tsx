@@ -5,8 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { HwatuCard } from '@/components/game/HwatuCard';
 import { HandReferenceDialog } from './HandReferenceDialog';
-import { useBgmPlayer } from '@/hooks/useBgmPlayer';
-import { useSfxPlayer } from '@/hooks/useSfxPlayer';
 
 interface HandPanelProps {
   myPlayer: PlayerState | null;
@@ -20,6 +18,10 @@ interface HandPanelProps {
   /** 외부 제어 모드: RoomPage에서 flip 상태를 관리할 때 사용 */
   flippedIndices?: Set<number>;
   onFlip?: (idx: number) => void;
+  bgmMuted?: boolean;
+  onToggleBgm?: () => void;
+  sfxMuted?: boolean;
+  onToggleSfx?: () => void;
 }
 
 const HAND_TYPE_KOREAN: Record<string, string> = {
@@ -72,11 +74,13 @@ export function HandPanel({
   dealingComplete = true,
   flippedIndices: controlledFlipped,
   onFlip,
+  bgmMuted,
+  onToggleBgm,
+  sfxMuted,
+  onToggleSfx,
 }: HandPanelProps) {
   const [showReference, setShowReference] = useState(false);
   const [internalFlipped, setInternalFlipped] = useState<Set<number>>(new Set());
-  const { isMuted: bgmMuted, toggleMute: toggleBgm } = useBgmPlayer();
-  const { isMuted: sfxMuted, toggleMute: toggleSfx } = useSfxPlayer();
 
   const flippedIndices = controlledFlipped ?? internalFlipped;
 
@@ -204,23 +208,29 @@ export function HandPanel({
         )}
       </div>
 
-      {/* Row 4: BGM/SFX 버튼 (모바일 전용) */}
-      <div className="flex md:hidden items-center gap-1.5">
-        <button
-          onClick={toggleBgm}
-          title={bgmMuted ? 'BGM 켜기' : 'BGM 끄기'}
-          className={`h-6 w-6 flex items-center justify-center rounded text-xs bg-black/40 border border-white/20 hover:bg-black/60 ${bgmMuted ? 'opacity-40' : 'opacity-70'}`}
-        >
-          {bgmMuted ? '🔇' : '🎵'}
-        </button>
-        <button
-          onClick={toggleSfx}
-          title={sfxMuted ? 'SFX 켜기' : 'SFX 끄기'}
-          className={`h-6 w-6 flex items-center justify-center rounded text-xs bg-black/40 border border-white/20 hover:bg-black/60 ${sfxMuted ? 'opacity-40' : 'opacity-70'}`}
-        >
-          {sfxMuted ? '🔕' : '🔔'}
-        </button>
-      </div>
+      {/* Row 4: BGM/SFX 버튼 (모바일 전용, props 제공 시만 렌더링) */}
+      {(onToggleBgm || onToggleSfx) && (
+        <div className="flex md:hidden items-center gap-1.5">
+          {onToggleBgm && (
+            <button
+              onClick={onToggleBgm}
+              title={bgmMuted ? 'BGM 켜기' : 'BGM 끄기'}
+              className={`h-6 w-6 flex items-center justify-center rounded text-xs bg-black/40 border border-white/20 hover:bg-black/60 ${bgmMuted ? 'opacity-40' : 'opacity-70'}`}
+            >
+              {bgmMuted ? '🔇' : '🎵'}
+            </button>
+          )}
+          {onToggleSfx && (
+            <button
+              onClick={onToggleSfx}
+              title={sfxMuted ? 'SFX 켜기' : 'SFX 끄기'}
+              className={`h-6 w-6 flex items-center justify-center rounded text-xs bg-black/40 border border-white/20 hover:bg-black/60 ${sfxMuted ? 'opacity-40' : 'opacity-70'}`}
+            >
+              {sfxMuted ? '🔕' : '🔔'}
+            </button>
+          )}
+        </div>
+      )}
 
       <HandReferenceDialog open={showReference} onOpenChange={setShowReference} />
     </div>
