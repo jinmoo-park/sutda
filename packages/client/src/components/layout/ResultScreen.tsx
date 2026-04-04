@@ -99,8 +99,12 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
     const iAmWinner = gameState.winnerId === myPlayerId;
 
     // 세장섯다: selectedCards 우선 사용 (me.cards[0,1]이 선택한 2장이 아닐 수 있음)
+    // 한장공유 모드: 플레이어의 1장 + 공유카드로 2장 구성
     const getHandCards = (player: typeof me) => {
       if (player.selectedCards && player.selectedCards.length >= 2) return player.selectedCards;
+      if (gameState.mode === 'shared-card' && gameState.sharedCard && player.cards[0]) {
+        return [player.cards[0], gameState.sharedCard];
+      }
       return player.cards?.filter((c): c is Card => c != null) ?? [];
     };
 
