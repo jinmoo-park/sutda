@@ -8,7 +8,7 @@ export function useBgmPlayer() {
     const audio = new Audio('/sfx/' + encodeURIComponent('main_bgm.mp3'));
     audio.loop = true;
     audio.preload = 'none';
-    audio.volume = 0.2;
+    audio.volume = 0.15;
     audioRef.current = audio;
 
     const muted = localStorage.getItem('sutda_bgm_muted') === 'true';
