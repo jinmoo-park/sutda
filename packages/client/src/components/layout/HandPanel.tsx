@@ -174,22 +174,51 @@ export function HandPanel({
         <p className="text-sm text-muted-foreground">카드가 아직 없어요</p>
       ) : (
         <div className="flex gap-2 items-center flex-wrap">
-          {cards.map((card, idx) => {
-            const isIndianHidden = mode === 'indian' && idx === 0;
-            const isFlipped = isCardSelectPhase ? true : flippedIndices.has(idx);
-            const isDisabled = !dealingComplete || isFlipped || card === null || isIndianHidden;
-            return (
-              <div key={idx} style={getDealAnimStyle(idx)} className={isIndianHidden ? 'opacity-40' : undefined}>
-                <HwatuCard
-                  card={card}
-                  faceUp={isFlipped}
-                  size="sm"
-                  onClick={() => handleFlip(idx)}
-                  disabled={isDisabled}
-                />
-              </div>
-            );
-          })}
+          {(() => {
+            // 세장섯다: openedCardIndex 카드를 맨 앞으로 정렬한 렌더 순서 계산
+            const isThreeCardWithOpened = mode === 'three-card' && myPlayer?.openedCardIndex !== undefined;
+            const cardRenderOrder: number[] = isThreeCardWithOpened
+              ? [myPlayer!.openedCardIndex!, ...[...cards.keys()].filter(i => i !== myPlayer!.openedCardIndex!)]
+              : [...cards.keys()];
+
+            // 세장섯다 공개 구분 적용 phase — sejang-open 이후 (betting-1, card-select, betting-2)
+            const isThreeCardOpenPhase = isThreeCardWithOpened &&
+              (phase === 'betting-1' || phase === 'card-select' || phase === 'betting-2');
+
+            return cardRenderOrder.map((origIdx, renderPos) => {
+              const card = cards[origIdx];
+              const isIndianHidden = mode === 'indian' && origIdx === 0;
+              const isFlipped = isCardSelectPhase ? true : flippedIndices.has(origIdx);
+              const isDisabled = !dealingComplete || isFlipped || card === null || isIndianHidden;
+              const isOpenedCard = isThreeCardOpenPhase && origIdx === myPlayer!.openedCardIndex!;
+              const isUnopenedCard = isThreeCardOpenPhase && origIdx !== myPlayer!.openedCardIndex!;
+
+              return (
+                <div
+                  key={origIdx}
+                  style={getDealAnimStyle(renderPos)}
+                  className={[
+                    isIndianHidden ? 'opacity-40' : undefined,
+                    isOpenedCard ? 'ring-2 ring-amber-400 rounded brightness-110' : undefined,
+                    isUnopenedCard ? 'brightness-75 opacity-80' : undefined,
+                  ].filter(Boolean).join(' ') || undefined}
+                >
+                  <HwatuCard
+                    card={card}
+                    faceUp={isFlipped}
+                    size="sm"
+                    onClick={() => handleFlip(origIdx)}
+                    disabled={isDisabled}
+                  />
+                  {isOpenedCard && (
+                    <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-400 text-amber-400 mt-0.5 block text-center">
+                      공개
+                    </Badge>
+                  )}
+                </div>
+              );
+            });
+          })()}
         </div>
       )}
 
