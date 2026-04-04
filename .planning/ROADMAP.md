@@ -294,7 +294,7 @@ Plans:
 **Gap Closure:** v1-MILESTONE-AUDIT.md BET-07 orphaned gap 해소
 **Requirements:** BET-07
 **Depends on:** Phase 4 (구현 이미 존재)
-**Plans:** 0/2 plans complete
+**Plans:** 2 plans
 
 Plans:
 - [ ] 15-01-PLAN.md — BET-07 Traceability 등록 + 코드 구현 확인 (BettingPanel.tsx + processBetAction)
