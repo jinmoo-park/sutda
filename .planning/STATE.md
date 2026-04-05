@@ -5,7 +5,7 @@ milestone_name: milestone
 status: verifying
 stopped_at: Completed quick-260404-vl1-PLAN.md
 last_updated: "2026-04-04T13:47:43.025Z"
-last_activity: "2026-04-04 - Completed quick task 260404-vl1: 한장공유 결과화면 공유카드 포함 2장 표시 + 족보 뱃지"
+last_activity: "2026-04-05 - Completed quick task 260405-i6e: 족보 한단계차이 패배 시 lose-ddaeng-but-lost SFX + 판돈 2만원↑ BGM 교체"
 progress:
   total_phases: 18
   completed_phases: 17
@@ -230,6 +230,7 @@ None yet.
 | 260404-tgm | 세장섯다 3장 카드 표시 버그 수정 — GameTable PlayerSeat 3장 표시 + HandPanel 공개 카드 맨앞 정렬 + 시각 구분 | 2026-04-04 | 6671d0a | [260404-tgm-sejang-3card-display-fix](./quick/260404-tgm-sejang-3card-display-fix/) |
 | 260404-vct | 버그 4건 수정 — 세장섯다 PlayerSeat 공개카드 정렬, 한장공유 SFX sharedCard 포함, 공유카드 모달 모바일 최적화, 구사 재경기 오리지날 모드 강제 | 2026-04-04 | 28b1892 | [260404-vct-sfx](./quick/260404-vct-sfx/) |
 | 260404-vl1 | 한장공유 결과화면 공유카드 포함 2장 표시 + 족보 뱃지 | 2026-04-04 | f5d5aee | [260404-vl1-2](./quick/260404-vl1-2/) |
+| 260405-i6e | 족보 한단계차이 패배 시 lose-ddaeng-but-lost SFX + 판돈 2만원↑ BGM 교체 | 2026-04-05 | 559d4c8 | [260405-i6e-lose-ddaeng-but-lost-sfx-2-bgm-bgm](./quick/260405-i6e-lose-ddaeng-but-lost-sfx-2-bgm-bgm/) |
 
 ### Blockers/Concerns
 
