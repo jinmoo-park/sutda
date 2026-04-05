@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 Phase: 16
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-05 - Completed quick task 260405-pz8: 방 생성 비밀번호 명칭을 암구호로 변경
+Last activity: 2026-04-05 - Completed quick task 260405-sgp: 플레이어 퇴장 즉시 toast + 재접속 알림
 
 Progress: [████░░░░░░] 44%
 
@@ -241,6 +241,9 @@ None yet.
 | 260405-miq | 모바일 3x3 그리드 좌석배치 + 판돈 중앙 + 레이즈 텍스트 간소화 + 학교가기 버튼 조건부 텍스트 | 2026-04-05 | 7a2bba8 | [260405-miq-mobile-layout-fix](./quick/260405-miq-mobile-layout-fix/) |
 | 260405-pv9 | 3장섯다 손패패널 카드 겹치기 배치 — 베팅패널 폭 확보 | 2026-04-05 | b1fc22c | [260405-pv9-3](./quick/260405-pv9-3/) |
 | 260405-pz8 | 방 생성 비밀번호 명칭을 암구호로 변경 — UI 라벨/플레이스홀더/에러메시지 | 2026-04-05 | 8e29144 | [260405-pz8-ui](./quick/260405-pz8-ui/) |
+| 260405-s6a | 인디언섯다/세장섯다 쇼다운 후 족보 한끗차이일때 lose-ddaeng-but-lost SFX 재생안됨 | 2026-04-05 | 5eb3299 | [260405-s6a-lose-ddaeng-but-lost-sfx](./quick/260405-s6a-lose-ddaeng-but-lost-sfx/) |
+| 260405-sce | 게임이력 CSV 저장 기능 — HistoryModal CSV 다운로드 버튼 | 2026-04-05 | 6f11dc7 | [260405-sce-csv](./quick/260405-sce-csv/) |
+| 260405-sgp | 플레이어 퇴장 즉시 토스트 + 재접속 알림 — 1분 유예 중에도 즉시 표시 | 2026-04-05 | f931315 | [260405-sgp-disconnect-toast](./quick/260405-sgp-disconnect-toast/) |
 
 ### Blockers/Concerns
 
