@@ -196,8 +196,16 @@ async function tryAdvanceNextRound(roomId: string): Promise<void> {
     const activePlayers = roomAfterKick?.players.filter(p => !p.isObserver) ?? [];
     if (activePlayers.length < 2) {
       // 1명 이하 남으면 대기실로 복귀
-      if (roomAfterKick) roomAfterKick.gamePhase = 'waiting';
-      if (roomAfterKick) io.to(roomId).emit('room-state', roomAfterKick);
+      // engine 삭제 전 정산된 chips를 room.players에 동기화
+      if (roomAfterKick) {
+        const enginePs = engine.getState().players;
+        for (const rp of roomAfterKick.players) {
+          const ep = enginePs.find(p => p.id === rp.id);
+          if (ep) rp.chips = ep.chips;
+        }
+        roomAfterKick.gamePhase = 'waiting';
+        io.to(roomId).emit('room-state', roomAfterKick);
+      }
       gameEngines.delete(roomId);
       return;
     }
