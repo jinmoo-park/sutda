@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import type { PlayerState, Card, GameMode, RoomState } from '@sutda/shared';
 import { PlayerSeat } from '@/components/game/PlayerSeat';
 import { SharedCardDisplay } from '@/components/game/SharedCardDisplay';
+import { HwatuCard } from '@/components/game/HwatuCard';
 import { Badge } from '@/components/ui/badge';
 import { setBigPot } from '@/hooks/useBgmPlayer';
 
@@ -47,6 +48,15 @@ function cellToGridArea(cell: number): string {
   const row = Math.ceil(cell / 3);
   const col = ((cell - 1) % 3) + 1;
   return `${row} / ${col}`;
+}
+
+/**
+ * 모바일 전용: 셀4(좌), 셀6(우)는 row2-3을 span해서 중앙 pot+player_me 공간 확보
+ */
+function mobileCellToGridArea(cell: number): string {
+  if (cell === 4) return '2 / 1 / 4 / 2';
+  if (cell === 6) return '2 / 3 / 4 / 4';
+  return cellToGridArea(cell);
 }
 
 export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibleCardCounts, sharedCard, mode, dealingComplete = true, myFlippedCardIndices, roomState, showMyTurnAlert }: GameTableProps) {
@@ -268,7 +278,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
               <div
                 key={p.id}
                 className="flex items-center justify-center p-0.5"
-                style={{ gridArea: cellToGridArea(cell) }}
+                style={{ gridArea: mobileCellToGridArea(cell) }}
               >
                 <PlayerSeat
                   seatIndex={i}
@@ -289,7 +299,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
 
           {/* 셀5 (row2/col2): 판돈 + 모드 정보 */}
           <div
-            className="flex flex-col items-center justify-center pointer-events-none"
+            className="flex flex-col items-center justify-center pointer-events-none gap-0.5 overflow-hidden"
             style={{ gridArea: '2 / 2' }}
           >
             {mode && (
@@ -297,10 +307,21 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
                 {MODE_LABELS[mode] ?? mode}
               </span>
             )}
-            <span className="font-semibold tabular-nums text-sm mt-0.5">{pot.toLocaleString()}원</span>
-            {hasAllIn && <span className="text-[9px] text-muted-foreground">올인 포함</span>}
-            {mode === 'shared-card' && sharedCard && (
-              <div className="mt-1"><SharedCardDisplay card={sharedCard} /></div>
+            {mode === 'shared-card' && sharedCard ? (
+              <div className="flex items-center gap-1.5">
+                <div className="flex flex-col items-end gap-0.5">
+                  <span className="font-semibold tabular-nums text-xs">{pot.toLocaleString()}원</span>
+                  {hasAllIn && <span className="text-[9px] text-muted-foreground">올인 포함</span>}
+                </div>
+                <div className="ring-1 ring-primary/50 rounded-sm shrink-0">
+                  <HwatuCard card={sharedCard} faceUp={true} size="xxs" />
+                </div>
+              </div>
+            ) : (
+              <>
+                <span className="font-semibold tabular-nums text-sm">{pot.toLocaleString()}원</span>
+                {hasAllIn && <span className="text-[9px] text-muted-foreground">올인 포함</span>}
+              </>
             )}
           </div>
 

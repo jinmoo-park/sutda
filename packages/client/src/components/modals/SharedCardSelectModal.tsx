@@ -44,19 +44,19 @@ export function SharedCardSelectModal({ open, roomId }: SharedCardSelectModalPro
   return (
     <Dialog open={open} modal={false}>
       <DialogContent
-        className="max-h-[85vh] overflow-y-auto p-3 md:p-6"
+        className="max-h-[80vh] overflow-y-auto p-2 md:p-6 w-[92vw] md:w-auto"
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
-        <DialogHeader>
-          <DialogTitle>공유 카드 선택</DialogTitle>
-          <DialogDescription>
+        <DialogHeader className="mb-1 md:mb-2">
+          <DialogTitle className="text-sm md:text-base">공유 카드 선택</DialogTitle>
+          <DialogDescription className="text-xs md:text-sm">
             {isDealer
               ? '모든 플레이어와 공유할 카드를 선택하세요.'
               : '선 플레이어가 공유 카드를 선택 중입니다...'}
           </DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-5 gap-1 md:gap-2 mt-2">
+        <div className="grid grid-cols-5 gap-0.5 md:gap-2 mt-1">
           {Array.from({ length: 20 }, (_, i) => {
             const isSelected = selectedIndex === i;
             const disabled = !isDealer || selectedIndex !== null;
@@ -74,9 +74,9 @@ export function SharedCardSelectModal({ open, roomId }: SharedCardSelectModalPro
                 )}
               >
                 {isDealer && deck[i] ? (
-                  <HwatuCard card={deck[i]} faceUp={true} size={isMd ? 'lg' : 'md'} />
+                  <HwatuCard card={deck[i]} faceUp={true} size={isMd ? 'lg' : 'xs'} />
                 ) : (
-                  <HwatuCard faceUp={false} size={isMd ? 'sm' : 'xs'} />
+                  <HwatuCard faceUp={false} size={isMd ? 'sm' : 'xxs'} />
                 )}
               </button>
             );

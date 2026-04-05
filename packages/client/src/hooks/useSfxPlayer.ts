@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 
 interface SfxEntry { file: string; volume: number; }
 
@@ -23,9 +23,11 @@ const SFX_MAP: Record<string, SfxEntry> = {
   'school-proxy':         { file: 'school-proxy.mp3',         volume: 0.7 },
 };
 
+// 모듈 레벨 싱글턴 캐시 — 컴포넌트 인스턴스에 상관없이 동일한 Audio 객체 공유
+const audioCache = new Map<string, HTMLAudioElement>();
+
 export function useSfxPlayer() {
   const [isMuted, setIsMuted] = useState(() => localStorage.getItem('sutda_sfx_muted') === 'true');
-  const audioCache = useRef<Map<string, HTMLAudioElement>>(new Map());
 
   const play = (key: string) => {
     if (localStorage.getItem('sutda_sfx_muted') === 'true') return;
@@ -33,7 +35,7 @@ export function useSfxPlayer() {
     if (!entry) return;
 
     const url = '/sfx/' + encodeURIComponent(entry.file);
-    let audio = audioCache.current.get(key);
+    let audio = audioCache.get(key);
 
     if (audio) {
       audio.currentTime = 0;
@@ -41,13 +43,13 @@ export function useSfxPlayer() {
     } else {
       audio = new Audio(url);
       audio.volume = entry.volume;
-      audioCache.current.set(key, audio);
+      audioCache.set(key, audio);
       audio.play().catch(() => {});
     }
   };
 
   const stop = (key: string) => {
-    const audio = audioCache.current.get(key);
+    const audio = audioCache.get(key);
     if (audio) {
       audio.pause();
       audio.currentTime = 0;
