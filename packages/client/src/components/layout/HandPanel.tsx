@@ -206,7 +206,7 @@ export function HandPanel({
                   className={[
                     isIndianHidden ? 'opacity-40' : undefined,
                     isOpenedCard ? 'ring-2 ring-amber-400 rounded brightness-110' : undefined,
-                    isUnopenedCard ? 'brightness-75 opacity-80' : undefined,
+                    isUnopenedCard ? 'brightness-75' : undefined,
                   ].filter(Boolean).join(' ') || undefined}
                 >
                   <HwatuCard
