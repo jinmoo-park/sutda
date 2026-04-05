@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 Phase: 16
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-05 - Completed quick task 260405-knk: PlayerSeat 박스 크기 최적화 — 데스크탑 확대 + 모바일 3x3 그리드 + BGM 음량 + 폰트/카드 조정
+Last activity: 2026-04-05 - Completed quick tasks 260405-l55 + 260405-l5b: 학교대신가주기 결과카드 버그 수정 + 결과페이지 disconnect 즉시 처리
 
 Progress: [████░░░░░░] 44%
 
@@ -236,6 +236,8 @@ None yet.
 | 260405-jug | 게임테이블 UI 버그+개선 7종 — 그리드마진/링크복사/빅팟pulse+BGM/판돈카드확대/모드Badge/베팅패널pulse | 2026-04-05 | e120591 | [260405-jug-ui-7-pulse-bgm](./quick/260405-jug-ui-7-pulse-bgm/) |
 | 260405-kf2 | 레이아웃 중대오류 수정 + 베팅패널 초기화버튼 인라인 + card-reveal SFX 타이밍 수정 | 2026-04-05 | 72ae604 | [260405-kf2-card-reveal-sfx](./quick/260405-kf2-card-reveal-sfx/) |
 | 260405-knk | PlayerSeat 박스 크기 최적화 — 데스크탑 그리드 박스 복구 + 모바일 3x3 그리드 + BGM 음량 + 폰트/카드 조정 | 2026-04-05 | d0afcf3 | [260405-knk-playerseat-3x3](./quick/260405-knk-playerseat-3x3/) |
+| 260405-l55 | 학교대신가주기 수혜자 결과카드 미반영 버그 수정 — attendSchoolProxy totalBet 누락 + ihi revert 복구 | 2026-04-05 | 6e0ee5d | [260405-l55-hakgyo-result-card](./quick/260405-l55-hakgyo-result-card/) |
+| 260405-l5b | 결과페이지 disconnect 즉시 진행 + tryAdvanceNextRound 추출 | 2026-04-05 | 1464b49 | [260405-l5b-disconnect-1](./quick/260405-l5b-disconnect-1/) |
 
 ### Blockers/Concerns
 
