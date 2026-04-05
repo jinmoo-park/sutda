@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 Phase: 16
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-05 - Completed quick task 260405-jug: 게임테이블 UI 버그+개선 7종 (그리드마진/링크복사/빅팟pulse+BGM/판돈카드확대/모드Badge/베팅패널pulse)
+Last activity: 2026-04-05 - Completed quick task 260405-knk: PlayerSeat 박스 크기 최적화 — 데스크탑 확대 + 모바일 3x3 그리드 + BGM 음량 + 폰트/카드 조정
 
 Progress: [████░░░░░░] 44%
 
@@ -235,6 +235,7 @@ None yet.
 | 260405-j4v | 게임테이블 3x3 그리드 레이아웃 리팩터링 — 인원수별 플레이어 배치 최적화 + 빅팟 내부글로우 CSS 효과 | 2026-04-05 | 6ac3861 | [260405-j4v-3x3-css](./quick/260405-j4v-3x3-css/) |
 | 260405-jug | 게임테이블 UI 버그+개선 7종 — 그리드마진/링크복사/빅팟pulse+BGM/판돈카드확대/모드Badge/베팅패널pulse | 2026-04-05 | e120591 | [260405-jug-ui-7-pulse-bgm](./quick/260405-jug-ui-7-pulse-bgm/) |
 | 260405-kf2 | 레이아웃 중대오류 수정 + 베팅패널 초기화버튼 인라인 + card-reveal SFX 타이밍 수정 | 2026-04-05 | 72ae604 | [260405-kf2-card-reveal-sfx](./quick/260405-kf2-card-reveal-sfx/) |
+| 260405-knk | PlayerSeat 박스 크기 최적화 — 데스크탑 그리드 박스 복구 + 모바일 3x3 그리드 + BGM 음량 + 폰트/카드 조정 | 2026-04-05 | d0afcf3 | [260405-knk-playerseat-3x3](./quick/260405-knk-playerseat-3x3/) |
 
 ### Blockers/Concerns
 
