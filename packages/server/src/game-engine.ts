@@ -1994,11 +1994,12 @@ export class GameEngine {
       return;
     }
 
-    // 후원자 칩 차감
+    // 후원자 칩 차감 + totalBet 추적
     sponsor.chips -= 500;
+    sponsor.totalBet += 500;  // 앤티 대납은 후원자의 totalBet에 반영 (chipDelta 정확성)
     sponsor.totalCommitted = (sponsor.totalCommitted ?? 0) + 500;
 
-    // 수혜자는 무료 참여 (chips 차감 없음)
+    // 수혜자는 무료 참여 (chips 차감 없음, totalBet도 0 유지)
     this.state.pot += 500;
     this.state.attendedPlayerIds.push(beneficiaryId);
 
