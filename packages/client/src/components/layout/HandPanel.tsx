@@ -173,8 +173,10 @@ export function HandPanel({
       {cards.length === 0 ? (
         <p className="text-sm text-muted-foreground">카드가 아직 없어요</p>
       ) : (
-        <div className="flex gap-2 items-center flex-wrap">
+        <div className={cards.length === 3 ? "flex items-center flex-wrap" : "flex gap-2 items-center flex-wrap"}>
           {(() => {
+            const isThreeCards = cards.length === 3;
+
             // 세장섯다: openedCardIndex 카드를 맨 앞으로 정렬한 렌더 순서 계산
             const isThreeCardWithOpened = mode === 'three-card' && myPlayer?.openedCardIndex !== undefined;
             const cardRenderOrder: number[] = isThreeCardWithOpened
@@ -196,7 +198,11 @@ export function HandPanel({
               return (
                 <div
                   key={origIdx}
-                  style={getDealAnimStyle(renderPos)}
+                  style={{
+                    ...getDealAnimStyle(renderPos),
+                    ...(isThreeCards && renderPos > 0 ? { marginLeft: '-12px' } : {}),
+                    zIndex: isThreeCards ? renderPos + 1 : undefined,
+                  }}
                   className={[
                     isIndianHidden ? 'opacity-40' : undefined,
                     isOpenedCard ? 'ring-2 ring-amber-400 rounded brightness-110' : undefined,
