@@ -113,7 +113,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   RECHARGE_NOT_FOUND: '재충전 요청을 찾을 수 없습니다.',
   INSUFFICIENT_CHIPS: '칩이 부족합니다.',
   CARD_ALREADY_TAKEN: '이미 선택된 카드입니다. 다른 카드를 선택하세요.',
-  INVALID_PASSWORD: '방 생성 비밀번호가 올바르지 않습니다.',
+  INVALID_PASSWORD: '암구호가 올바르지 않습니다.',
 };
 
 type ErrorCode = ErrorPayload['code'];

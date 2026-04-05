@@ -62,11 +62,11 @@ export function MainPage() {
               />
             </div>
             <div className="space-y-1">
-              <label htmlFor="room-password" className="sr-only">방 생성 비밀번호</label>
+              <label htmlFor="room-password" className="sr-only">암구호</label>
               <Input
                 id="room-password"
                 type="password"
-                placeholder="방 생성 비밀번호"
+                placeholder="암구호"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
