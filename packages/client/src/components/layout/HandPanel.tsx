@@ -201,7 +201,7 @@ export function HandPanel({
                   style={{
                     ...getDealAnimStyle(renderPos),
                     ...(isThreeCards && renderPos > 0 ? { marginLeft: '-12px' } : {}),
-                    zIndex: isThreeCards ? renderPos + 1 : undefined,
+                    zIndex: isThreeCards ? cards.length - renderPos : undefined,
                   }}
                   className={[
                     isIndianHidden ? 'opacity-40' : undefined,
