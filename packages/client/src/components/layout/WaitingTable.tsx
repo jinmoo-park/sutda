@@ -20,14 +20,24 @@ export function WaitingTable({ roomState, myPlayerId, roomId }: WaitingTableProp
   const isHost = myPlayerId === roomState.hostId;
   const canStart = roomState.players.length >= 2;
 
-  const handleCopyUrl = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // clipboard API 실패 시 무시
-    }
+  const handleCopyUrl = () => {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url)
+      .catch(() => {
+        // fallback: 임시 input 생성 + execCommand
+        const input = document.createElement('input');
+        input.value = url;
+        input.style.position = 'fixed';
+        input.style.opacity = '0';
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+      })
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      });
   };
 
   const handleStartGame = () => {

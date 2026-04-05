@@ -56,3 +56,13 @@
     opacity: 1;
   }
 }
+
+@keyframes bigpot-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes betting-pulse {
+  0%, 100% { box-shadow: 0 0 28px 8px hsl(75 55% 42% / 0.7); }
+  50% { box-shadow: 0 0 14px 4px hsl(75 55% 42% / 0.3); }
+}

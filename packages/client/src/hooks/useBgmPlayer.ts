@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 
 // 모듈 레벨 싱글톤 — 여러 컴포넌트가 훅을 호출해도 Audio 인스턴스는 하나만 생성됨
 let _audio: HTMLAudioElement | null = null;
+let _bigpotAudio: HTMLAudioElement | null = null;
+let _isBigPotActive = false;
 const _subscribers = new Set<(muted: boolean) => void>();
 
 function getAudio(): HTMLAudioElement {
@@ -30,6 +32,27 @@ function getAudio(): HTMLAudioElement {
   return _audio;
 }
 
+/** 빅팟 BGM 전환 — 모듈 레벨 싱글톤 관리 */
+export function setBigPot(active: boolean) {
+  if (active === _isBigPotActive) return;
+  _isBigPotActive = active;
+
+  if (localStorage.getItem('sutda_bgm_muted') === 'true') return;
+
+  if (active) {
+    _audio?.pause();
+    if (!_bigpotAudio) {
+      _bigpotAudio = new Audio('/sfx/bgm_bigpot.mp3');
+      _bigpotAudio.loop = true;
+      _bigpotAudio.volume = 0.1;
+    }
+    _bigpotAudio.play().catch(() => {});
+  } else {
+    _bigpotAudio?.pause();
+    _audio?.play().catch(() => {});
+  }
+}
+
 export function useBgmPlayer() {
   const [isMuted, setIsMuted] = useState(() => localStorage.getItem('sutda_bgm_muted') === 'true');
 
@@ -48,9 +71,16 @@ export function useBgmPlayer() {
     localStorage.setItem('sutda_bgm_muted', String(next));
     const audio = getAudio();
     if (next) {
+      // mute: main + bigpot 모두 정지
       audio.pause();
+      _bigpotAudio?.pause();
     } else {
-      audio.play().catch(() => {});
+      // unmute: 빅팟 활성 상태에 따라 적절한 BGM 재생
+      if (_isBigPotActive) {
+        _bigpotAudio?.play().catch(() => {});
+      } else {
+        audio.play().catch(() => {});
+      }
     }
     // 모든 구독자(컴포넌트)에게 상태 변경 전파
     _subscribers.forEach(fn => fn(next));
@@ -58,13 +88,18 @@ export function useBgmPlayer() {
 
   const stopBgm = () => {
     _audio?.pause();
+    _bigpotAudio?.pause();
   };
 
   const startBgm = () => {
     if (localStorage.getItem('sutda_bgm_muted') !== 'true') {
-      getAudio().play().catch(() => {});
+      if (_isBigPotActive) {
+        _bigpotAudio?.play().catch(() => {});
+      } else {
+        getAudio().play().catch(() => {});
+      }
     }
   };
 
-  return { isMuted, toggleMute, stopBgm, startBgm };
+  return { isMuted, toggleMute, stopBgm, startBgm, setBigPot };
 }
