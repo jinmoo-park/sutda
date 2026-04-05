@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
 import { io as ioc, Socket as ClientSocket } from 'socket.io-client';
 import type { ServerToClientEvents, ClientToServerEvents, GameState } from '@sutda/shared';
-import { httpServer, gameEngines } from './index.js';
+import { httpServer, gameEngines, roomManager } from './index.js';
 
 type TestClient = ClientSocket<ServerToClientEvents, ClientToServerEvents>;
 
@@ -472,5 +472,60 @@ describe('보안: send-chat 접근 제어 (A01)', () => {
 
     // client1의 방에 메시지가 도달하지 않아야 한다
     expect(received.length).toBe(0);
+  });
+});
+
+describe('버그 수정: disconnect 유예 만료 시 chips 동기화 (D-18)', () => {
+  const clients: TestClient[] = [];
+
+  afterEach(() => {
+    vi.useRealTimers();
+    clients.forEach(c => c.disconnect());
+    clients.length = 0;
+    gameEngines.clear();
+  });
+
+  it('게임 중 disconnect 유예 만료 후 대기실 전환 시 남은 플레이어의 chips가 engine 정산값을 유지한다', async () => {
+    // 1. 게임 시작
+    const { host, joiner, roomId } = await setupGameStarted();
+    clients.push(host, joiner);
+
+    // 2. engine의 chips를 게임 중 정산된 값으로 강제 설정 (예: 방장이 80,000원 획득)
+    const engine = gameEngines.get(roomId)!;
+    expect(engine).toBeDefined();
+    const engineState = (engine as any).state;
+    const hostPlayerId = engineState.players[0].id;
+    engineState.players[0].chips = 80000; // 방장: 20,000 잃은 상태
+    engineState.players[1].chips = 120000; // 참여자: 20,000 얻은 상태
+
+    // 3. fake timers 활성화 (disconnect 60초 타이머를 가로채기 위해)
+    vi.useFakeTimers();
+
+    // 4. room-state 수신 대기 설정
+    const roomStatePromise = new Promise<any>((resolve) => {
+      host.once('room-state', (data: any) => resolve(data));
+    });
+
+    // 5. joiner(참여자) 연결 끊기 — 서버가 60초 타이머를 시작함
+    joiner.disconnect();
+
+    // 6. 60초 타이머를 빠르게 실행
+    await vi.runAllTimersAsync();
+
+    // 7. real timers 복원 후 room-state 이벤트 대기
+    vi.useRealTimers();
+    const roomState = await Promise.race([
+      roomStatePromise,
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+    ]);
+
+    expect(roomState).not.toBeNull();
+    expect(roomState.gamePhase).toBe('waiting');
+
+    // 8. 남은 플레이어(방장)의 chips가 engine 정산값(80,000)을 유지해야 한다
+    //    (버그 수정 전: 100,000으로 리셋됨)
+    const hostInRoom = roomState.players.find((p: any) => p.id === hostPlayerId);
+    expect(hostInRoom).toBeDefined();
+    expect(hostInRoom.chips).toBe(80000);
   });
 });
