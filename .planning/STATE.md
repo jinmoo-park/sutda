@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 Phase: 16
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-05 - Completed quick task 260405-ujr: 2인 게임 disconnect 후 대기실 복귀 시 chips 초기화 버그 수정 (ce4c7f0)
+Last activity: 2026-04-05 - Completed quick task 260405-v03: 결과화면 퇴장 시 팟 반환 및 이력 잔액 기록 (5a454ae)
 
 Progress: [████░░░░░░] 44%
 
@@ -247,6 +247,7 @@ None yet.
 | 260405-t3k | 2인 게임 종료 시 방장 chips engine→room 미동기화 버그 수정 | 2026-04-05 | 94cd432 | — |
 | 260405-ue1 | 족보 한단계차이 승패 SFX lose-ddaeng-but-lost 미지정 원인 디버그 | 2026-04-05 | fbf66ad | [260405-ue1-sfx-lose-ddaeng-but-lost](./quick/260405-ue1-sfx-lose-ddaeng-but-lost/) |
 | 260405-ujr | 2인 게임 disconnect 후 대기실 복귀 시 chips 초기화 버그 수정 | 2026-04-05 | ce4c7f0 | [260405-ujr-2-disconnect-chips](./quick/260405-ujr-2-disconnect-chips/) |
+| 260405-v03 | 결과화면 퇴장 시 팟 반환 및 이력 잔액 기록 | 2026-04-05 | 5a454ae | [260405-v03-result-exit-pot-refund](./quick/260405-v03-result-exit-pot-refund/) |
 
 ### Blockers/Concerns
 
