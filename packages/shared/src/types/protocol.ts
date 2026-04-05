@@ -96,6 +96,8 @@ export interface ServerToClientEvents {
     tapOrder: number[];
     cutterNickname: string;
   }) => void;
+  'player-disconnected': (data: { nickname: string }) => void;
+  'player-reconnected': (data: { nickname: string }) => void;
 }
 
 /** Socket.IO 서버 간 이벤트 (사용하지 않지만 타입 완전성) */

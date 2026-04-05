@@ -9,63 +9,12 @@ interface HistoryModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-function escapeCsvCell(value: string): string {
-  return `"${value.replace(/"/g, '""')}"`;
-}
-
-function entriesToCsv(entries: RoundHistoryEntry[]): string {
-  const BOM = '\uFEFF';
-  const header = ['판', '승자', '족보', '땡값여부', '판돈', '플레이어별잔액'].map(escapeCsvCell).join(',');
-  const rows = entries.map((entry) => {
-    const balances = entry.playerChipChanges
-      .map((pc) => `${pc.nickname}:${pc.balance ?? 0}`)
-      .join('/');
-    return [
-      escapeCsvCell(String(entry.roundNumber)),
-      escapeCsvCell(entry.winnerNickname),
-      escapeCsvCell(handLabelToKorean(entry.winnerHandLabel)),
-      escapeCsvCell(entry.hasTtaengPayment ? 'O' : ''),
-      escapeCsvCell(String(entry.pot)),
-      escapeCsvCell(balances),
-    ].join(',');
-  });
-  return BOM + [header, ...rows].join('\r\n');
-}
-
-function downloadCsv(entries: RoundHistoryEntry[]): void {
-  const csvString = entriesToCsv(entries);
-  const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-
-  const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const timestamp =
-    `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}` +
-    `-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `sutda-history-${timestamp}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
 export function HistoryModal({ entries, open, onOpenChange }: HistoryModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
       <DialogContent className="max-w-[560px] max-h-[80vh] p-4" onInteractOutside={(e) => e.preventDefault()}>
-        <DialogHeader className="flex flex-row items-center justify-between">
+        <DialogHeader>
           <DialogTitle className="text-xl font-semibold">게임 이력</DialogTitle>
-          <button
-            type="button"
-            disabled={entries.length === 0}
-            onClick={() => downloadCsv(entries)}
-            className="rounded-md border border-input bg-background px-3 py-1 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
-          >
-            CSV 저장
-          </button>
         </DialogHeader>
         {entries.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">아직 이력이 없습니다</p>
