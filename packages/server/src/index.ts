@@ -360,6 +360,10 @@ io.on('connection', (socket) => {
             clearTimeout(gameDisconnectTimers.get(gameTimerKey)!);
             gameDisconnectTimers.delete(gameTimerKey);
           }
+          // 재접속 알림 토스트용 이벤트 emit (observer 재접속 제외)
+          if (!existing.isObserver) {
+            io.to(roomId).emit('player-reconnected', { nickname });
+          }
           return;
         }
 
@@ -427,6 +431,8 @@ io.on('connection', (socket) => {
       if (waitingDisconnectTimers.has(reconnectWaitKey)) {
         clearTimeout(waitingDisconnectTimers.get(reconnectWaitKey)!);
         waitingDisconnectTimers.delete(reconnectWaitKey);
+        // 대기실 재접속 알림 토스트용 이벤트 emit
+        io.to(roomId).emit('player-reconnected', { nickname });
       }
     } catch (err: any) {
       emitError(socket, err.message as ErrorCode);
@@ -834,6 +840,9 @@ io.on('connection', (socket) => {
         const disconnectedNickname = socket.data.nickname;
         const timerKey = `${roomId}:${disconnectedNickname}`; // nickname 기반 키 (재접속 시 socket.id 변경되므로)
 
+        // 즉시: 퇴장 알림 토스트용 이벤트 emit (재접속 유예 타이머와 별개)
+        io.to(roomId).emit('player-disconnected', { nickname: disconnectedNickname });
+
         // 즉시: 베팅/card-reveal/showdown 차례면 자동 처리
         const engine = gameEngines.get(roomId);
         if (engine) {
@@ -909,6 +918,10 @@ io.on('connection', (socket) => {
         const timerKey = `${roomId}:wait:${disconnectedNickname2}`; // nickname 기반 키
         const isHost = room.hostId === disconnectedId;
         const isAlone = room.players.length === 1;
+        // 즉시: 퇴장 알림 토스트용 이벤트 emit (혼자인 경우 받을 사람 없으므로 생략)
+        if (!isAlone) {
+          io.to(roomId).emit('player-disconnected', { nickname: disconnectedNickname2 });
+        }
         // 방장 단독: 1시간 유예, 그 외: 60초 유예 (모바일 앱 전환 대응)
         const waitDelay = (isHost && isAlone) ? 3_600_000 : 60_000;
         console.log(`[waiting-disconnect] scheduling leave for ${disconnectedNickname2} in room ${roomId}, timer ${waitDelay}ms (isHost=${isHost}, isAlone=${isAlone})`);

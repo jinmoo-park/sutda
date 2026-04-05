@@ -129,6 +129,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }
     });
 
+    socket.on('player-disconnected', ({ nickname }) => {
+      toast(`${nickname}님이 나갔습니다 (재접속 대기 중...)`, { duration: 5000 });
+    });
+
+    socket.on('player-reconnected', ({ nickname }) => {
+      toast.success(`${nickname}님이 돌아왔습니다`);
+    });
+
     socket.on('disconnect', () => {
       set({ error: '연결이 끊겼어요. 자동 재연결 중...' });
     });
