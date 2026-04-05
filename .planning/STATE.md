@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 Phase: 16
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-05 - Completed quick task 260405-sgp: 플레이어 퇴장 즉시 toast + 재접속 알림
+Last activity: 2026-04-05 - 2인 게임 종료 시 방장 chips 미동기화 버그 수정 (94cd432)
 
 Progress: [████░░░░░░] 44%
 
@@ -244,6 +244,7 @@ None yet.
 | 260405-s6a | 인디언섯다/세장섯다 쇼다운 후 족보 한끗차이일때 lose-ddaeng-but-lost SFX 재생안됨 | 2026-04-05 | 5eb3299 | [260405-s6a-lose-ddaeng-but-lost-sfx](./quick/260405-s6a-lose-ddaeng-but-lost-sfx/) |
 | 260405-sce | 게임이력 CSV 저장 기능 — HistoryModal CSV 다운로드 버튼 | 2026-04-05 | 6f11dc7 | [260405-sce-csv](./quick/260405-sce-csv/) |
 | 260405-sgp | 플레이어 퇴장 즉시 토스트 + 재접속 알림 — 1분 유예 중에도 즉시 표시 | 2026-04-05 | f931315 | [260405-sgp-disconnect-toast](./quick/260405-sgp-disconnect-toast/) |
+| 260405-t3k | 2인 게임 종료 시 방장 chips engine→room 미동기화 버그 수정 | 2026-04-05 | 94cd432 | — |
 
 ### Blockers/Concerns
 
