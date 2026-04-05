@@ -828,16 +828,16 @@ io.on('connection', (socket) => {
     state.schoolProxyBeneficiaryIds = beneficiaryIds;
     state.schoolProxySponsorId = socket.data.playerId;
 
-    // proxy-ante-applied broadcast (토스트용)
+    // proxy-ante-applied broadcast (토스트용) — 단일 emit으로 수혜자 배열 전달
     const sponsorNickname = socket.data.nickname;
-    for (const bid of beneficiaryIds) {
-      const beneficiary = room.players.find(p => p.id === bid);
-      if (beneficiary) {
-        io.to(roomId).emit('proxy-ante-applied', {
-          sponsorNickname,
-          beneficiaryNickname: beneficiary.nickname,
-        } as any);
-      }
+    const beneficiaryNicknames = beneficiaryIds
+      .map(bid => room.players.find(p => p.id === bid)?.nickname)
+      .filter((n): n is string => !!n);
+    if (beneficiaryNicknames.length > 0) {
+      io.to(roomId).emit('proxy-ante-applied', {
+        sponsorNickname,
+        beneficiaryNicknames,
+      });
     }
   });
 
