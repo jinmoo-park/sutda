@@ -167,12 +167,18 @@ export function PlayerSeat({
           )}
           {player.lastBetAction.type === 'raise' && (
             <div className="flex flex-col gap-0.5">
-              <Badge variant="outline" className="text-xs px-1 py-0 text-yellow-400 border-yellow-400 w-fit">
+              <Badge variant="outline" className={cn(
+                "px-1 py-0 text-yellow-400 border-yellow-400 w-fit",
+                compact ? "text-[10px]" : "text-xs"
+              )}>
                 레이즈{player.lastBetAction.amount ? ` +${player.lastBetAction.amount.toLocaleString()}원` : ''}
               </Badge>
               {player.currentBet > 0 && (
-                <span className="text-xs tabular-nums text-yellow-400 font-semibold">
-                  베팅금액 {player.currentBet.toLocaleString()}원
+                <span className={cn(
+                  "tabular-nums text-yellow-400 font-semibold",
+                  compact ? "text-[10px]" : "text-xs"
+                )}>
+                  {player.currentBet.toLocaleString()}원
                 </span>
               )}
             </div>

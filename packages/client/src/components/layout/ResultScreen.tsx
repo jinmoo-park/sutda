@@ -36,6 +36,8 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
   const [countdown, setCountdown] = useState(AUTO_NEXT_SECONDS);
 
   const myPlayer = gameState.players.find((p) => p.id === myPlayerId);
+  const myNickname = myPlayer?.nickname;
+  const isProxyBeneficiary = myNickname ? proxyBeneficiaryNicknames.includes(myNickname) : false;
   const amAbsent = myPlayer?.isAbsent === true;
   const nonAbsentCount = gameState.players.filter((p) => !p.isAbsent).length;
   const canSkip = nonAbsentCount > 2;
@@ -382,7 +384,7 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
         ) : (
           <div className="flex gap-2">
             <Button variant="secondary" onClick={() => { play('school-go'); handleNextRound(); }}>
-              학교 가기
+              {isProxyBeneficiary ? '다음판으로' : '학교 가기'}
             </Button>
             {canSkip && myPlayerId !== gameState.winnerId && (
               <Button variant="ghost" disabled={hasTakenBreak} onClick={handleTakeBreak}>
