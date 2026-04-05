@@ -1929,11 +1929,49 @@ export class GameEngine {
 
     if (!player.isAlive) return;
 
+    // 베팅 phase: 현재 차례인 경우 자동 다이 처리
     const currentPlayer = this.state.players.find(p => p.seatIndex === this.state.currentPlayerIndex);
     if (currentPlayer?.id === playerId && GameEngine.BETTING_PHASES.includes(this.state.phase)) {
       try {
         this.processBetAction(playerId, { type: 'die' });
       } catch { /* no-op */ }
+    }
+
+    // card-reveal phase: disconnect된 플레이어의 카드를 자동으로 전체 공개 처리
+    if (this.state.phase === 'card-reveal' && !player.isRevealed) {
+      const totalCards = (player as any).selectedCards?.length === 2
+        ? 2
+        : player.cards.filter(c => c != null).length;
+      player.revealedCardIndices = Array.from({ length: totalCards }, (_, i) => i);
+      player.isRevealed = true;
+
+      // 모든 생존 플레이어가 공개 완료되었는지 확인 → showdown 트리거
+      const alivePlayers = this.state.players.filter(p => p.isAlive);
+      const allFullyRevealed = alivePlayers.every(p => p.isRevealed);
+      if (allFullyRevealed) {
+        const strategy = this.getModeStrategy();
+        strategy.showdown(this, this.state);
+      }
+    }
+
+    // showdown phase (전원 다이 후 공개/숨기기 선택): disconnect된 플레이어는 자동 공개(reveal) 처리
+    if (this.state.phase === 'showdown' && !player.isRevealed) {
+      player.isRevealed = true;
+      const alivePlayers = this.state.players.filter(p => p.isAlive);
+      if (alivePlayers.length === 1) {
+        // 생존자 1명: 승자 확정 후 즉시 정산
+        this.state.winnerId = alivePlayers[0].id;
+        const chipsSnapshot = new Map(this.state.players.map(p => [p.id, p.chips]));
+        this.settleChipsWithAllIn();
+        this._settleTtaengValue();
+        this._generateRoundHistory(chipsSnapshot);
+        this.state.phase = 'result';
+      } else {
+        const allRevealed = alivePlayers.every(p => p.isRevealed);
+        if (allRevealed) {
+          this._resolveShowdown();
+        }
+      }
     }
   }
 
