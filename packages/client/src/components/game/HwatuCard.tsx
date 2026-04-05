@@ -4,7 +4,7 @@ import { getCardImageSrc, getCardBackSrc } from '@/lib/cardImageUtils';
 interface HwatuCardProps {
   card?: Card | null;         // null/undefined = 뒷면만 표시
   faceUp?: boolean;           // default false
-  size?: 'xs' | 'sm' | 'md' | 'lg'; // default 'md'
+  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg'; // default 'md'
   onClick?: () => void;
   disabled?: boolean;         // true면 pointer-events: none
   className?: string;
@@ -12,6 +12,7 @@ interface HwatuCardProps {
 
 /** 화투 실물 1:1.583 비율 크기 매핑 */
 const SIZE_MAP = {
+  xxs: { width: 30, height: 49 },
   xs: { width: 40, height: 65 },
   sm: { width: 51, height: 83 },
   md: { width: 68, height: 110 },
@@ -30,7 +31,7 @@ const SIZE_MAP = {
 export function HwatuCard({
   card = null,
   faceUp = false,
-  size = 'md' as 'xs' | 'sm' | 'md' | 'lg',
+  size = 'md' as 'xxs' | 'xs' | 'sm' | 'md' | 'lg',
   onClick,
   disabled = false,
   className,
