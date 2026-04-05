@@ -157,6 +157,128 @@ async function handleGameAction(
   }
 }
 
+/**
+ * result phase에서 투표가 충분히 모였으면 다음 판을 시작한다.
+ * - disconnect + absent 플레이어는 투표 필요 인원에서 제외
+ * - next-round 핸들러, take-break 핸들러, disconnect 핸들러에서 공통 호출
+ */
+async function tryAdvanceNextRound(roomId: string): Promise<void> {
+  const engine = gameEngines.get(roomId);
+  if (!engine) return;
+  const state = engine.getState();
+  if (state.phase !== 'result') return;
+
+  const votes = nextRoundVotes.get(roomId);
+  if (!votes) return;
+
+  // disconnect + absent 제외한 투표 필요 인원 (0칩 플레이어는 어차피 강퇴 대상이므로 포함)
+  const requiredCount = state.players.filter(
+    p => !p.isAbsent && !p.isDisconnected && p.chips > 0
+  ).length;
+
+  if (votes.size < requiredCount) return;
+
+  nextRoundVotes.delete(roomId);
+  schoolResponded.delete(roomId);
+
+  // 칩 0원 플레이어 강제 퇴장 (다음 판 앤티 납부 불가)
+  const brokePlayers = state.players.filter(p => p.chips === 0 && !p.isAbsent);
+  for (const broke of brokePlayers) {
+    const leaveResult = roomManager.leaveRoom(roomId, broke.id);
+    if (leaveResult) {
+      io.to(broke.id).emit('kicked', { reason: 'NO_CHIPS' });
+      const brokenSocket = io.sockets.sockets.get(broke.id);
+      if (brokenSocket) brokenSocket.leave(roomId);
+    }
+  }
+  if (brokePlayers.length > 0) {
+    const roomAfterKick = roomManager.getRoom(roomId);
+    const activePlayers = roomAfterKick?.players.filter(p => !p.isObserver) ?? [];
+    if (activePlayers.length < 2) {
+      // 1명 이하 남으면 대기실로 복귀
+      if (roomAfterKick) roomAfterKick.gamePhase = 'waiting';
+      if (roomAfterKick) io.to(roomId).emit('room-state', roomAfterKick);
+      gameEngines.delete(roomId);
+      return;
+    }
+    // 엔진 players를 남은 room players와 동기화
+    const engineState = engine.getState();
+    (engineState as any).players = engineState.players.filter(
+      p => activePlayers.some(rp => rp.id === p.id)
+    );
+    // seatIndex 재정렬
+    (engineState as any).players.forEach((p: any, i: number) => { p.seatIndex = i; });
+  }
+
+  // 이력 수집
+  const lastHistory = (engine as any).lastRoundHistory;
+  if (lastHistory) {
+    if (!gameHistories.has(roomId)) gameHistories.set(roomId, []);
+    gameHistories.get(roomId)!.push(lastHistory);
+    io.to(roomId).emit('game-history', { entries: gameHistories.get(roomId)! });
+  }
+
+  // proxy-ante 데이터 보존
+  const savedProxyBeneficiaries: string[] = (engine.getState() as any).schoolProxyBeneficiaryIds ?? [];
+  const savedProxySponsorId: string | undefined = (engine.getState() as any).schoolProxySponsorId;
+
+  engine.nextRound();
+
+  // nextRound() 후 winnerId(=dealer) 보존 (Observer 합류 시 엔진 재생성용)
+  const prevDealerId = engine.getState().players.find(p => p.isDealer)?.id;
+
+  // Observer → 일반 플레이어 자동 합류
+  const room = roomManager.getRoom(roomId)!;
+  const observers = room.players.filter(p => p.isObserver);
+  if (observers.length > 0) {
+    const engineStatePlayers = engine.getState().players;
+    for (const rp of room.players) {
+      if (!rp.isObserver) {
+        const ep = engineStatePlayers.find(p => p.id === rp.id);
+        if (ep) rp.chips = ep.chips;
+      }
+    }
+    for (const obs of observers) {
+      obs.isObserver = false;
+      obs.chips = obs.observerChips ?? 100000;
+      obs.observerChips = undefined;
+    }
+    const currentState = engine.getState();
+    const newEngine = new GameEngine(
+      roomId,
+      room.players.filter(p => !p.isObserver),
+      currentState.mode,
+      currentState.roundNumber,
+    );
+    if (prevDealerId) {
+      newEngine.setDealerFromPreviousWinner(prevDealerId);
+    }
+    gameEngines.set(roomId, newEngine);
+  }
+
+  // 자동 앤티
+  const activeEngine = gameEngines.get(roomId) ?? engine;
+  if (activeEngine.getState().phase === 'attend-school') {
+    const nonAbsentPlayers = activeEngine.getState().players.filter(p => !p.isAbsent && p.isAlive);
+    for (const p of nonAbsentPlayers) {
+      try {
+        if (savedProxyBeneficiaries.includes(p.id) && savedProxySponsorId) {
+          activeEngine.attendSchoolProxy(p.id, savedProxySponsorId);
+        } else {
+          activeEngine.attendSchool(p.id);
+        }
+      } catch { /* 이미 등교 */ }
+      if (activeEngine.getState().phase !== 'attend-school') break;
+    }
+    if (activeEngine.getState().phase === 'attend-school') {
+      activeEngine.completeAttendSchool();
+    }
+  }
+
+  io.to(roomId).emit('room-state', room);
+  io.to(roomId).emit('game-state', activeEngine.getState() as GameState);
+}
+
 const socketEventRateLimiter = new RateLimiterMemory({
   points: 20,
   duration: 1,
@@ -610,7 +732,7 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('next-round', ({ roomId }) => {
+  socket.on('next-round', async ({ roomId }) => {
     try {
       const engine = getEngine(roomId);
       const state = engine.getState();
@@ -623,167 +745,22 @@ io.on('connection', (socket) => {
       // 투표 현황 브로드캐스트 (학교가기 상태 표시용)
       io.to(roomId).emit('next-round-votes', { votedPlayerIds: Array.from(votes) });
 
-      // 비-absent + 칩 있는 플레이어 전원 투표 시 다음 판 시작 (0칩 플레이어는 어차피 강퇴)
-      const nonAbsentCount = state.players.filter(p => !p.isAbsent && p.chips > 0).length;
-      if (votes.size >= nonAbsentCount) {
-        nextRoundVotes.delete(roomId);
-        schoolResponded.delete(roomId);
-
-        // 칩 0원 플레이어 강제 퇴장 (다음 판 앤티 납부 불가)
-        const brokePlayers = state.players.filter(p => p.chips === 0 && !p.isAbsent);
-        for (const broke of brokePlayers) {
-          const leaveResult = roomManager.leaveRoom(roomId, broke.id);
-          if (leaveResult) {
-            io.to(broke.id).emit('kicked', { reason: 'NO_CHIPS' });
-            const brokenSocket = io.sockets.sockets.get(broke.id);
-            if (brokenSocket) brokenSocket.leave(roomId);
-          }
-        }
-        if (brokePlayers.length > 0) {
-          const roomAfterKick = roomManager.getRoom(roomId);
-          const activePlayers = roomAfterKick?.players.filter(p => !p.isObserver) ?? [];
-          if (activePlayers.length < 2) {
-            // 1명 이하 남으면 대기실로 복귀
-            if (roomAfterKick) roomAfterKick.gamePhase = 'waiting';
-            if (roomAfterKick) io.to(roomId).emit('room-state', roomAfterKick);
-            gameEngines.delete(roomId);
-            return;
-          }
-          // 엔진 players를 남은 room players와 동기화
-          const engineState = engine.getState();
-          (engineState as any).players = engineState.players.filter(
-            p => activePlayers.some(rp => rp.id === p.id)
-          );
-          // seatIndex 재정렬 — leaveRoom()이 room.players의 seatIndex를 0부터 재정렬하므로
-          // engine.state.players도 동일하게 재정렬해야 모든 seatIndex 기반 연산이 올바름
-          // (비연속 seatIndex는 _advanceBettingTurn 모듈러 산술과 클라이언트 배열 인덱스 lookup을 깨뜨림)
-          (engineState as any).players.forEach((p: any, i: number) => { p.seatIndex = i; });
-        }
-
-        // 이력 수집 — lastRoundHistory가 있으면 gameHistories에 추가 (Plan 02 연동)
-        const lastHistory = (engine as any).lastRoundHistory;
-        if (lastHistory) {
-          if (!gameHistories.has(roomId)) gameHistories.set(roomId, []);
-          gameHistories.get(roomId)!.push(lastHistory);
-          io.to(roomId).emit('game-history', { entries: gameHistories.get(roomId)! });
-        }
-
-        // proxy-ante 데이터를 nextRound() 전에 보존 (nextRound가 schoolProxyBeneficiaryIds를 초기화하므로)
-        const savedProxyBeneficiaries: string[] = (engine.getState() as any).schoolProxyBeneficiaryIds ?? [];
-        const savedProxySponsorId: string | undefined = (engine.getState() as any).schoolProxySponsorId;
-
-        engine.nextRound();
-
-        // nextRound() 후 winnerId(=dealer) 보존 (Observer 합류 시 엔진 재생성용)
-        const prevDealerId = engine.getState().players.find(p => p.isDealer)?.id;
-
-        // Observer → 일반 플레이어 자동 합류 (D-15)
-        const room = roomManager.getRoom(roomId)!;
-        const observers = room.players.filter(p => p.isObserver);
-        if (observers.length > 0) {
-          // Bug Fix: room.players의 chips를 engine 현재값으로 동기화
-          // (게임 중 칩 변동은 engine.state.players에만 반영되므로, new GameEngine 전에 반드시 동기화)
-          const engineStatePlayers = engine.getState().players;
-          for (const rp of room.players) {
-            if (!rp.isObserver) {
-              const ep = engineStatePlayers.find(p => p.id === rp.id);
-              if (ep) rp.chips = ep.chips;
-            }
-          }
-
-          for (const obs of observers) {
-            obs.isObserver = false;
-            obs.chips = obs.observerChips ?? 100000;  // 입장 시 입력한 초기 칩
-            obs.observerChips = undefined;
-          }
-
-          // Observer 합류: GameEngine 재생성 (방법 A — nextRound() 이후 안전)
-          const currentState = engine.getState();
-          const newEngine = new GameEngine(
-            roomId,
-            room.players.filter(p => !p.isObserver),  // 모든 Observer 이미 해제됨
-            currentState.mode,
-            currentState.roundNumber,
-          );
-          // 딜러 복원 — 새 엔진 생성자가 isDealer를 false로 초기화하므로
-          if (prevDealerId) {
-            newEngine.setDealerFromPreviousWinner(prevDealerId);
-          }
-          gameEngines.set(roomId, newEngine);
-        }
-
-        // 모달 없이 자동 앤티: 비-absent 플레이어 전원 자동 등교
-        const activeEngine = getEngine(roomId);
-        if (activeEngine.getState().phase === 'attend-school') {
-          const nonAbsentPlayers = activeEngine.getState().players.filter(p => !p.isAbsent && p.isAlive);
-          for (const p of nonAbsentPlayers) {
-            try {
-              // proxy 수혜자이고 후원자 ID가 있으면 대납 처리
-              if (savedProxyBeneficiaries.includes(p.id) && savedProxySponsorId) {
-                activeEngine.attendSchoolProxy(p.id, savedProxySponsorId);
-              } else {
-                activeEngine.attendSchool(p.id);
-              }
-            } catch { /* 이미 등교 */ }
-            if (activeEngine.getState().phase !== 'attend-school') break;
-          }
-          // 아직 attend-school이면 (absent 플레이어 때문에 자동완료 안 된 경우) 강제 완료
-          if (activeEngine.getState().phase === 'attend-school') {
-            activeEngine.completeAttendSchool();
-          }
-        }
-
-        io.to(roomId).emit('room-state', room);
-        io.to(roomId).emit('game-state', activeEngine.getState() as GameState);
-      }
+      // 투표 충족 여부 확인 후 다음 판 진행 (disconnect + absent 플레이어 제외)
+      await tryAdvanceNextRound(roomId);
     } catch (err: any) {
       socket.emit('game-error', { code: err.message, message: err.message });
     }
   });
 
-  socket.on('take-break', ({ roomId }) => {
+  socket.on('take-break', async ({ roomId }) => {
     try {
       const engine = getEngine(roomId);
       if (engine.getState().phase !== 'result') return;
       engine.takeBreak(socket.data.playerId);
       io.to(roomId).emit('game-state', engine.getState() as GameState);
 
-      // take-break 후 비-absent 전원이 이미 투표했으면 다음 판 진행
-      const newState = engine.getState();
-      const votes = nextRoundVotes.get(roomId);
-      if (votes) {
-        const nonAbsentCount = newState.players.filter(p => !p.isAbsent).length;
-        if (nonAbsentCount > 0 && votes.size >= nonAbsentCount) {
-          nextRoundVotes.delete(roomId);
-          schoolResponded.delete(roomId);
-
-          // proxy-ante 데이터를 nextRound() 전에 보존
-          const tbSavedProxyBeneficiaries: string[] = (engine.getState() as any).schoolProxyBeneficiaryIds ?? [];
-          const tbSavedProxySponsorId: string | undefined = (engine.getState() as any).schoolProxySponsorId;
-
-          engine.nextRound();
-
-          // 자동 앤티
-          if (engine.getState().phase === 'attend-school') {
-            const nonAbsentPlayers = engine.getState().players.filter(p => !p.isAbsent && p.isAlive);
-            for (const p of nonAbsentPlayers) {
-              try {
-                if (tbSavedProxyBeneficiaries.includes(p.id) && tbSavedProxySponsorId) {
-                  engine.attendSchoolProxy(p.id, tbSavedProxySponsorId);
-                } else {
-                  engine.attendSchool(p.id);
-                }
-              } catch { /* 이미 등교 */ }
-              if (engine.getState().phase !== 'attend-school') break;
-            }
-            if (engine.getState().phase === 'attend-school') {
-              engine.completeAttendSchool();
-            }
-          }
-
-          io.to(roomId).emit('game-state', engine.getState() as GameState);
-        }
-      }
+      // take-break 후 투표 충족 여부 재계산 (disconnect + absent 플레이어 제외)
+      await tryAdvanceNextRound(roomId);
     } catch (err: any) {
       socket.emit('game-error', { code: err.message, message: err.message });
     }
@@ -857,16 +834,18 @@ io.on('connection', (socket) => {
         const disconnectedNickname = socket.data.nickname;
         const timerKey = `${roomId}:${disconnectedNickname}`; // nickname 기반 키 (재접속 시 socket.id 변경되므로)
 
-        // 즉시: 베팅 차례면 자동 다이 처리
+        // 즉시: 베팅/card-reveal/showdown 차례면 자동 처리
         const engine = gameEngines.get(roomId);
         if (engine) {
           try { engine.forceDisconnectedPlayerAction(disconnectedPlayerId); } catch { /* no-op */ }
-          // 즉시 게임 상태 broadcast (per-player emit)
+          // 즉시 게임 상태 broadcast + result phase 진입 시 투표 재계산
           (async () => {
             const sockets2 = await io.in(roomId).fetchSockets();
             for (const s of sockets2) {
               s.emit('game-state', engine.getStateFor(s.data.playerId) as GameState);
             }
+            // card-reveal → showdown → result 자동 전환 포함, result phase면 투표 재계산
+            await tryAdvanceNextRound(roomId);
           })();
         }
 
