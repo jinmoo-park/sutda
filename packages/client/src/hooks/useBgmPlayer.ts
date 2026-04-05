@@ -19,7 +19,7 @@ function getAudio(): HTMLAudioElement {
       _bigpotAudio = new Audio('/sfx/bgm_bigpot.mp3');
       _bigpotAudio.loop = true;
       _bigpotAudio.preload = 'auto';
-      _bigpotAudio.volume = 0.4;
+      _bigpotAudio.volume = 0.3;
     }
 
     const muted = localStorage.getItem('sutda_bgm_muted') === 'true';
