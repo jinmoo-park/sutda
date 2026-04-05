@@ -9,6 +9,21 @@ import { useGameStore } from '@/store/gameStore';
 import { useSfxPlayer } from '@/hooks/useSfxPlayer';
 import { getHandLabel } from '@/lib/handLabels';
 
+/** 족보 score 순서 배열 -- 한 단계 차이 판별용 (삭제 금지: SFX lose-ddaeng-but-lost 트리거) */
+const SCORE_RANK_ORDER = [
+  1300, 1200, 1100, // 광땡
+  1010, 1009, 1008, 1007, 1006, 1005, 1004, 1003, 1002, 1001, // 땡
+  60, 50, 40, 30, 20, 10, // 특수조합
+  9, 8, 7, 6, 5, 4, 3, 2, 1, 0, // 끗
+];
+
+function isOneRankApart(scoreA: number, scoreB: number): boolean {
+  const idxA = SCORE_RANK_ORDER.indexOf(scoreA);
+  const idxB = SCORE_RANK_ORDER.indexOf(scoreB);
+  if (idxA === -1 || idxB === -1) return false;
+  return Math.abs(idxA - idxB) === 1;
+}
+
 const mdQuery = typeof window !== 'undefined' ? window.matchMedia('(min-width: 768px)') : null;
 const subscribe = (cb: () => void) => { mdQuery?.addEventListener('change', cb); return () => mdQuery?.removeEventListener('change', cb); };
 const getSnapshot = () => mdQuery?.matches ?? false;
@@ -118,6 +133,11 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
     const myHandCards = getHandCards(me);
 
     stop('card-reveal');
+
+    // 승자 카드 공개 여부 + 승자 핸드카드 (승자/패자 모두 사용)
+    const winnerCardsVisible = gameState.mode === 'original' ? (winner?.isRevealed ?? false) : !!winner;
+    const winnerHandCards = winner ? getHandCards(winner) : [];
+
     if (iAmWinner) {
       if (myHandCards.length >= 2) {
         try {
@@ -129,6 +149,25 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
         }
       } else {
         play('win-normal');
+      }
+      // 한 단계 차이 체크 -- 승자에게도 lose-ddaeng-but-lost 추가 재생
+      if (myHandCards.length >= 2) {
+        try {
+          const myResult = evaluateHand(myHandCards[0]!, myHandCards[1]!);
+          const loserScores = gameState.players
+            .filter(p => p.id !== myPlayerId && p.isAlive)
+            .map(p => {
+              const cards = getHandCards(p);
+              if (cards.length < 2) return -1;
+              try { return evaluateHand(cards[0]!, cards[1]!).score; } catch { return -1; }
+            })
+            .filter(s => s >= 0)
+            .sort((a, b) => b - a);
+          const topLoserScore = loserScores[0] ?? -1;
+          if (topLoserScore >= 0 && isOneRankApart(myResult.score, topLoserScore)) {
+            play('lose-ddaeng-but-lost');
+          }
+        } catch { /* 평가 실패 시 무시 */ }
       }
     } else {
       const hasDdaengPenalty = gameState.ttaengPayments?.some(t => t.playerId === myPlayerId);
@@ -151,9 +190,7 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
       }
       // 승자가 땡이고 패를 볼 수 있는 경우 win-ddaeng-loser 추가 재생 (낮은 볼륨, 겹침 허용)
       // 오리지날 모드만 패 공개/미공개 선택이 있음. 나머지 모드는 result phase에서 자동 공개
-      const winnerCardsVisible = gameState.mode === 'original' ? (winner?.isRevealed ?? false) : !!winner;
       if (winnerCardsVisible) {
-        const winnerHandCards = getHandCards(winner);
         if (winnerHandCards.length >= 2) {
           try {
             if (evaluateHand(winnerHandCards[0]!, winnerHandCards[1]!).handType.includes('ttaeng')) {
@@ -161,6 +198,22 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
             }
           } catch { /* 평가 실패 시 무시 */ }
         }
+      }
+      // 한 단계 차이 체크 -- 패자에게도 lose-ddaeng-but-lost 추가 재생
+      if (winnerCardsVisible && myHandCards.length >= 2 && winnerHandCards.length >= 2) {
+        try {
+          const myResult = evaluateHand(myHandCards[0]!, myHandCards[1]!);
+          const winnerResult = evaluateHand(winnerHandCards[0]!, winnerHandCards[1]!);
+          if (isOneRankApart(winnerResult.score, myResult.score)) {
+            // 이미 lose-ddaeng-but-lost가 재생된 경우(ttaeng 패배) 중복 방지
+            if (!hasDdaengPenalty) {
+              const isDdaeng = myResult.handType.includes('ttaeng');
+              if (!isDdaeng) {
+                play('lose-ddaeng-but-lost');
+              }
+            }
+          }
+        } catch { /* 평가 실패 시 무시 */ }
       }
     }
   }, [gameState.phase, gameState.winnerId]); // eslint-disable-line react-hooks/exhaustive-deps
