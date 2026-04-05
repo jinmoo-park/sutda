@@ -449,6 +449,35 @@ io.on('connection', (socket) => {
 
   // leave-room 핸들러
   socket.on('leave-room', ({ roomId }) => {
+    const room = roomManager.getRoom(roomId);
+    const engine = gameEngines.get(roomId);
+
+    // --- 게임 중 퇴장 처리 (playing 상태일 때만) ---
+    if (room && room.gamePhase === 'playing' && engine) {
+      // 1) 이력 기록: lastRoundHistory가 있고 아직 gameHistories에 push 안 된 경우 기록
+      const lastHistory = (engine as any).lastRoundHistory;
+      if (lastHistory) {
+        if (!gameHistories.has(roomId)) gameHistories.set(roomId, []);
+        const histories = gameHistories.get(roomId)!;
+        // 중복 방지: 같은 roundNumber 이력이 이미 있으면 skip
+        if (!histories.some(h => h.roundNumber === lastHistory.roundNumber)) {
+          histories.push(lastHistory);
+          io.to(roomId).emit('game-history', { entries: histories });
+        }
+      }
+
+      // 2) engine에서 플레이어 제거
+      try { engine.forcePlayerLeave(socket.id); } catch { /* no-op */ }
+
+      // 3) engine chips → room chips 동기화 (leave 전에 수행)
+      const enginePs = engine.getState().players;
+      for (const rp of room.players) {
+        const ep = enginePs.find(p => p.id === rp.id);
+        if (ep) rp.chips = ep.chips;
+      }
+    }
+
+    // --- 기존 leaveRoom 호출 ---
     const result = roomManager.leaveRoom(roomId, socket.id);
     if (result) {
       socket.leave(roomId);
@@ -457,10 +486,41 @@ io.on('connection', (socket) => {
         newHostId: result.newHostId,
         nickname: socket.data.nickname,
       });
+
+      // 게임 중이었다면: 남은 인원 < 2 → 대기실 전환
+      if (engine && room && room.gamePhase === 'playing') {
+        const remainingRoom = roomManager.getRoom(roomId);
+        if (remainingRoom) {
+          const activePlayers = remainingRoom.players.filter(p => !p.isObserver);
+          if (activePlayers.length < 2) {
+            // engine chips 동기화 (위에서 이미 했지만, leaveRoom 이후 남은 플레이어 재확인)
+            const enginePs2 = engine.getState().players;
+            for (const rp of remainingRoom.players) {
+              const ep = enginePs2.find(p => p.id === rp.id);
+              if (ep) rp.chips = ep.chips;
+            }
+            remainingRoom.gamePhase = 'waiting';
+            gameEngines.delete(roomId);
+            io.to(roomId).emit('room-state', remainingRoom);
+          } else {
+            // 3인 이상에서 1명 나간 경우: room-state broadcast
+            io.to(roomId).emit('room-state', remainingRoom);
+
+            // result phase에서 나갔으면 투표 재계산
+            const engineState = engine.getState();
+            if (engineState.phase === 'result') {
+              (async () => { await tryAdvanceNextRound(roomId); })();
+            }
+          }
+        }
+      }
+
       // 방이 비었으면 채팅 이력 정리
-      const room = roomManager.getRoom(roomId);
-      if (!room || room.players.length === 0) {
+      const roomAfter = roomManager.getRoom(roomId);
+      if (!roomAfter || roomAfter.players.length === 0) {
         chatHistories.delete(roomId);
+        gameEngines.delete(roomId);
+        gameHistories.delete(roomId);
       }
     }
   });
