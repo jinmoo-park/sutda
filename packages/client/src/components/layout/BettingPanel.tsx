@@ -55,13 +55,16 @@ export function BettingPanel({
   const canDie = currentBetAmount > 0 || !isEffectiveSen;
 
   return (
-    <div className={cn(
-      'p-3 rounded-lg space-y-2 transition-all duration-200 border',
-      isMyTurn && !isMyAllIn
-        ? 'border-primary ring-2 ring-primary ring-offset-2 ring-offset-background shadow-[0_0_28px_8px_hsl(var(--primary)/0.7)] bg-primary/20'
-        : 'border-transparent',
-      isMyAllIn && 'opacity-50 pointer-events-none'
-    )}>
+    <div
+      className={cn(
+        'p-3 rounded-lg space-y-2 transition-all duration-200 border',
+        isMyTurn && !isMyAllIn
+          ? 'border-primary ring-2 ring-primary ring-offset-2 ring-offset-background shadow-[0_0_28px_8px_hsl(var(--primary)/0.7)] bg-primary/20'
+          : 'border-transparent',
+        isMyAllIn && 'opacity-50 pointer-events-none'
+      )}
+      style={isMyTurn && !isMyAllIn ? { animation: 'betting-pulse 1.5s ease-in-out infinite' } : undefined}
+    >
       {isMyAllIn && (
         <p className="text-sm text-muted-foreground text-center">올인 — 베팅 종료</p>
       )}
