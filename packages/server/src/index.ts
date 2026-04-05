@@ -349,6 +349,11 @@ io.on('connection', (socket) => {
           if (chatHistory && chatHistory.length > 0) {
             socket.emit('chat-history', { messages: chatHistory });
           }
+          // 게임 이력 전송 (재접속 시 기존 이력 복원)
+          const gameHistory = gameHistories.get(roomId);
+          if (gameHistory && gameHistory.length > 0) {
+            socket.emit('game-history', { entries: gameHistory });
+          }
           const engine = gameEngines.get(roomId);
           if (engine) {
             if (!existing.isObserver) {
@@ -411,6 +416,11 @@ io.on('connection', (socket) => {
         if (chatHistory && chatHistory.length > 0) {
           socket.emit('chat-history', { messages: chatHistory });
         }
+        // 게임 이력 전송 (옵저버에게도 이력 제공)
+        const gameHistoryObs = gameHistories.get(roomId);
+        if (gameHistoryObs && gameHistoryObs.length > 0) {
+          socket.emit('game-history', { entries: gameHistoryObs });
+        }
         return;
       }
 
@@ -428,6 +438,11 @@ io.on('connection', (socket) => {
       const chatHistory = chatHistories.get(roomId);
       if (chatHistory && chatHistory.length > 0) {
         socket.emit('chat-history', { messages: chatHistory });
+      }
+      // 게임 이력 전송 (대기실 재입장 시 이력 복원)
+      const gameHistoryWait = gameHistories.get(roomId);
+      if (gameHistoryWait && gameHistoryWait.length > 0) {
+        socket.emit('game-history', { entries: gameHistoryWait });
       }
       // 재접속 시 disconnect 타이머 클리어 (nickname 기반 키)
       const reconnectGameKey = `${roomId}:${nickname}`;
