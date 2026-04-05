@@ -1,6 +1,5 @@
 import type { PlayerState, GameMode } from '@sutda/shared';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
 import { HwatuCard } from './HwatuCard';
 import { cn } from '@/lib/utils';
 
@@ -50,10 +49,12 @@ export function PlayerSeat({
   };
 
   const content = (
-    <Card
+    <div
       className={cn(
-        'w-auto transition-shadow duration-300',
-        compact ? 'min-w-0 p-1.5 space-y-1' : 'min-w-[11rem] p-4 space-y-1',
+        'w-auto transition-shadow duration-300 rounded-lg',
+        compact
+          ? 'min-w-0 p-1.5 space-y-1'
+          : 'min-w-[11rem] p-4 space-y-1 border bg-card shadow-sm',
         isCurrentTurn && 'ring-2 ring-primary shadow-[0_0_14px_3px] shadow-primary/50',
         !player.isAlive && 'opacity-50',
         !isConnected && 'opacity-50'
@@ -155,27 +156,27 @@ export function PlayerSeat({
         );
       })()}
 
-      <p className={`tabular-nums ${compact ? 'text-[11px]' : 'text-xs'} ${isMe ? 'text-yellow-400 font-semibold' : 'text-muted-foreground'}`}>{player.chips.toLocaleString()}원</p>
+      <p className={`tabular-nums ${compact ? 'text-[11px]' : 'text-xs'} ${isMe ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>{player.chips.toLocaleString()}원</p>
 
       {player.lastBetAction && (
         <div className="flex items-center gap-1 flex-wrap">
           {player.lastBetAction.type === 'check' && (
-            <Badge variant="outline" className="text-xs px-1 py-0 text-sky-400 border-sky-400">체크</Badge>
+            <Badge variant="outline" className="text-xs px-1 py-0 text-check border-check">체크</Badge>
           )}
           {player.lastBetAction.type === 'call' && (
-            <Badge variant="outline" className="text-xs px-1 py-0 text-green-400 border-green-400">콜</Badge>
+            <Badge variant="outline" className="text-xs px-1 py-0 text-call border-call">콜</Badge>
           )}
           {player.lastBetAction.type === 'raise' && (
             <div className="flex flex-col gap-0.5">
               <Badge variant="outline" className={cn(
-                "px-1 py-0 text-yellow-400 border-yellow-400 w-fit",
+                "px-1 py-0 text-primary border-primary w-fit",
                 compact ? "text-[10px]" : "text-xs"
               )}>
                 레이즈{player.lastBetAction.amount ? ` +${player.lastBetAction.amount.toLocaleString()}원` : ''}
               </Badge>
               {player.currentBet > 0 && (
                 <span className={cn(
-                  "tabular-nums text-yellow-400 font-semibold",
+                  "tabular-nums text-primary font-semibold",
                   compact ? "text-[10px]" : "text-xs"
                 )}>
                   {player.currentBet.toLocaleString()}원
@@ -184,16 +185,16 @@ export function PlayerSeat({
             </div>
           )}
           {player.lastBetAction.type === 'die' && (
-            <Badge variant="outline" className="text-xs px-1 py-0 text-red-400 border-red-400">다이</Badge>
+            <Badge variant="outline" className="text-xs px-1 py-0 text-lose border-lose">다이</Badge>
           )}
           {player.lastBetAction.type !== 'raise' && player.currentBet > 0 && (
-            <span className="text-xs tabular-nums text-yellow-400 font-semibold">
+            <span className="text-xs tabular-nums text-primary font-semibold">
               {player.currentBet.toLocaleString()}원
             </span>
           )}
         </div>
       )}
-    </Card>
+    </div>
   );
 
   return <>{content}</>;

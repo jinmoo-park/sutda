@@ -59,11 +59,10 @@ export function BettingPanel({
       className={cn(
         'p-3 rounded-lg space-y-2 transition-all duration-200 border',
         isMyTurn && !isMyAllIn
-          ? 'border-primary ring-2 ring-primary ring-offset-2 ring-offset-background shadow-[0_0_28px_8px_hsl(var(--primary)/0.7)] bg-primary/20'
+          ? 'betting-active border-primary ring-2 ring-primary ring-offset-2 ring-offset-background bg-primary/20'
           : 'border-transparent',
         isMyAllIn && 'opacity-50 pointer-events-none'
       )}
-      style={isMyTurn && !isMyAllIn ? { animation: 'betting-pulse 1.5s ease-in-out infinite' } : undefined}
     >
       {isMyAllIn && (
         <p className="text-sm text-muted-foreground text-center">올인 — 베팅 종료</p>
@@ -94,7 +93,7 @@ export function BettingPanel({
           <button
             disabled={!isMyTurn}
             onClick={() => setRaiseAmount(0)}
-            className="text-xs border border-border rounded px-2 py-0.5 text-muted-foreground hover:text-foreground hover:border-foreground transition-colors disabled:opacity-30"
+            className="text-xs border border-border rounded px-3 py-2 min-h-[44px] text-muted-foreground hover:text-foreground hover:border-foreground transition-colors disabled:opacity-30"
           >
             초기화
           </button>
@@ -122,7 +121,7 @@ export function BettingPanel({
       </div>
       {/* 올인 뱃지 — raiseAmount가 최대에 달했을 때 */}
       {isMyTurn && raiseAmount > 0 && raiseAmount >= maxRaiseAmount && (
-        <p className="text-xs text-center text-yellow-400 font-semibold">올인</p>
+        <p className="text-xs text-center text-primary font-semibold">올인</p>
       )}
 
 
@@ -138,6 +137,7 @@ export function BettingPanel({
         </Button>
 
         <Button
+          variant="secondary"
           disabled={!isMyTurn || !canCall}
           onClick={() => { play('bet-call'); emitAction({ type: 'call' }); }}
           className={cn('h-14 md:h-12 text-sm', !isMyTurn && 'opacity-20')}
@@ -149,7 +149,7 @@ export function BettingPanel({
           variant="secondary"
           disabled={!isMyTurn || raiseAmount === 0}
           onClick={() => { play('bet-raise'); emitAction({ type: 'raise', amount: raiseAmount }); }}
-          className={cn('h-14 md:h-12 text-sm bg-yellow-400 hover:bg-yellow-500 text-black', (!isMyTurn || raiseAmount === 0) && 'opacity-20')}
+          className={cn('h-14 md:h-12 text-sm bg-yellow-400 hover:bg-yellow-500 text-primary-foreground', (!isMyTurn || raiseAmount === 0) && 'opacity-20')}
         >
           레이즈
         </Button>

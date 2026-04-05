@@ -206,11 +206,13 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
         </div>
       )}
       {isCardRevealPhase ? (
-        <h2 className="text-xl font-semibold">패를 공개하세요!</h2>
+        <h1 className="text-xl">패를 공개하세요!</h1>
       ) : isRematchPending ? (
-        <h2 className="text-xl font-semibold">동점!</h2>
+        <h1 className="text-xl">동점!</h1>
       ) : (
-        <h2 className="text-xl font-semibold">{winnerNickname} 승리!</h2>
+        <h1 className={`result-winner-title text-2xl md:text-3xl ${gameState.winnerId === myPlayerId ? 'text-primary' : 'text-foreground'}`}>
+          {winnerNickname} 승리!
+        </h1>
       )}
 
       <div className={`grid gap-2 justify-items-center ${
@@ -286,17 +288,20 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
                       const isCardRevealed = isSharedCardAtIndex || revealedIndices.includes(idx);
                       const canClick = isMe && !isCardRevealed && player.isAlive;
                       return (
-                        <div
+                        <button
                           key={idx}
+                          type="button"
+                          disabled={!canClick}
                           onClick={canClick ? () => socket?.emit('reveal-my-card', { roomId, cardIndex: idx }) : undefined}
-                          className={canClick ? 'cursor-pointer animate-pulse' : ''}
+                          aria-label={canClick ? `${idx + 1}번째 카드 공개` : undefined}
+                          className={`bg-transparent border-0 p-0 ${canClick ? 'cursor-pointer animate-pulse' : 'cursor-default'}`}
                         >
                           <HwatuCard
                             card={isCardRevealed ? card! : undefined}
                             faceUp={isCardRevealed}
                             size={cardSize}
                           />
-                        </div>
+                        </button>
                       );
                     })
                   : displayCards.map((card, idx) =>
@@ -319,9 +324,9 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
                   <Badge
                     className={`text-[10px] md:text-xs ${
                       chipDelta > 0
-                        ? 'bg-green-600 text-white'
+                        ? 'bg-win text-foreground'
                         : chipDelta < 0
-                        ? 'bg-red-600 text-white'
+                        ? 'bg-lose text-foreground'
                         : ''
                     }`}
                   >
@@ -329,12 +334,12 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
                     {chipDelta.toLocaleString()}원
                   </Badge>
                   {isWinner && totalTtaengReceived > 0 && (
-                    <p className="text-[10px] text-green-400 md:text-xs">
+                    <p className="text-[10px] text-win md:text-xs">
                       땡값 +{totalTtaengReceived.toLocaleString()}원
                     </p>
                   )}
                   {!isWinner && myTtaengPayment && (
-                    <p className="text-[10px] text-red-400 md:text-xs">
+                    <p className="text-[10px] text-lose md:text-xs">
                       땡값 -{myTtaengPayment.amount.toLocaleString()}원
                     </p>
                   )}

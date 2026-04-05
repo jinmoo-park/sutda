@@ -2,26 +2,32 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: hsl(70 15% 8%);
-  --color-foreground: hsl(60 20% 92%);
-  --color-card: hsl(72 12% 13%);
-  --color-card-foreground: hsl(60 20% 92%);
-  --color-popover: hsl(72 12% 13%);
-  --color-popover-foreground: hsl(60 20% 92%);
-  --color-primary: hsl(75 55% 42%);
-  --color-primary-foreground: hsl(70 15% 8%);
-  --color-secondary: hsl(72 12% 18%);
-  --color-secondary-foreground: hsl(60 20% 92%);
-  --color-muted: hsl(72 12% 18%);
-  --color-muted-foreground: hsl(70 10% 55%);
-  --color-accent: hsl(72 12% 18%);
-  --color-accent-foreground: hsl(60 20% 92%);
-  --color-destructive: hsl(0 72% 60%);
-  --color-destructive-foreground: hsl(0 0% 100%);
-  --color-border: hsl(72 12% 20%);
-  --color-input: hsl(72 12% 18%);
-  --color-ring: hsl(75 55% 42%);
+  --color-background: hsl(20 18% 7%);
+  --color-foreground: hsl(45 28% 91%);
+  --color-card: hsl(18 14% 11%);
+  --color-card-foreground: hsl(45 28% 91%);
+  --color-popover: hsl(18 14% 11%);
+  --color-popover-foreground: hsl(45 28% 91%);
+  --color-primary: hsl(42 90% 52%);
+  --color-primary-foreground: hsl(20 18% 7%);
+  --color-secondary: hsl(18 12% 18%);
+  --color-secondary-foreground: hsl(45 28% 91%);
+  --color-muted: hsl(18 12% 18%);
+  --color-muted-foreground: hsl(35 8% 52%);
+  --color-accent: hsl(18 12% 18%);
+  --color-accent-foreground: hsl(45 28% 91%);
+  --color-destructive: hsl(0 70% 56%);
+  --color-destructive-foreground: hsl(45 28% 95%);
+  --color-border: hsl(18 12% 20%);
+  --color-input: hsl(18 12% 18%);
+  --color-ring: hsl(42 90% 52%);
   --radius: 0.5rem;
+
+  /* Semantic game color tokens */
+  --color-win: hsl(145 55% 40%);
+  --color-lose: hsl(0 68% 52%);
+  --color-call: hsl(145 50% 42%);
+  --color-check: hsl(200 58% 50%);
 }
 
 @layer base {
@@ -62,7 +68,32 @@
   50% { opacity: 0.4; }
 }
 
-@keyframes betting-pulse {
-  0%, 100% { box-shadow: 0 0 28px 8px hsl(75 55% 42% / 0.7); }
-  50% { box-shadow: 0 0 14px 4px hsl(75 55% 42% / 0.3); }
+/* GPU-composited glow: box-shadow is static, only opacity animates */
+.betting-active {
+  position: relative;
+  isolation: isolate;
+}
+.betting-active::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: var(--radius);
+  pointer-events: none;
+  box-shadow: 0 0 28px 8px var(--color-primary);
+  animation: betting-glow 1.5s ease-in-out infinite;
+  z-index: -1;
+}
+
+@keyframes betting-glow {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 0.2; }
+}
+
+@keyframes result-pop {
+  0% { transform: scale(0.82); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.result-winner-title {
+  animation: result-pop 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

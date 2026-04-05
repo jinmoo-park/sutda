@@ -51,23 +51,32 @@ export function MainPage() {
       <div className="w-full max-w-sm space-y-6">
 
         <div className="space-y-3">
-            <Input
-              placeholder="닉네임"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              maxLength={10}
-            />
-            <Input
-              type="password"
-              placeholder="방 생성 비밀번호"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
             <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">
+              <label htmlFor="nickname" className="sr-only">닉네임</label>
+              <Input
+                id="nickname"
+                placeholder="닉네임"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                maxLength={10}
+              />
+            </div>
+            <div className="space-y-1">
+              <label htmlFor="room-password" className="sr-only">방 생성 비밀번호</label>
+              <Input
+                id="room-password"
+                type="password"
+                placeholder="방 생성 비밀번호"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <label htmlFor="initial-chips" className="text-xs text-muted-foreground">
                 초기 칩 금액 (만원 단위)
               </label>
               <Input
+                id="initial-chips"
                 type="number"
                 value={initialChips}
                 min={10000}

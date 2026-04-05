@@ -224,7 +224,7 @@ export function HandPanel({
 
       {/* Row 3: 족보 참고표 버튼 + 족보 배지 */}
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" className="h-6 text-[10px] px-1.5 py-0 shrink-0" onClick={() => setShowReference(true)}>
+        <Button variant="ghost" size="sm" className="h-8 text-[10px] px-1.5 shrink-0" onClick={() => setShowReference(true)}>
           족보 참고표
         </Button>
         {handLabel && (
@@ -240,19 +240,21 @@ export function HandPanel({
           {onToggleBgm && (
             <button
               onClick={onToggleBgm}
+              aria-label={bgmMuted ? 'BGM 켜기' : 'BGM 끄기'}
               title={bgmMuted ? 'BGM 켜기' : 'BGM 끄기'}
-              className={`h-6 w-6 flex items-center justify-center rounded text-xs bg-black/40 border border-white/20 hover:bg-black/60 ${bgmMuted ? 'opacity-40' : 'opacity-70'}`}
+              className={`h-11 w-11 flex items-center justify-center rounded text-base bg-black/40 border border-white/20 hover:bg-black/60 ${bgmMuted ? 'opacity-40' : 'opacity-70'}`}
             >
-              {bgmMuted ? '🔇' : '🎵'}
+              <span aria-hidden="true">{bgmMuted ? '🔇' : '🎵'}</span>
             </button>
           )}
           {onToggleSfx && (
             <button
               onClick={onToggleSfx}
+              aria-label={sfxMuted ? 'SFX 켜기' : 'SFX 끄기'}
               title={sfxMuted ? 'SFX 켜기' : 'SFX 끄기'}
-              className={`h-6 w-6 flex items-center justify-center rounded text-xs bg-black/40 border border-white/20 hover:bg-black/60 ${sfxMuted ? 'opacity-40' : 'opacity-70'}`}
+              className={`h-11 w-11 flex items-center justify-center rounded text-base bg-black/40 border border-white/20 hover:bg-black/60 ${sfxMuted ? 'opacity-40' : 'opacity-70'}`}
             >
-              {sfxMuted ? '🔕' : '🔔'}
+              <span aria-hidden="true">{sfxMuted ? '🔕' : '🔔'}</span>
             </button>
           )}
         </div>

@@ -61,11 +61,11 @@ export function WaitingTable({ roomState, myPlayerId, roomId }: WaitingTableProp
       </button>
 
       {/* 참가자 목록 */}
-      <div className="w-full bg-background/70 border border-border rounded-xl px-4 py-3 space-y-2 backdrop-blur-sm">
+      <div className="w-full bg-background/90 border border-border rounded-xl px-4 py-3 space-y-2">
         <p className="text-xs text-muted-foreground">참가자 {roomState.players.length}명</p>
         {roomState.players.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-2">
-            친구에게 링크를 공유해 보세요
+            위 링크 복사 버튼으로 친구를 초대하세요
           </p>
         ) : (
           roomState.players.map((p) => (
@@ -108,17 +108,19 @@ export function WaitingTable({ roomState, myPlayerId, roomId }: WaitingTableProp
       <div className="flex gap-2">
         <button
           onClick={toggleBgm}
+          aria-label={bgmMuted ? 'BGM 켜기' : 'BGM 끄기'}
           title={bgmMuted ? 'BGM 켜기' : 'BGM 끄기'}
-          className={`h-8 w-8 flex items-center justify-center rounded text-xs font-semibold transition-opacity bg-black/50 backdrop-blur-sm border border-white/20 hover:bg-black/70 ${bgmMuted ? 'opacity-40' : 'opacity-80'}`}
+          className={`h-11 w-11 flex items-center justify-center rounded text-base transition-opacity bg-black/50 border border-white/20 hover:bg-black/70 ${bgmMuted ? 'opacity-40' : 'opacity-80'}`}
         >
-          {bgmMuted ? '🔇' : '🎵'}
+          <span aria-hidden="true">{bgmMuted ? '🔇' : '🎵'}</span>
         </button>
         <button
           onClick={toggleSfx}
+          aria-label={sfxMuted ? 'SFX 켜기' : 'SFX 끄기'}
           title={sfxMuted ? 'SFX 켜기' : 'SFX 끄기'}
-          className={`h-8 w-8 flex items-center justify-center rounded text-xs font-semibold transition-opacity bg-black/50 backdrop-blur-sm border border-white/20 hover:bg-black/70 ${sfxMuted ? 'opacity-40' : 'opacity-80'}`}
+          className={`h-11 w-11 flex items-center justify-center rounded text-base transition-opacity bg-black/50 border border-white/20 hover:bg-black/70 ${sfxMuted ? 'opacity-40' : 'opacity-80'}`}
         >
-          {sfxMuted ? '🔕' : '🔔'}
+          <span aria-hidden="true">{sfxMuted ? '🔕' : '🔔'}</span>
         </button>
       </div>
     </div>
