@@ -52,14 +52,3 @@
 | 14. 방 생성 패스워드 | v1.0 | 1/1 | Complete | 2026-04-02 |
 | 15. BET-07 체크 기능 공식 검증 | v1.0 | 2/2 | Complete | 2026-04-04 |
 | 16. SESSION-END 재접속 시각 표시 수정 | v1.0 | 2/2 | Complete | 2026-04-04 |
-
-### Phase 1: AI Watchdog MVP
-
-**Goal:** VM 로그 수집 + 룰 기반 필터 + Claude Haiku 분석 + 로컬 MD 덤프하는 독립 Python 스크립트. 수동/cron 실행 지원.
-**Requirements**: WD-01 (watchdog.py 로그수집+분석), WD-02 (run-watchdog.sh 수동+cron), WD-03 (MD 출력 /opt/ai-watchdog/.debug/), WD-04 (pull-debug.sh 로컬 동기화), WD-05 (Claude Code 세션 자동 실행)
-**Depends on:** v1.0 배포 완료 (VM 운영 중)
-**Plans:** 2 plans
-
-Plans:
-- [x] 01-01-PLAN.md — VM Watchdog 핵심 스크립트 + 실행 환경 (watchdog.py + run-watchdog.sh + cron)
-- [x] 01-02-PLAN.md — 로컬 pull-debug.sh + Claude Code 세션 훅
