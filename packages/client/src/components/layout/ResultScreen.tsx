@@ -141,19 +141,9 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
     if (iAmWinner) {
       if (myHandCards.length >= 2) {
         try {
-          const result = evaluateHand(myHandCards[0]!, myHandCards[1]!);
-          const isDdaeng = result.handType.includes('ttaeng');
-          play(isDdaeng ? 'win-ddaeng' : 'win-normal');
-        } catch {
-          play('win-normal');
-        }
-      } else {
-        play('win-normal');
-      }
-      // 한 단계 차이 체크 -- 승자에게도 lose-ddaeng-but-lost 추가 재생
-      if (myHandCards.length >= 2) {
-        try {
           const myResult = evaluateHand(myHandCards[0]!, myHandCards[1]!);
+          const isDdaeng = myResult.handType.includes('ttaeng');
+          // 한 단계 차이 체크 -- win-normal 대신 lose-ddaeng-but-lost 재생
           const loserScores = gameState.players
             .filter(p => p.id !== myPlayerId && p.isAlive)
             .map(p => {
@@ -164,10 +154,19 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
             .filter(s => s >= 0)
             .sort((a, b) => b - a);
           const topLoserScore = loserScores[0] ?? -1;
-          if (topLoserScore >= 0 && isOneRankApart(myResult.score, topLoserScore)) {
+          const oneRankApart = topLoserScore >= 0 && isOneRankApart(myResult.score, topLoserScore);
+          if (isDdaeng) {
+            play('win-ddaeng');
+          } else if (oneRankApart) {
             play('lose-ddaeng-but-lost');
+          } else {
+            play('win-normal');
           }
-        } catch { /* 평가 실패 시 무시 */ }
+        } catch {
+          play('win-normal');
+        }
+      } else {
+        play('win-normal');
       }
     } else {
       const hasDdaengPenalty = gameState.ttaengPayments?.some(t => t.playerId === myPlayerId);
