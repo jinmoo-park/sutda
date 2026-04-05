@@ -22,6 +22,7 @@ interface GameStore {
   chatMessages: ChatMessage[];
   roundHistory: RoundHistoryEntry[];
   nextRoundVotedIds: string[];
+  proxyBeneficiaryNicknames: string[];
 
   // 액션
   connect: (serverUrl: string) => void;
@@ -39,6 +40,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   chatMessages: [],
   roundHistory: [],
   nextRoundVotedIds: [],
+  proxyBeneficiaryNicknames: [],
 
   connect: (serverUrl: string) => {
     const existing = get().socket;
@@ -67,11 +69,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     socket.on('game-state', (state: GameState) => {
       const prev = get().gameState;
-      // result phase에서 벗어나면 nextRoundVotedIds 초기화
+      // result phase에서 벗어나면 nextRoundVotedIds, proxyBeneficiaryNicknames 초기화
       const wasResult = prev?.phase === 'result';
       const isResult = state.phase === 'result';
       if (wasResult && !isResult) {
-        set({ gameState: state, nextRoundVotedIds: [] });
+        set({ gameState: state, nextRoundVotedIds: [], proxyBeneficiaryNicknames: [] });
       } else {
         set({ gameState: state });
       }
@@ -113,8 +115,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ nextRoundVotedIds: votedPlayerIds });
     });
 
-    socket.on('proxy-ante-applied', ({ sponsorNickname, beneficiaryNickname }) => {
-      toast(`${sponsorNickname}님이 ${beneficiaryNickname}의 학교를 대신 가줬습니다`);
+    socket.on('proxy-ante-applied', ({ sponsorNickname, beneficiaryNicknames }) => {
+      const names = beneficiaryNicknames.join(', ');
+      toast(`${sponsorNickname}님이 ${names}의 학교를 대신 가줬습니다`);
+      set(state => ({
+        proxyBeneficiaryNicknames: [...new Set([...state.proxyBeneficiaryNicknames, ...beneficiaryNicknames])]
+      }));
     });
 
     socket.on('player-left', ({ nickname }) => {
@@ -132,7 +138,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   disconnect: () => {
     get().socket?.disconnect();
-    set({ socket: null, gameState: null, roomState: null, myPlayerId: null, chatMessages: [], roundHistory: [], nextRoundVotedIds: [] });
+    set({ socket: null, gameState: null, roomState: null, myPlayerId: null, chatMessages: [], roundHistory: [], nextRoundVotedIds: [], proxyBeneficiaryNicknames: [] });
   },
 
   clearError: () => set({ error: null }),
