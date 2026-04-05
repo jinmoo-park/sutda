@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 Phase: 16
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-05 - Completed quick task 260405-v03: 결과화면 퇴장 시 팟 반환 및 이력 잔액 기록 (5a454ae)
+Last activity: 2026-04-05 - Completed quick tasks 260405-v5z, 260405-v63: sfx-map.md 최신화 + 이력 join-room 영속
 
 Progress: [████░░░░░░] 44%
 
@@ -248,6 +248,8 @@ None yet.
 | 260405-ue1 | 족보 한단계차이 승패 SFX lose-ddaeng-but-lost 미지정 원인 디버그 | 2026-04-05 | fbf66ad | [260405-ue1-sfx-lose-ddaeng-but-lost](./quick/260405-ue1-sfx-lose-ddaeng-but-lost/) |
 | 260405-ujr | 2인 게임 disconnect 후 대기실 복귀 시 chips 초기화 버그 수정 | 2026-04-05 | ce4c7f0 | [260405-ujr-2-disconnect-chips](./quick/260405-ujr-2-disconnect-chips/) |
 | 260405-v03 | 결과화면 퇴장 시 팟 반환 및 이력 잔액 기록 | 2026-04-05 | 5a454ae | [260405-v03-result-exit-pot-refund](./quick/260405-v03-result-exit-pot-refund/) |
+| 260405-v5z | sfx-map.md SFX/BGM 설정 최신화 — 볼륨·트리거·BGM 섹션 | 2026-04-05 | a5be491 | [260405-v5z-sfx-map-md-sfx](./quick/260405-v5z-sfx-map-md-sfx/) |
+| 260405-v63 | 게임 이력 room ID 기준 영속 — join-room 3경로 emit 추가 | 2026-04-05 | d506a5d | [260405-v63-room-id](./quick/260405-v63-room-id/) |
 
 ### Blockers/Concerns
 
