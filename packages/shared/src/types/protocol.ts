@@ -86,7 +86,7 @@ export interface ServerToClientEvents {
   'set-player-id': (data: { playerId: string }) => void;
   'chat-message': (data: { playerId: string; nickname: string; text: string; timestamp: number }) => void;
   'chat-history': (data: { messages: Array<{ playerId: string; nickname: string; text: string; timestamp: number }> }) => void;
-  'proxy-ante-applied': (data: { sponsorNickname: string; beneficiaryNicknames: string[] }) => void;
+  'proxy-ante-applied': (data: { sponsorNickname: string; beneficiaryNickname: string }) => void;
   'game-history': (data: { entries: RoundHistoryEntry[] }) => void;
   'kicked': (data: { reason: string }) => void;
   'next-round-votes': (data: { votedPlayerIds: string[] }) => void;

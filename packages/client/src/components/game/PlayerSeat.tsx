@@ -24,8 +24,8 @@ interface PlayerSeatProps {
 }
 
 export function PlayerSeat({
-  seatIndex,
-  totalPlayers,
+  seatIndex: _seatIndex,
+  totalPlayers: _totalPlayers,
   player,
   isMe,
   isCurrentTurn,
@@ -37,10 +37,6 @@ export function PlayerSeat({
   isConnected = true,
   compact = false,
 }: PlayerSeatProps) {
-  const style = {
-    '--angle': `calc(360deg / ${totalPlayers} * ${seatIndex})`,
-  } as React.CSSProperties;
-
   const showCount = visibleCardCount ?? 2;
 
   // 배분 날아오기 애니메이션 스타일
@@ -53,20 +49,20 @@ export function PlayerSeat({
     };
   };
 
-  const content = (
+  return (
     <Card
       className={cn(
-        'w-auto transition-shadow duration-300',
-        compact ? 'min-w-0 p-1.5 space-y-1' : 'min-w-[7rem] p-2 space-y-1',
+        'w-full transition-shadow duration-300',
+        compact ? 'min-w-0 p-1.5 space-y-1' : 'p-2 space-y-1',
         isCurrentTurn && 'ring-2 ring-primary shadow-[0_0_14px_3px] shadow-primary/50',
         !player.isAlive && 'opacity-50',
         !isConnected && 'opacity-50'
       )}
     >
       <div className="flex items-center gap-1">
-        <p className={cn(compact ? 'text-[9px]' : 'text-xs', 'font-semibold truncate flex-1', isCurrentTurn && 'text-primary')}>
+        <p className={cn(compact ? 'text-[9px]' : 'text-sm', 'font-semibold truncate flex-1', isCurrentTurn && 'text-primary')}>
           {player.nickname}
-          {isMe && <span className={cn('ml-1 font-semibold text-primary', compact ? 'text-[9px]' : 'text-xs')}>[나]</span>}
+          {isMe && <span className={cn('ml-1 font-semibold text-primary', compact ? 'text-[9px]' : 'text-sm')}>[나]</span>}
         </p>
         {player.isDealer && (
           <Badge variant="outline" className="text-xs px-1 py-0 shrink-0">
@@ -159,7 +155,7 @@ export function PlayerSeat({
         );
       })()}
 
-      <p className={`tabular-nums ${compact ? 'text-[9px]' : 'text-xs'} ${isMe ? 'text-yellow-400 font-semibold' : 'text-muted-foreground'}`}>{player.chips.toLocaleString()}원</p>
+      <p className={`tabular-nums ${compact ? 'text-[9px]' : 'text-sm'} ${isMe ? 'text-yellow-400 font-semibold' : 'text-muted-foreground'}`}>{player.chips.toLocaleString()}원</p>
 
       {player.lastBetAction && (
         <div className="flex items-center gap-1 flex-wrap">
@@ -185,23 +181,5 @@ export function PlayerSeat({
         </div>
       )}
     </Card>
-  );
-
-  return (
-    <>
-      {/* 데스크톱: 원형 배치 */}
-      <div
-        className="absolute top-1/2 left-1/2 -mt-14 -ml-14 hidden md:block transition-transform duration-500"
-        style={{
-          ...style,
-          transform: `rotate(var(--angle)) translateY(-220px) rotate(calc(var(--angle) * -1))`,
-        }}
-      >
-        {content}
-      </div>
-
-      {/* 모바일: 일반 flex 아이템 */}
-      <div className="md:hidden">{content}</div>
-    </>
   );
 }

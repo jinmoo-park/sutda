@@ -84,7 +84,7 @@ export function RoomPage() {
   const locationState = location.state as { nickname?: string; initialChips?: number; isHost?: boolean } | null;
   const { socket, connect, gameState, roomState, myPlayerId, error, clearError } = useGameStore();
   const { play: playSfx, stop: stopSfx, isMuted: sfxMuted, toggleMute: toggleSfx } = useSfxPlayer();
-  const { isMuted: bgmMuted, toggleMute: toggleBgm, switchBgm, restoreBgm } = useBgmPlayer();
+  const { isMuted: bgmMuted, toggleMute: toggleBgm } = useBgmPlayer();
   const serverUrl = import.meta.env.VITE_SERVER_URL || '';
 
   // location.state → sessionStorage 순서로 입장 정보 복원 (새로고침 대응)
@@ -116,8 +116,6 @@ export function RoomPage() {
   } | null>(null);
   const [visibleCardCounts, setVisibleCardCounts] = useState<Record<string, number>>({});
   const dealingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  // 빅팟 BGM 교체 — 라운드 내 중복 교체 방지
-  const bigpotActivatedRef = useRef(false);
   // 상대방 베팅 SFX 감지용 — key: `${roundNumber}-${JSON.stringify(lastBetAction)}`
   const prevBetActionsRef = useRef<Record<string, string>>({});
   // 모달 포털 컨테이너 (게임 테이블 영역)
@@ -374,34 +372,6 @@ export function RoomPage() {
       setSejangThirdCardDismissed(false);
     }
   }, [gameState?.phase]);
-
-  // 빅팟 BGM 교체 — pot >= 20000 시 bgm_bigpot.mp3로 교체
-  useEffect(() => {
-    if (!gameState) return;
-    if (gameState.pot >= 20000 && !bigpotActivatedRef.current) {
-      switchBgm('bgm_bigpot.mp3');
-      bigpotActivatedRef.current = true;
-    }
-  }, [gameState?.pot]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // result phase 후 BGM 복귀 + 새 라운드 시작 시 bigpotActivatedRef 리셋
-  useEffect(() => {
-    const phase = gameState?.phase;
-    if (!phase) return;
-
-    if (phase === 'result' && bigpotActivatedRef.current) {
-      const timer = setTimeout(() => {
-        restoreBgm();
-        bigpotActivatedRef.current = false;
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-
-    // 새 라운드 시작 phase 진입 시 ref 리셋 (result 복귀가 이미 처리되지 않은 경우 대비)
-    if (phase === 'attend-school' || phase === 'shuffling' || phase === 'dealer-select' || phase === 'mode-select') {
-      bigpotActivatedRef.current = false;
-    }
-  }, [gameState?.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // card-reveal phase 진입 감지 → play('card-reveal')
   // 새 라운드 phase 진입 시 card-reveal SFX 즉시 정지

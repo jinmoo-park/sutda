@@ -22,7 +22,6 @@ interface GameStore {
   chatMessages: ChatMessage[];
   roundHistory: RoundHistoryEntry[];
   nextRoundVotedIds: string[];
-  proxyBeneficiaryNicknames: string[];
 
   // 액션
   connect: (serverUrl: string) => void;
@@ -40,7 +39,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
   chatMessages: [],
   roundHistory: [],
   nextRoundVotedIds: [],
-  proxyBeneficiaryNicknames: [],
 
   connect: (serverUrl: string) => {
     const existing = get().socket;
@@ -73,7 +71,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const wasResult = prev?.phase === 'result';
       const isResult = state.phase === 'result';
       if (wasResult && !isResult) {
-        set({ gameState: state, nextRoundVotedIds: [], proxyBeneficiaryNicknames: [] });
+        set({ gameState: state, nextRoundVotedIds: [] });
       } else {
         set({ gameState: state });
       }
@@ -115,14 +113,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ nextRoundVotedIds: votedPlayerIds });
     });
 
-    socket.on('proxy-ante-applied', ({ sponsorNickname, beneficiaryNicknames }) => {
-      // 통합 토스트: 수혜자 전원을 한 줄로 표시
-      const names = beneficiaryNicknames.join(', ');
-      toast(`${sponsorNickname}님이 ${names}의 학교를 대신 가줬습니다`);
-      // 대리출석 수혜자 추적 (ResultScreen 배지용)
-      set(state => ({
-        proxyBeneficiaryNicknames: [...new Set([...state.proxyBeneficiaryNicknames, ...beneficiaryNicknames])]
-      }));
+    socket.on('proxy-ante-applied', ({ sponsorNickname, beneficiaryNickname }) => {
+      toast(`${sponsorNickname}님이 ${beneficiaryNickname}의 학교를 대신 가줬습니다`);
     });
 
     socket.on('player-left', ({ nickname }) => {
@@ -140,7 +132,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   disconnect: () => {
     get().socket?.disconnect();
-    set({ socket: null, gameState: null, roomState: null, myPlayerId: null, chatMessages: [], roundHistory: [], nextRoundVotedIds: [], proxyBeneficiaryNicknames: [] });
+    set({ socket: null, gameState: null, roomState: null, myPlayerId: null, chatMessages: [], roundHistory: [], nextRoundVotedIds: [] });
   },
 
   clearError: () => set({ error: null }),
