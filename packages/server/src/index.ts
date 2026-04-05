@@ -909,6 +909,14 @@ io.on('connection', (socket) => {
             // 2인 → 1인 남으면 대기실 전환 (D-18)
             const remainingRoom = roomManager.getRoom(roomId);
             if (remainingRoom && remainingRoom.players.filter(p => !p.isObserver).length < 2) {
+              // engine 삭제 전 정산된 chips를 room.players에 동기화 (94cd432 tryAdvanceNextRound와 동일 패턴)
+              if (eng) {
+                const enginePs = eng.getState().players;
+                for (const rp of remainingRoom.players) {
+                  const ep = enginePs.find(p => p.id === rp.id);
+                  if (ep) rp.chips = ep.chips;
+                }
+              }
               remainingRoom.gamePhase = 'waiting';
               gameEngines.delete(roomId);
               io.to(roomId).emit('room-state', remainingRoom);

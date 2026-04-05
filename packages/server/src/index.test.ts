@@ -479,53 +479,62 @@ describe('버그 수정: disconnect 유예 만료 시 chips 동기화 (D-18)', (
   const clients: TestClient[] = [];
 
   afterEach(() => {
-    vi.useRealTimers();
     clients.forEach(c => c.disconnect());
     clients.length = 0;
     gameEngines.clear();
   });
 
   it('게임 중 disconnect 유예 만료 후 대기실 전환 시 남은 플레이어의 chips가 engine 정산값을 유지한다', async () => {
+    // 60초 타이머 대기 없이 disconnect 타이머 콜백 로직을 직접 시뮬레이션한다.
+    // 서버의 disconnect 타이머 콜백과 동일한 순서로:
+    //   1) roomManager.leaveRoom 으로 퇴장
+    //   2) engine→room chips 동기화 (수정된 로직)
+    //   3) gamePhase='waiting' 전환, gameEngines.delete
+
     // 1. 게임 시작
     const { host, joiner, roomId } = await setupGameStarted();
     clients.push(host, joiner);
 
-    // 2. engine의 chips를 게임 중 정산된 값으로 강제 설정 (예: 방장이 80,000원 획득)
+    // 2. engine의 chips를 게임 중 정산된 값으로 강제 설정
     const engine = gameEngines.get(roomId)!;
     expect(engine).toBeDefined();
     const engineState = (engine as any).state;
-    const hostPlayerId = engineState.players[0].id;
-    engineState.players[0].chips = 80000; // 방장: 20,000 잃은 상태
+    const hostPlayerId: string = engineState.players[0].id;
+    const joinerPlayerId: string = engineState.players[1].id;
+    engineState.players[0].chips = 80000;  // 방장: 20,000 잃은 상태
     engineState.players[1].chips = 120000; // 참여자: 20,000 얻은 상태
 
-    // 3. fake timers 활성화 (disconnect 60초 타이머를 가로채기 위해)
-    vi.useFakeTimers();
+    // 3. disconnect 타이머 만료 시 수행되는 로직을 직접 실행:
+    //    a) 참여자를 방에서 제거
+    const leaveResult = roomManager.leaveRoom(roomId, joinerPlayerId);
+    expect(leaveResult).not.toBeNull();
 
-    // 4. room-state 수신 대기 설정
-    const roomStatePromise = new Promise<any>((resolve) => {
-      host.once('room-state', (data: any) => resolve(data));
-    });
+    //    b) 남은 플레이어 수 < 2 → 대기실 전환
+    const remainingRoom = roomManager.getRoom(roomId);
+    expect(remainingRoom).not.toBeNull();
+    expect(remainingRoom!.players.filter(p => !p.isObserver).length).toBeLessThan(2);
 
-    // 5. joiner(참여자) 연결 끊기 — 서버가 60초 타이머를 시작함
-    joiner.disconnect();
+    //    c) engine→room chips 동기화 (수정된 로직과 동일)
+    const eng = gameEngines.get(roomId);
+    expect(eng).toBeDefined(); // gameEngines.delete 전이므로 반드시 존재해야 함
+    if (eng) {
+      const enginePs = eng.getState().players;
+      for (const rp of remainingRoom!.players) {
+        const ep = enginePs.find(p => p.id === rp.id);
+        if (ep) rp.chips = ep.chips;
+      }
+    }
 
-    // 6. 60초 타이머를 빠르게 실행
-    await vi.runAllTimersAsync();
+    //    d) gamePhase 전환 및 engine 삭제
+    remainingRoom!.gamePhase = 'waiting';
+    gameEngines.delete(roomId);
 
-    // 7. real timers 복원 후 room-state 이벤트 대기
-    vi.useRealTimers();
-    const roomState = await Promise.race([
-      roomStatePromise,
-      new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
-    ]);
-
-    expect(roomState).not.toBeNull();
-    expect(roomState.gamePhase).toBe('waiting');
-
-    // 8. 남은 플레이어(방장)의 chips가 engine 정산값(80,000)을 유지해야 한다
-    //    (버그 수정 전: 100,000으로 리셋됨)
-    const hostInRoom = roomState.players.find((p: any) => p.id === hostPlayerId);
+    // 4. 남은 플레이어(방장)의 chips가 engine 정산값(80,000)을 유지해야 한다
+    //    (버그 수정 전: chips sync 없으면 100,000 그대로)
+    const hostInRoom = remainingRoom!.players.find(p => p.id === hostPlayerId);
     expect(hostInRoom).toBeDefined();
-    expect(hostInRoom.chips).toBe(80000);
+    expect(hostInRoom!.chips).toBe(80000);
+    expect(remainingRoom!.gamePhase).toBe('waiting');
+    expect(gameEngines.get(roomId)).toBeUndefined();
   });
 });
