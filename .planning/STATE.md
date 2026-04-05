@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 Phase: 16
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-05 - 2인 게임 종료 시 방장 chips 미동기화 버그 수정 (94cd432)
+Last activity: 2026-04-05 - Completed quick task 260405-ue1: 족보 한단계차이 승패 SFX lose-ddaeng-but-lost 미지정 원인 디버그 (fbf66ad)
 
 Progress: [████░░░░░░] 44%
 
@@ -245,6 +245,7 @@ None yet.
 | 260405-sce | 게임이력 CSV 저장 기능 — HistoryModal CSV 다운로드 버튼 | 2026-04-05 | 6f11dc7 | [260405-sce-csv](./quick/260405-sce-csv/) |
 | 260405-sgp | 플레이어 퇴장 즉시 토스트 + 재접속 알림 — 1분 유예 중에도 즉시 표시 | 2026-04-05 | f931315 | [260405-sgp-disconnect-toast](./quick/260405-sgp-disconnect-toast/) |
 | 260405-t3k | 2인 게임 종료 시 방장 chips engine→room 미동기화 버그 수정 | 2026-04-05 | 94cd432 | — |
+| 260405-ue1 | 족보 한단계차이 승패 SFX lose-ddaeng-but-lost 미지정 원인 디버그 | 2026-04-05 | fbf66ad | [260405-ue1-sfx-lose-ddaeng-but-lost](./quick/260405-ue1-sfx-lose-ddaeng-but-lost/) |
 
 ### Blockers/Concerns
 
