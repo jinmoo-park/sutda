@@ -239,45 +239,92 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
           </div>
         )}
 
-        {/* 스크롤 컨텍스트: h-full 고정 + overflow-y-auto → 내용이 넘치면 스크롤 */}
-        <div className="relative z-10 h-full overflow-y-auto">
-          <div className="flex flex-col min-h-full">
-            {/* 팟 한줄 요약 */}
-            <div className="flex items-center justify-center gap-1.5 pt-2 pb-1 px-2 flex-wrap">
-              {mode && (
-                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full border border-primary text-primary bg-primary/10">
-                  {MODE_LABELS[mode] ?? mode}
-                </span>
-              )}
-              <span className="text-xs text-muted-foreground tracking-widest uppercase">판돈</span>
-              <span className="font-semibold tabular-nums">{pot.toLocaleString()}원</span>
-              {hasAllIn && <span className="text-[10px] text-muted-foreground">올인 포함</span>}
-            </div>
-            {mode === 'shared-card' && sharedCard && (
-              <div className="flex justify-center items-center py-1">
-                <SharedCardDisplay card={sharedCard} />
+        {/* Observer 목록 (모바일) */}
+        {observers.length > 0 && (
+          <div className="absolute bottom-2 right-2 flex flex-col gap-1 z-10">
+            {observers.map(obs => (
+              <div key={obs.id} className="bg-card/80 rounded px-2 py-1 text-xs flex items-center gap-1.5">
+                <span>{obs.nickname}</span>
+                <Badge variant="outline" className="border-primary text-primary text-xs px-1 py-0">관람 중</Badge>
               </div>
-            )}
-            {/* 그리드 배치: 6명까지 3열 2행 */}
-            <div className="grid grid-cols-3 gap-1 p-1 justify-items-center">
-              {/* Bug Fix: currentPlayerIndex는 seatIndex값 — p.seatIndex로 비교 */}
-              {players.map((p, i) => (
+            ))}
+          </div>
+        )}
+
+        {/* 모바일 3x3 CSS Grid */}
+        <div
+          className="relative z-10 h-full"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr 1fr',
+            gridTemplateRows: '1fr 1fr 1fr',
+          }}
+        >
+          {/* 상대방 플레이어 배치 */}
+          {opponents.map((p, i) => {
+            const cell = opponentCells[i];
+            if (cell === undefined) return null;
+            return (
+              <div
+                key={p.id}
+                className="flex items-center justify-center p-0.5"
+                style={{ gridArea: cellToGridArea(cell) }}
+              >
                 <PlayerSeat
-                  key={p.id}
                   seatIndex={i}
                   totalPlayers={players.length}
                   player={p}
-                  isMe={p.id === myPlayerId}
+                  isMe={false}
                   isCurrentTurn={p.seatIndex === currentPlayerIndex}
                   visibleCardCount={visibleCardCounts?.[p.id]}
-                  dealingComplete={dealingComplete}
-                  isConnected={roomState?.players.find(rp => rp.id === p.id)?.isConnected ?? true}
                   mode={mode}
+                  dealingComplete={dealingComplete}
+                  flippedCardIndices={undefined}
+                  isConnected={roomState?.players.find(rp => rp.id === p.id)?.isConnected ?? true}
                   compact
                 />
-              ))}
-            </div>
+              </div>
+            );
+          })}
+
+          {/* 셀5 (row2/col2): 판돈 + 모드 정보 */}
+          <div
+            className="flex flex-col items-center justify-center pointer-events-none"
+            style={{ gridArea: '2 / 2' }}
+          >
+            {mode && (
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full border border-primary text-primary bg-primary/10">
+                {MODE_LABELS[mode] ?? mode}
+              </span>
+            )}
+            <span className="font-semibold tabular-nums text-sm mt-0.5">{pot.toLocaleString()}원</span>
+            {hasAllIn && <span className="text-[9px] text-muted-foreground">올인 포함</span>}
+            {mode === 'shared-card' && sharedCard && (
+              <div className="mt-1"><SharedCardDisplay card={sharedCard} /></div>
+            )}
           </div>
+
+          {/* 내 플레이어: 셀8 (row3/col2) */}
+          {me && (
+            <div
+              className="flex items-center justify-center p-0.5"
+              style={{ gridArea: '3 / 2' }}
+            >
+              <PlayerSeat
+                seatIndex={players.findIndex(p => p.id === myPlayerId)}
+                totalPlayers={players.length}
+                player={me}
+                isMe={true}
+                isCurrentTurn={me.seatIndex === currentPlayerIndex}
+                visibleCardCount={visibleCardCounts?.[me.id]}
+                mode={mode}
+                dealingComplete={dealingComplete}
+                flippedCardIndices={myFlippedCardIndices}
+                isConnected={roomState?.players.find(rp => rp.id === me.id)?.isConnected ?? true}
+                compact
+              />
+            </div>
+          )}
         </div>
       </div>
     </>
