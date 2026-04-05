@@ -37,10 +37,6 @@ export function PlayerSeat({
   isConnected = true,
   compact = false,
 }: PlayerSeatProps) {
-  const style = {
-    '--angle': `calc(360deg / ${totalPlayers} * ${seatIndex})`,
-  } as React.CSSProperties;
-
   const showCount = visibleCardCount ?? 2;
 
   // 배분 날아오기 애니메이션 스타일
@@ -187,21 +183,5 @@ export function PlayerSeat({
     </Card>
   );
 
-  return (
-    <>
-      {/* 데스크톱: 원형 배치 */}
-      <div
-        className="absolute top-1/2 left-1/2 -mt-14 -ml-14 hidden md:block transition-transform duration-500"
-        style={{
-          ...style,
-          transform: `rotate(var(--angle)) translateY(-220px) rotate(calc(var(--angle) * -1))`,
-        }}
-      >
-        {content}
-      </div>
-
-      {/* 모바일: 일반 flex 아이템 */}
-      <div className="md:hidden">{content}</div>
-    </>
-  );
+  return <>{content}</>;
 }

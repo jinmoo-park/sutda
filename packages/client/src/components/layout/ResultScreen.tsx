@@ -27,7 +27,7 @@ const AUTO_NEXT_SECONDS = 5;
 
 export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRematchPending, onEject }: ResultScreenProps) {
   const { socket, nextRoundVotedIds } = useGameStore();
-  const { play } = useSfxPlayer();
+  const { play, stop } = useSfxPlayer();
   const navigate = useNavigate();
   const [hasVotedNextRound, setHasVotedNextRound] = useState(false);
   const resultSfxPlayedRef = useRef<string | null>(null);
@@ -110,6 +110,7 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
 
     const myHandCards = getHandCards(me);
 
+    stop('card-reveal');
     if (iAmWinner) {
       if (myHandCards.length >= 2) {
         try {

@@ -80,16 +80,25 @@ export function BettingPanel({
         )}
       </div>
 
-      {/* 레이즈 금액 표시 */}
+      {/* 레이즈 금액 + 초기화 버튼 인라인 */}
       {raiseAmount > 0 && (
-        <p className="text-2xl font-semibold tabular-nums text-primary">
-          +{raiseAmount.toLocaleString()}원
-          {callAmount > 0 && (
-            <span className="text-xs text-muted-foreground font-normal ml-1">
-              (총 {totalRaisePayment.toLocaleString()})
-            </span>
-          )}
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="text-2xl font-semibold tabular-nums text-primary flex-1">
+            +{raiseAmount.toLocaleString()}원
+            {callAmount > 0 && (
+              <span className="text-xs text-muted-foreground font-normal ml-1">
+                (총 {totalRaisePayment.toLocaleString()})
+              </span>
+            )}
+          </p>
+          <button
+            disabled={!isMyTurn}
+            onClick={() => setRaiseAmount(0)}
+            className="text-xs border border-border rounded px-2 py-0.5 text-muted-foreground hover:text-foreground hover:border-foreground transition-colors disabled:opacity-30"
+          >
+            초기화
+          </button>
+        </div>
       )}
 
       {/* 칩 버튼 — 1×4 그리드 */}
@@ -116,18 +125,6 @@ export function BettingPanel({
         <p className="text-xs text-center text-yellow-400 font-semibold">올인</p>
       )}
 
-      {/* 초기화 */}
-      {raiseAmount > 0 && (
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={!isMyTurn}
-          onClick={() => setRaiseAmount(0)}
-          className="w-full h-7 text-xs"
-        >
-          초기화
-        </Button>
-      )}
 
       {/* 액션 버튼 — 1×4 그리드 */}
       <div className="grid grid-cols-4 gap-1.5">
