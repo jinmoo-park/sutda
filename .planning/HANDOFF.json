@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "timestamp": "2026-04-05T07:49:52.653Z",
+  "timestamp": "2026-04-05T10:01:39.480Z",
   "phase": null,
   "phase_name": "quick-tasks",
   "phase_dir": null,
@@ -9,31 +9,21 @@
   "total_tasks": null,
   "status": "paused",
   "completed_tasks": [
-    {"id": "260405-knk", "name": "PlayerSeat 박스 크기 최적화 — 데스크탑 확대 + 모바일 3x3 + BGM 음량 + 폰트/카드", "status": "done", "commit": "d0afcf3"},
-    {"id": "260405-l55", "name": "학교대신가주기 수혜자 결과카드 미반영 버그 + ihi revert 복구", "status": "done", "commit": "6e0ee5d"},
-    {"id": "260405-l5b", "name": "결과페이지 disconnect 즉시 진행 + tryAdvanceNextRound 추출", "status": "done", "commit": "1464b49"},
-    {"id": "260405-miq", "name": "모바일 3x3 그리드 좌석배치 + 판돈 중앙 + 레이즈 텍스트 + 학교가기 버튼 조건부 텍스트", "status": "done", "commit": "7a2bba8"}
+    {"id": "260405-pv9", "name": "3장섯다 손패패널 카드 겹치기 배치 — negative margin", "status": "done", "commit": "b1fc22c"},
+    {"id": "260405-pv9-fix1", "name": "미공개 카드 opacity-80 제거", "status": "done", "commit": "4d8928a"},
+    {"id": "260405-pv9-fix2", "name": "z-index 순서 반전 — 왼쪽 카드가 위로", "status": "done", "commit": "71b1418"},
+    {"id": "260405-pz8", "name": "방 생성 비밀번호→암구호 명칭 변경", "status": "done", "commit": "8e29144"},
+    {"id": "bgm-preload", "name": "빅팟 BGM preload — 첫 발동 딜레이 방지", "status": "done", "commit": "6992fce"}
   ],
   "remaining_tasks": [],
   "blockers": [],
-  "human_actions_pending": [
-    {
-      "action": "브라우저에서 모바일 레이아웃 시각 검증 — DevTools 모바일 뷰에서 3x3 좌석배치, 판돈 중앙 셀5, 레이즈 텍스트 확인",
-      "context": "pnpm --filter client dev 실행 후 확인",
-      "blocking": false
-    },
-    {
-      "action": "배포 — git push origin master + Oracle VM SSH 배포 (CLAUDE.md 배포 절차)",
-      "context": "origin/master 대비 44 커밋 앞서 있음",
-      "blocking": false
-    }
-  ],
+  "human_actions_pending": [],
   "decisions": [
-    {"decision": "빠른 수정은 worktree 사용하지 않고 직접 수정 방식 선호", "rationale": "워크트리 병합 시 scripts/, bgm 파일, planning 파일들이 반복 삭제됨", "phase": "quick-tasks"},
-    {"decision": "5번 그리드 셀을 판돈+모드 정보 영역으로 사용, 8번을 isMe 고정", "rationale": "6인 플레이 시 좌석 겹침 해소 + 판돈카드 중앙 배치", "phase": "quick-260405-miq"},
-    {"decision": "proxyBeneficiaryNicknames 기반으로 학교가기 버튼 텍스트 분기", "rationale": "대리출석 이미 등록된 경우 다음판으로 표시", "phase": "quick-260405-miq"}
+    {"decision": "3장 카드 marginLeft: -12px, z-index: cards.length - renderPos", "rationale": "왼쪽 카드가 위에 오는 자연스러운 겹침", "phase": "quick"},
+    {"decision": "미공개 카드 brightness-75 유지, opacity 제거", "rationale": "공개/미공개 구분은 밝기로만", "phase": "quick"},
+    {"decision": "빅팟 BGM preload: auto, getAudio() 초기화 시 생성", "rationale": "첫 발동 딜레이 방지", "phase": "quick"}
   ],
   "uncommitted_files": [],
-  "next_action": "브라우저에서 모바일 레이아웃 확인 후 배포. 추가 UI 피드백은 /gsd-quick으로 처리.",
-  "context_notes": "오늘 세션(260405): 모바일/데스크탑 PlayerSeat 레이아웃 다수 개선, 학교대신가주기 결과카드 버그 + ihi revert 복구, 결과페이지 disconnect 즉시 처리, 모바일 3x3 좌석배치 전면 리팩터링 완료. 모든 변경사항 커밋됨. origin/master보다 44 커밋 앞서 있어 배포 필요."
+  "next_action": ".planning/ROADMAP.md에서 다음 phase 확인 후 /gsd-next 또는 /gsd-quick으로 작업 시작",
+  "context_notes": "2026-04-05 오후 세션: 3장섯다 카드 겹치기 UI 개선, 암구호 명칭 변경, 빅팟 BGM 프리로드 수정. 모두 배포 완료. origin/master 동기화."
 }
