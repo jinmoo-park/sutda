@@ -41,7 +41,7 @@ interface ResultScreenProps {
 const AUTO_NEXT_SECONDS = 5;
 
 export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRematchPending, onEject }: ResultScreenProps) {
-  const { socket, nextRoundVotedIds } = useGameStore();
+  const { socket, nextRoundVotedIds, proxyBeneficiaryNicknames } = useGameStore();
   const { play } = useSfxPlayer();
   const navigate = useNavigate();
   const [hasVotedNextRound, setHasVotedNextRound] = useState(false);
@@ -94,13 +94,18 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
     socket?.emit('take-break', { roomId });
   };
 
-  // school-proxy SFX: proxy-ante-applied 이벤트 수신 시 전 플레이어 재생
+  // school-proxy SFX: proxy-ante-applied 이벤트 수신 시 수혜자 본인에게만 재생
   useEffect(() => {
     if (!socket) return;
-    const handler = () => { play('school-proxy'); };
+    const myNickname = myPlayer?.nickname;
+    const handler = ({ beneficiaryNicknames }: { beneficiaryNicknames: string[] }) => {
+      if (myNickname && beneficiaryNicknames.includes(myNickname)) {
+        play('school-proxy');
+      }
+    };
     socket.on('proxy-ante-applied', handler);
     return () => { socket.off('proxy-ante-applied', handler); };
-  }, [socket]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [socket, myPlayer?.nickname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // result phase 진입 시 1회 SFX 재생
   useEffect(() => {
@@ -308,6 +313,9 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
             >
               <div className="flex items-center gap-1">
                 <p className="text-xs font-semibold md:text-sm">{player.nickname}</p>
+                {proxyBeneficiaryNicknames.includes(player.nickname) && (
+                  <span className="text-[9px] px-1 py-0.5 rounded bg-blue-600/80 text-white font-medium">대리출석</span>
+                )}
                 {!isCardRevealPhase && !isRematchPending && gameState.phase === 'result' && nextRoundVotedIds.includes(player.id) && (
                   <span className="text-[9px] px-1 py-0.5 rounded bg-green-600/80 text-white font-medium">학교</span>
                 )}
