@@ -243,19 +243,23 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
         <div className="relative z-10 h-full overflow-y-auto">
           <div className="flex flex-col min-h-full">
             {/* 팟 한줄 요약 */}
-            <div className="text-center pt-2 pb-1 px-2">
-              {mode && <span className="text-[10px] text-primary font-medium mr-1">{MODE_LABELS[mode] ?? ''}</span>}
-              <span className="text-xs text-muted-foreground tracking-widest uppercase">판돈 </span>
+            <div className="flex items-center justify-center gap-1.5 pt-2 pb-1 px-2 flex-wrap">
+              {mode && (
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full border border-primary text-primary bg-primary/10">
+                  {MODE_LABELS[mode] ?? mode}
+                </span>
+              )}
+              <span className="text-xs text-muted-foreground tracking-widest uppercase">판돈</span>
               <span className="font-semibold tabular-nums">{pot.toLocaleString()}원</span>
-              {hasAllIn && <span className="text-[10px] text-muted-foreground ml-1">올인 포함</span>}
+              {hasAllIn && <span className="text-[10px] text-muted-foreground">올인 포함</span>}
             </div>
             {mode === 'shared-card' && sharedCard && (
-              <div className="flex justify-center py-1">
+              <div className="flex justify-center items-center py-1">
                 <SharedCardDisplay card={sharedCard} />
               </div>
             )}
-            {/* 그리드 배치: 6명까지 2열 3행 */}
-            <div className="grid grid-cols-2 gap-1 p-1">
+            {/* 그리드 배치: 6명까지 3열 2행 */}
+            <div className="grid grid-cols-3 gap-1 p-1 justify-items-center">
               {/* Bug Fix: currentPlayerIndex는 seatIndex값 — p.seatIndex로 비교 */}
               {players.map((p, i) => (
                 <PlayerSeat

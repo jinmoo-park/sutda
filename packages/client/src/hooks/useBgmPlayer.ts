@@ -44,7 +44,7 @@ export function setBigPot(active: boolean) {
     if (!_bigpotAudio) {
       _bigpotAudio = new Audio('/sfx/bgm_bigpot.mp3');
       _bigpotAudio.loop = true;
-      _bigpotAudio.volume = 0.1;
+      _bigpotAudio.volume = 0.25;
     }
     _bigpotAudio.play().catch(() => {});
   } else {

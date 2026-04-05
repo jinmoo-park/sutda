@@ -53,16 +53,16 @@ export function PlayerSeat({
     <Card
       className={cn(
         'w-auto transition-shadow duration-300',
-        compact ? 'min-w-0 p-1.5 space-y-1' : 'min-w-[7rem] p-2 space-y-1',
+        compact ? 'min-w-0 p-1.5 space-y-1' : 'min-w-[11rem] p-4 space-y-1',
         isCurrentTurn && 'ring-2 ring-primary shadow-[0_0_14px_3px] shadow-primary/50',
         !player.isAlive && 'opacity-50',
         !isConnected && 'opacity-50'
       )}
     >
       <div className="flex items-center gap-1">
-        <p className={cn(compact ? 'text-[9px]' : 'text-xs', 'font-semibold truncate flex-1', isCurrentTurn && 'text-primary')}>
+        <p className={cn(compact ? 'text-[11px]' : 'text-xs', 'font-semibold truncate flex-1', isCurrentTurn && 'text-primary')}>
           {player.nickname}
-          {isMe && <span className={cn('ml-1 font-semibold text-primary', compact ? 'text-[9px]' : 'text-xs')}>[나]</span>}
+          {isMe && <span className={cn('ml-1 font-semibold text-primary', compact ? 'text-[11px]' : 'text-xs')}>[나]</span>}
         </p>
         {player.isDealer && (
           <Badge variant="outline" className="text-xs px-1 py-0 shrink-0">
@@ -114,7 +114,7 @@ export function PlayerSeat({
         return (
         <div className={cn(
           'flex flex-wrap',
-          isThreeCardLayout ? '-space-x-2' : 'gap-1'
+          isThreeCardLayout && compact ? '-space-x-3' : isThreeCardLayout ? '-space-x-2' : 'gap-1'
         )}>
           {renderOrder.map((origIdx, renderPos) => {
             const visible = origIdx < showCount;
@@ -145,7 +145,7 @@ export function PlayerSeat({
                 <HwatuCard
                   card={card ?? undefined}
                   faceUp={showFace}
-                  size={compact ? 'xs' : 'sm'}
+                  size={compact ? 'xxs' : 'sm'}
                   disabled
                 />
               </div>
@@ -155,7 +155,7 @@ export function PlayerSeat({
         );
       })()}
 
-      <p className={`tabular-nums ${compact ? 'text-[9px]' : 'text-xs'} ${isMe ? 'text-yellow-400 font-semibold' : 'text-muted-foreground'}`}>{player.chips.toLocaleString()}원</p>
+      <p className={`tabular-nums ${compact ? 'text-[11px]' : 'text-xs'} ${isMe ? 'text-yellow-400 font-semibold' : 'text-muted-foreground'}`}>{player.chips.toLocaleString()}원</p>
 
       {player.lastBetAction && (
         <div className="flex items-center gap-1 flex-wrap">
@@ -166,14 +166,21 @@ export function PlayerSeat({
             <Badge variant="outline" className="text-xs px-1 py-0 text-green-400 border-green-400">콜</Badge>
           )}
           {player.lastBetAction.type === 'raise' && (
-            <Badge variant="outline" className="text-xs px-1 py-0 text-yellow-400 border-yellow-400">
-              레이즈{player.lastBetAction.amount ? ` +${player.lastBetAction.amount.toLocaleString()}` : ''}
-            </Badge>
+            <div className="flex flex-col gap-0.5">
+              <Badge variant="outline" className="text-xs px-1 py-0 text-yellow-400 border-yellow-400 w-fit">
+                레이즈{player.lastBetAction.amount ? ` +${player.lastBetAction.amount.toLocaleString()}원` : ''}
+              </Badge>
+              {player.currentBet > 0 && (
+                <span className="text-xs tabular-nums text-yellow-400 font-semibold">
+                  베팅금액 {player.currentBet.toLocaleString()}원
+                </span>
+              )}
+            </div>
           )}
           {player.lastBetAction.type === 'die' && (
             <Badge variant="outline" className="text-xs px-1 py-0 text-red-400 border-red-400">다이</Badge>
           )}
-          {player.currentBet > 0 && (
+          {player.lastBetAction.type !== 'raise' && player.currentBet > 0 && (
             <span className="text-xs tabular-nums text-yellow-400 font-semibold">
               {player.currentBet.toLocaleString()}원
             </span>
