@@ -14,6 +14,14 @@ function getAudio(): HTMLAudioElement {
     audio.volume = 0.1;
     _audio = audio;
 
+    // 빅팟 BGM 미리 로드 — 첫 발동 시 딜레이 방지
+    if (!_bigpotAudio) {
+      _bigpotAudio = new Audio('/sfx/bgm_bigpot.mp3');
+      _bigpotAudio.loop = true;
+      _bigpotAudio.preload = 'auto';
+      _bigpotAudio.volume = 0.25;
+    }
+
     const muted = localStorage.getItem('sutda_bgm_muted') === 'true';
     if (!muted) {
       audio.play().catch(() => {
@@ -41,12 +49,7 @@ export function setBigPot(active: boolean) {
 
   if (active) {
     _audio?.pause();
-    if (!_bigpotAudio) {
-      _bigpotAudio = new Audio('/sfx/bgm_bigpot.mp3');
-      _bigpotAudio.loop = true;
-      _bigpotAudio.volume = 0.25;
-    }
-    _bigpotAudio.play().catch(() => {});
+    _bigpotAudio?.play().catch(() => {});
   } else {
     _bigpotAudio?.pause();
     _audio?.play().catch(() => {});
