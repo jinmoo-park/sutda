@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "timestamp": "2026-04-05T05:45:28.574Z",
+  "timestamp": "2026-04-05T07:49:52.653Z",
   "phase": null,
   "phase_name": "quick-tasks",
   "phase_dir": null,
@@ -9,24 +9,31 @@
   "total_tasks": null,
   "status": "paused",
   "completed_tasks": [
-    {"id": "260405-j4v", "name": "게임테이블 3x3 그리드 레이아웃 리팩터링 + 빅팟 내부글로우", "status": "done", "commit": "6ac3861"},
-    {"id": "260405-jug", "name": "게임테이블 UI 버그+개선 7종 (그리드마진/링크복사/빅팟pulse+BGM/판돈카드확대/모드Badge/베팅패널pulse)", "status": "done", "commit": "e120591"},
-    {"id": "260405-kf2", "name": "레이아웃 중대오류 수정 + 베팅패널 초기화버튼 인라인 + card-reveal SFX 타이밍", "status": "done", "commit": "72ae604"}
+    {"id": "260405-knk", "name": "PlayerSeat 박스 크기 최적화 — 데스크탑 확대 + 모바일 3x3 + BGM 음량 + 폰트/카드", "status": "done", "commit": "d0afcf3"},
+    {"id": "260405-l55", "name": "학교대신가주기 수혜자 결과카드 미반영 버그 + ihi revert 복구", "status": "done", "commit": "6e0ee5d"},
+    {"id": "260405-l5b", "name": "결과페이지 disconnect 즉시 진행 + tryAdvanceNextRound 추출", "status": "done", "commit": "1464b49"},
+    {"id": "260405-miq", "name": "모바일 3x3 그리드 좌석배치 + 판돈 중앙 + 레이즈 텍스트 + 학교가기 버튼 조건부 텍스트", "status": "done", "commit": "7a2bba8"}
   ],
   "remaining_tasks": [],
   "blockers": [],
   "human_actions_pending": [
     {
-      "action": "브라우저에서 게임테이블 레이아웃, 빅팟 글로우, 베팅패널, card-reveal SFX 시각 검증 후 배포",
-      "context": "pnpm dev로 로컬 확인 후 CLAUDE.md 배포 절차 실행",
+      "action": "브라우저에서 모바일 레이아웃 시각 검증 — DevTools 모바일 뷰에서 3x3 좌석배치, 판돈 중앙 셀5, 레이즈 텍스트 확인",
+      "context": "pnpm --filter client dev 실행 후 확인",
+      "blocking": false
+    },
+    {
+      "action": "배포 — git push origin master + Oracle VM SSH 배포 (CLAUDE.md 배포 절차)",
+      "context": "origin/master 대비 44 커밋 앞서 있음",
       "blocking": false
     }
   ],
   "decisions": [
-    {"decision": "PlayerSeat 원형 배치 코드 완전 제거, 그리드 셀이 배치 담당", "rationale": "워크트리 실행기가 반복적으로 원형 코드를 복원하여 수동 수정으로 확정", "phase": "quick-260405-kf2"},
-    {"decision": "빠른 수정은 worktree 사용하지 않고 직접 수정 방식 선호", "rationale": "워크트리 병합 시 scripts/, bgm 파일, planning 파일들이 반복 삭제됨", "phase": "quick-tasks"}
+    {"decision": "빠른 수정은 worktree 사용하지 않고 직접 수정 방식 선호", "rationale": "워크트리 병합 시 scripts/, bgm 파일, planning 파일들이 반복 삭제됨", "phase": "quick-tasks"},
+    {"decision": "5번 그리드 셀을 판돈+모드 정보 영역으로 사용, 8번을 isMe 고정", "rationale": "6인 플레이 시 좌석 겹침 해소 + 판돈카드 중앙 배치", "phase": "quick-260405-miq"},
+    {"decision": "proxyBeneficiaryNicknames 기반으로 학교가기 버튼 텍스트 분기", "rationale": "대리출석 이미 등록된 경우 다음판으로 표시", "phase": "quick-260405-miq"}
   ],
   "uncommitted_files": [],
-  "next_action": "배포 필요 시 CLAUDE.md 배포 절차 실행. 추가 UI 피드백은 /gsd-quick으로 처리.",
-  "context_notes": "오늘 세션: 작업폴더 이동 후 의존성 재설치, 게임테이블 3x3 그리드 리팩터링, UI 개선 7종, 레이아웃 중대오류(PlayerSeat 원형 코드 복원) 수정, 베팅패널 초기화버튼 인라인, card-reveal SFX 타이밍 수정 완료. 모든 변경사항 커밋됨."
+  "next_action": "브라우저에서 모바일 레이아웃 확인 후 배포. 추가 UI 피드백은 /gsd-quick으로 처리.",
+  "context_notes": "오늘 세션(260405): 모바일/데스크탑 PlayerSeat 레이아웃 다수 개선, 학교대신가주기 결과카드 버그 + ihi revert 복구, 결과페이지 disconnect 즉시 처리, 모바일 3x3 좌석배치 전면 리팩터링 완료. 모든 변경사항 커밋됨. origin/master보다 44 커밋 앞서 있어 배포 필요."
 }
