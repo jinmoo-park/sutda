@@ -250,6 +250,7 @@ None yet.
 | 260405-v03 | 결과화면 퇴장 시 팟 반환 및 이력 잔액 기록 | 2026-04-05 | 5a454ae | [260405-v03-result-exit-pot-refund](./quick/260405-v03-result-exit-pot-refund/) |
 | 260405-v5z | sfx-map.md SFX/BGM 설정 최신화 — 볼륨·트리거·BGM 섹션 | 2026-04-05 | a5be491 | [260405-v5z-sfx-map-md-sfx](./quick/260405-v5z-sfx-map-md-sfx/) |
 | 260405-v63 | 게임 이력 room ID 기준 영속 — join-room 3경로 emit 추가 | 2026-04-05 | d506a5d | [260405-v63-room-id](./quick/260405-v63-room-id/) |
+| 260409-t4a | 밤일낮장 UI 강조표시, 그리드 반시계방향 배치, 올인 플레이어 베팅 스킵 처리 | 2026-04-09 | f371e12 | [260409-t4a-ui](./quick/260409-t4a-ui/) |
 
 ### Blockers/Concerns
 
