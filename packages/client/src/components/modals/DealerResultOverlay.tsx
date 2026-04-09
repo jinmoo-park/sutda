@@ -24,11 +24,16 @@ export function DealerResultOverlay({ open, results, players, winnerId, onOpenCh
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>선 결정 결과</DialogTitle>
+          <DialogTitle>밤일낮장 결과</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-2">
           {results.map(({ playerId, card }) => {
             const isWinner = playerId === winnerId;
+            const isNight = card.month <= 10;
+            const dayNightLabel = isNight ? '밤일' : '낮장';
+            const badgeColor = isNight
+              ? 'text-amber-500 border-amber-500'
+              : 'text-blue-400 border-blue-400';
             return (
               <div
                 key={playerId}
@@ -39,9 +44,9 @@ export function DealerResultOverlay({ open, results, players, winnerId, onOpenCh
                 <HwatuCard card={card} faceUp={true} size="sm" />
                 <div>
                   <p className="font-semibold text-sm">{getNickname(playerId)}</p>
-                  {isWinner && (
-                    <p className="text-xs text-primary font-medium">선 결정!</p>
-                  )}
+                  <span className={`text-xs font-semibold border rounded px-1 py-0.5 ${badgeColor}`}>
+                    {dayNightLabel}
+                  </span>
                 </div>
               </div>
             );

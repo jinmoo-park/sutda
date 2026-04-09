@@ -46,7 +46,7 @@ export function DealerSelectModal({ open, roomId }: DealerSelectModalProps) {
       >
         <DialogHeader>
           <DialogTitle>
-            {isRedraw ? '동률 — 재추첨' : '선 결정 — 카드를 선택하세요'}
+            {isRedraw ? '동률 — 재추첨' : '밤일낮장 — 카드를 선택하세요'}
           </DialogTitle>
         </DialogHeader>
         {isRedraw && (
