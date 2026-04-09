@@ -5,6 +5,7 @@ import { SharedCardDisplay } from '@/components/game/SharedCardDisplay';
 import { HwatuCard } from '@/components/game/HwatuCard';
 import { Badge } from '@/components/ui/badge';
 import { setBigPot } from '@/hooks/useBgmPlayer';
+import { ChipStack } from '@/components/game/ChipStack';
 
 const MODE_LABELS: Record<string, string> = {
   'original': '오리지날',
@@ -178,14 +179,20 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
               className="flex items-center justify-center pointer-events-none"
               style={{ gridArea: '2 / 2' }}
             >
-              <div className="text-center bg-background/60 border border-border rounded-2xl px-8 py-5 shadow-inner">
+              <div className="text-center bg-background/60 border border-border rounded-2xl px-8 py-5 shadow-inner min-w-[160px]">
                 {mode && (
                   <Badge variant="outline" className="border-primary text-primary text-[10px] mb-1">
                     {MODE_LABELS[mode] ?? mode}
                   </Badge>
                 )}
                 <p className="text-sm text-muted-foreground tracking-widest uppercase">판돈</p>
-                <p className="text-[36px] font-semibold tabular-nums">{pot.toLocaleString()}원</p>
+                {/* 칩 스택 시각화 (데스크탑 전용) */}
+                {pot > 0 && (
+                  <div className="my-2">
+                    <ChipStack pot={pot} />
+                  </div>
+                )}
+                <p className="text-[28px] font-semibold tabular-nums">{pot.toLocaleString()}원</p>
                 {hasAllIn && (
                   <span className="text-[10px] text-muted-foreground">올인 포함</span>
                 )}
