@@ -38,6 +38,9 @@ export function DealerSelectModal({ open, roomId }: DealerSelectModalProps) {
     ? gameState?.players.filter(p => eligibleIds!.includes(p.id)).map(p => p.nickname).join(', ')
     : null;
 
+  const kstHour = (new Date().getUTCHours() + 9) % 24;
+  const isNightTime = kstHour >= 18 || kstHour < 6;
+
   return (
     <Dialog open={open}>
       <DialogContent
@@ -46,7 +49,13 @@ export function DealerSelectModal({ open, roomId }: DealerSelectModalProps) {
       >
         <DialogHeader>
           <DialogTitle>
-            {isRedraw ? '동률 — 재추첨' : '밤일낮장 — 카드를 선택하세요'}
+            {isRedraw ? '동률 — 재추첨' : (
+              <>
+                <span className={isNightTime ? 'text-amber-400 font-bold' : ''}>밤일</span>
+                <span className={!isNightTime ? 'text-blue-400 font-bold' : ''}>낮장</span>
+                {' — 카드를 선택하세요'}
+              </>
+            )}
           </DialogTitle>
         </DialogHeader>
         {isRedraw && (
