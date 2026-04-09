@@ -253,6 +253,7 @@ None yet.
 | 260409-t4a | 밤일낮장 UI 강조표시, 그리드 반시계방향 배치, 올인 플레이어 베팅 스킵 처리 | 2026-04-09 | f371e12 | [260409-t4a-ui](./quick/260409-t4a-ui/) |
 | 260409-urd | 밤일낮장 시간기반 강조 수정, 올인재경기 팟분배 버그, 3장섯다 disconnect 게임멈춤 | 2026-04-09 | 2f5bde9 | [260409-urd-3-disconn](./quick/260409-urd-3-disconn/) |
 | 260409-v42 | AUTO 자동패섞기 옵션 버튼 신설 — 방장 토글, autoMode ShuffleModal, SFX 연동 | 2026-04-09 | ce97622 | [260409-v42-auto](./quick/260409-v42-auto/) |
+| 260409-voi | 칩 SVG 아이콘 교체(500/1k/5k/10k) 및 데스크탑 판돈 칩 스택 애니메이션 | 2026-04-09 | 732be27 | [260409-voi-svg](./quick/260409-voi-svg/) |
 
 ### Blockers/Concerns
 
