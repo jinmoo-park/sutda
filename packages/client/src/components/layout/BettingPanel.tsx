@@ -17,10 +17,10 @@ interface BettingPanelProps {
 }
 
 const CHIP_BUTTONS = [
-  { amount: 500,   color: 'bg-zinc-400',   label: '500' },
-  { amount: 1000,  color: 'bg-blue-500',   label: '1천' },
-  { amount: 5000,  color: 'bg-green-500',  label: '5천' },
-  { amount: 10000, color: 'bg-red-500',    label: '1만' },
+  { amount: 500,   svg: '/chips/500.svg',  label: '500' },
+  { amount: 1000,  svg: '/chips/1k.svg',   label: '1천' },
+  { amount: 5000,  svg: '/chips/5k.svg',   label: '5천' },
+  { amount: 10000, svg: '/chips/10k.svg',  label: '1만' },
 ];
 
 export function BettingPanel({
@@ -102,20 +102,23 @@ export function BettingPanel({
 
       {/* 칩 버튼 — 1×4 그리드 */}
       <div className="grid grid-cols-4 gap-1.5">
-        {CHIP_BUTTONS.map(({ amount, color, label }) => {
+        {CHIP_BUTTONS.map(({ amount, svg, label }) => {
           const chipDisabled = !isMyTurn || raiseAmount >= maxRaiseAmount;
           return (
-            <Button
+            <button
               key={amount}
-              variant="secondary"
-              size="sm"
               disabled={chipDisabled}
               onClick={() => { play('chip'); setRaiseAmount((prev) => Math.min(prev + amount, maxRaiseAmount)); }}
-              className={cn('h-auto py-3 md:py-2.5 flex-col gap-1 text-xs px-1', chipDisabled && 'opacity-20 pointer-events-none')}
+              className={cn(
+                'relative flex items-center justify-center transition-transform active:scale-95',
+                chipDisabled ? 'opacity-20 pointer-events-none' : 'hover:scale-105'
+              )}
             >
-              <span className={`w-3 h-3 rounded-full shrink-0 ${color}`} />
-              <span>+{label}</span>
-            </Button>
+              <img src={svg} alt={label} className="w-full h-auto max-w-[64px] drop-shadow-md" draggable={false} />
+              <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-[11px] leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                +{label}
+              </span>
+            </button>
           );
         })}
       </div>
