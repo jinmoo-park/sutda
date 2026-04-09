@@ -195,9 +195,9 @@ export function ShuffleModal({ open, roomId, readOnly = false, autoMode = false 
     };
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // autoMode: 열릴 때 전체 브로드캐스트 + SFX + 2.5초 후 자동 emit
+  // autoMode: 선 플레이어만 브로드캐스트 + SFX + 자동 emit (readOnly = 비선 → 스킵)
   useEffect(() => {
-    if (!open || !autoMode) return;
+    if (!open || !autoMode || readOnly) return;
     socket?.emit('auto-shuffle-notify' as any, { roomId });
     play('auto_shuffle');
     const timer = setTimeout(() => {
