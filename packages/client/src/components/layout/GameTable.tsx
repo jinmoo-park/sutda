@@ -34,10 +34,10 @@ interface GameTableProps {
  */
 function getOpponentCells(opponentCount: number): number[] {
   switch (opponentCount) {
-    case 5: return [1, 2, 3, 4, 6];
-    case 4: return [1, 3, 4, 6];
-    case 3: return [1, 2, 3];
-    case 2: return [1, 3];
+    case 5: return [6, 3, 2, 1, 4];
+    case 4: return [6, 3, 1, 4];
+    case 3: return [3, 2, 1];
+    case 2: return [3, 1];
     case 1: return [2];
     default: return [];
   }
@@ -76,7 +76,15 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
   const isBigPot = pot >= 20000;
 
   const me = players.find(p => p.id === myPlayerId);
-  const opponents = players.filter(p => p.id !== myPlayerId);
+  // 반시계 방향 정렬: 내 seatIndex 기준으로 1씩 감소하며 상대방 수집
+  const mySeatIndex = me?.seatIndex ?? 0;
+  const totalPlayers = players.length;
+  const opponents: PlayerState[] = [];
+  for (let i = 1; i < totalPlayers; i++) {
+    const seatIdx = (mySeatIndex - i + totalPlayers) % totalPlayers;
+    const p = players.find(p => p.seatIndex === seatIdx && p.id !== myPlayerId);
+    if (p) opponents.push(p);
+  }
   const opponentCells = getOpponentCells(opponents.length);
 
   return (
