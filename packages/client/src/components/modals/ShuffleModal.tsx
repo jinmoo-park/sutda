@@ -219,57 +219,60 @@ export function ShuffleModal({ open, roomId, readOnly = false, autoMode = false 
           </DialogTitle>
         </DialogHeader>
 
-        {/* 카드 더미 — 레이아웃은 카드 시각 크기(130px)만, 애니메이션은 overflow:visible */}
-        <div className="flex items-center justify-center" style={{ padding: '24px 0' }}>
-          <div
-            style={{
-              perspective: '700px', perspectiveOrigin: '50% 50%',
-              cursor: (readOnly || autoMode) ? 'default' : 'pointer', userSelect: 'none', WebkitUserSelect: 'none',
-              overflow: 'visible',
-            }}
-            onPointerDown={(readOnly || autoMode) ? undefined : startShuffle}
-            onPointerUp={(readOnly || autoMode) ? undefined : stopShuffle}
-            onPointerLeave={(readOnly || autoMode) ? undefined : stopShuffle}
-          >
+        {autoMode ? (
+          /* AUTO 모드: 이미지 크게 표시 */
+          <div className="flex flex-col items-center gap-3 py-2">
+            <img
+              src="/auto_shuffle.webp"
+              alt="자동 패섞기"
+              className="w-full rounded-lg object-cover"
+              style={{ maxHeight: '240px', objectPosition: 'center' }}
+            />
+            <p className="text-sm text-muted-foreground">자동으로 패를 섞는 중...</p>
+          </div>
+        ) : (
+          /* 수동 모드: 카드 더미 애니메이션 */
+          <div className="flex items-center justify-center" style={{ padding: '24px 0' }}>
             <div
               style={{
-                position: 'relative',
-                width: '80px',
-                height: '130px',
-                transformStyle: 'preserve-3d',
+                perspective: '700px', perspectiveOrigin: '50% 50%',
+                cursor: readOnly ? 'default' : 'pointer', userSelect: 'none', WebkitUserSelect: 'none',
+                overflow: 'visible',
               }}
+              onPointerDown={readOnly ? undefined : startShuffle}
+              onPointerUp={readOnly ? undefined : stopShuffle}
+              onPointerLeave={readOnly ? undefined : stopShuffle}
             >
-              {Array.from({ length: N }, (_, i) => (
-                <div
-                  key={i}
-                  ref={(el) => { cardRefs.current[i] = el; }}
-                  style={{
-                    position: 'absolute',
-                    width: '54px',
-                    height: '78px',
-                    left: '50%',
-                    marginLeft: '-27px',
-                    borderRadius: '5px',
-                    boxSizing: 'border-box',
-                    top: `${BASE_TOP - i * GAP}px`,
-                    zIndex: i + 1,
-                    backgroundImage: 'url(/img/card_back.jpg)',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                  }}
-                />
-              ))}
+              <div
+                style={{
+                  position: 'relative',
+                  width: '80px',
+                  height: '130px',
+                  transformStyle: 'preserve-3d',
+                }}
+              >
+                {Array.from({ length: N }, (_, i) => (
+                  <div
+                    key={i}
+                    ref={(el) => { cardRefs.current[i] = el; }}
+                    style={{
+                      position: 'absolute',
+                      width: '54px',
+                      height: '78px',
+                      left: '50%',
+                      marginLeft: '-27px',
+                      borderRadius: '5px',
+                      boxSizing: 'border-box',
+                      top: `${BASE_TOP - i * GAP}px`,
+                      zIndex: i + 1,
+                      backgroundImage: 'url(/img/card_back.jpg)',
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                    }}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        </div>
-
-        {autoMode && (
-          <div className="flex flex-col items-center gap-2 mt-2">
-            {/* auto_shuffle.png 준비 전 placeholder */}
-            <div className="w-32 h-20 bg-muted/40 border border-dashed border-muted-foreground/30 rounded flex items-center justify-center text-xs text-muted-foreground">
-              이미지 준비 중
-            </div>
-            <p className="text-sm text-muted-foreground">자동으로 패를 섞는 중...</p>
           </div>
         )}
         {!readOnly && !autoMode && (
