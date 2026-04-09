@@ -249,9 +249,9 @@ export function HandPanel({
         )}
       </div>
 
-      {/* Row 4: BGM/SFX/AUTO 버튼 (모바일 전용, props 제공 시만 렌더링) */}
+      {/* Row 4: BGM/SFX/AUTO 버튼 (props 제공 시만 렌더링) */}
       {(onToggleBgm || onToggleSfx || (isHost && onToggleAutoShuffle)) && (
-        <div className="flex md:hidden items-center gap-1.5">
+        <div className="flex items-center gap-1.5">
           {onToggleBgm && (
             <button
               onClick={onToggleBgm}
