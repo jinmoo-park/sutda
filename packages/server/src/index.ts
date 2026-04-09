@@ -149,11 +149,40 @@ async function handleGameAction(
       const pid = s.data?.playerId;
       s.emit('game-state', engine.getStateFor(pid) as GameState);
     }
+    // AUTO 패섞기: shuffling phase이고 autoShuffle=true이면 자동 처리
+    await maybeAutoShuffle(roomId);
   } catch (err: any) {
     socket.emit('game-error', {
       code: err.message || 'UNKNOWN_ERROR',
       message: ERROR_MESSAGES[err.message] || err.message || '알 수 없는 오류',
     });
+  }
+}
+
+/**
+ * shuffling phase이고 room.autoShuffle=true이면 서버가 자동으로 패를 섞는다.
+ * handleGameAction 내 emit 이후에 호출하여 자동 처리 여부를 확인한다.
+ */
+async function maybeAutoShuffle(roomId: string): Promise<void> {
+  const room = roomManager.getRoom(roomId);
+  const engine = gameEngines.get(roomId);
+  if (!room || !engine) return;
+  const state = engine.getState() as GameState;
+  if (state.phase !== 'shuffling' || !room.autoShuffle) return;
+  const dealer = state.players.find(p => p.isDealer);
+  if (!dealer) return;
+  try {
+    engine.shuffle(dealer.id);
+    // 변경된 상태 재broadcast (per-player)
+    const sockets = await io.in(roomId).fetchSockets();
+    for (const s of sockets) {
+      const pid = s.data?.playerId;
+      s.emit('game-state', engine.getStateFor(pid) as GameState);
+    }
+    // auto_shuffle SFX 트리거 이벤트를 클라이언트에 전송
+    io.to(roomId).emit('auto-shuffle-trigger' as any);
+  } catch {
+    // 이미 처리된 경우 무시
   }
 }
 
@@ -694,6 +723,15 @@ io.on('connection', (socket) => {
     handleGameAction(socket, roomId, () => {
       getEngine(roomId).shuffle(socket.data.playerId);
     });
+  });
+
+  socket.on('set-auto-shuffle' as any, ({ roomId, enabled }: { roomId: string; enabled: boolean }) => {
+    const room = roomManager.getRoom(roomId);
+    if (!room) return;
+    // 방장만 설정 가능
+    if (room.hostId !== socket.data.playerId) return;
+    room.autoShuffle = enabled;
+    io.to(roomId).emit('room-state', room);
   });
 
   socket.on('giri-phase-update', ({ roomId, phase, piles, tapOrder }) => {

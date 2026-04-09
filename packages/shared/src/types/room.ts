@@ -17,4 +17,5 @@ export interface RoomState {
   maxPlayers: number;       // 최대 인원 (6, per INFRA-03)
   gamePhase: 'waiting' | 'playing'; // 대기 vs 게임 진행 중
   createdAt: number;        // Date.now() 타임스탬프
+  autoShuffle?: boolean;    // AUTO 자동패섞기 ON/OFF (방 전체 설정, 기본값 false)
 }
