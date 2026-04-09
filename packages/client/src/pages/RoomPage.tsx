@@ -373,15 +373,17 @@ export function RoomPage() {
     }
   }, [gameState?.phase]);
 
-  // AUTO 패섞기: auto-shuffle-trigger 이벤트 수신 → SFX 재생
+  // AUTO 패섞기 활성 여부 (비선 플레이어용 — auto-shuffle-active 수신 시 true, shuffling 종료 시 reset)
+  const [autoShuffleActive, setAutoShuffleActive] = useState(false);
   useEffect(() => {
     if (!socket) return;
-    const handler = () => playSfx('auto_shuffle');
-    socket.on('auto-shuffle-trigger' as any, handler);
-    return () => {
-      socket.off('auto-shuffle-trigger' as any, handler);
-    };
+    const handler = () => setAutoShuffleActive(true);
+    socket.on('auto-shuffle-active' as any, handler);
+    return () => { socket.off('auto-shuffle-active' as any, handler); };
   }, [socket]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (gameState?.phase !== 'shuffling') setAutoShuffleActive(false);
+  }, [gameState?.phase]);
 
   // card-reveal phase 진입 감지 → play('card-reveal')
   // 새 라운드 phase 진입 시 card-reveal SFX 즉시 정지
@@ -850,7 +852,7 @@ export function RoomPage() {
       {/* AUTO ON + 내가 선: autoMode / 그 외: 일반 or readOnly */}
       <ShuffleModal open={phase === 'shuffling' && isDealer && autoShuffle} roomId={roomId!} autoMode />
       <ShuffleModal open={phase === 'shuffling' && isDealer && !autoShuffle} roomId={roomId!} />
-      <ShuffleModal open={phase === 'shuffling' && !isDealer} roomId={roomId!} readOnly />
+      <ShuffleModal open={phase === 'shuffling' && !isDealer} roomId={roomId!} readOnly autoMode={autoShuffleActive} />
       <CutModal open={phase === 'cutting' && isMyTurn} roomId={roomId!} />
       {/* 기리 대기 — 본인 아닌 플레이어에게 실시간 더미 스트리밍 표시 */}
       <SpectatorCutView

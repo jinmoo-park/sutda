@@ -728,10 +728,14 @@ io.on('connection', (socket) => {
   socket.on('set-auto-shuffle' as any, ({ roomId, enabled }: { roomId: string; enabled: boolean }) => {
     const room = roomManager.getRoom(roomId);
     if (!room) return;
-    // 방장만 설정 가능
     if (room.hostId !== socket.data.playerId) return;
     room.autoShuffle = enabled;
     io.to(roomId).emit('room-state', room);
+  });
+
+  // 선 플레이어가 AUTO 모드로 셔플 시작을 알림 → 전체 브로드캐스트
+  socket.on('auto-shuffle-notify' as any, ({ roomId }: { roomId: string }) => {
+    io.to(roomId).emit('auto-shuffle-active' as any);
   });
 
   socket.on('giri-phase-update', ({ roomId, phase, piles, tapOrder }) => {
