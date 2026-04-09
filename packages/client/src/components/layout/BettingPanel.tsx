@@ -115,7 +115,13 @@ export function BettingPanel({
               )}
             >
               <img src={svg} alt={label} className="w-full h-auto max-w-[64px] drop-shadow-md" draggable={false} />
-              <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-[11px] leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+              <span
+                className="absolute inset-0 flex items-center justify-center text-white font-black text-[11px] leading-none"
+                style={{
+                  textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 2px 4px rgba(0,0,0,0.8)',
+                  fontFamily: "'Black Han Sans', 'Noto Sans KR', sans-serif",
+                }}
+              >
                 +{label}
               </span>
             </button>
