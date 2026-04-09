@@ -1931,6 +1931,65 @@ export class GameEngine {
 
     player.isDisconnected = true;
 
+    // dealer-select phase: disconnect 플레이어를 제외하고 나머지가 모두 선택했는지 확인
+    if (this.state.phase === 'dealer-select') {
+      const eligibleIds = this.state.dealerSelectEligibleIds;
+      const effectiveEligible = eligibleIds
+        ? eligibleIds.filter(id => {
+            const p = this.state.players.find(pl => pl.id === id);
+            return p && !p.isDisconnected;
+          })
+        : this.state.players.filter(p => !p.isDisconnected).map(p => p.id);
+
+      if (effectiveEligible.length > 0) {
+        const selectedInEligible = (this.state.dealerSelectCards ?? []).filter(
+          sc => effectiveEligible.includes(sc.playerId)
+        );
+        if (selectedInEligible.length >= effectiveEligible.length) {
+          // disconnect 제외 후 모두 선택 완료 → 선 결정
+          if (eligibleIds) {
+            this.state.dealerSelectEligibleIds = effectiveEligible;
+          }
+          try { this._resolveDealer(); } catch { /* no-op */ }
+        }
+      }
+    }
+
+    // mode-select phase: 선(dealer)이 disconnect → 기본 모드(original)로 자동 진행
+    if (this.state.phase === 'mode-select' && player.isDealer) {
+      try { this.selectMode(playerId, 'original'); } catch { /* no-op */ }
+    }
+
+    // shared-card-select phase: 선이 disconnect → 랜덤 카드로 자동 선택
+    if (this.state.phase === 'shared-card-select' && player.isDealer) {
+      try {
+        const randomIndex = Math.floor(Math.random() * this.state.deck.length);
+        this.setSharedCard(playerId, randomIndex);
+      } catch { /* no-op */ }
+    }
+
+    // gusa-pending phase: 아직 결정 안 한 disconnect 플레이어 → 거절(false) 자동 처리
+    if (this.state.phase === 'gusa-pending') {
+      const decisions = this.state.gusaPendingDecisions;
+      if (decisions && playerId in decisions && decisions[playerId] === null) {
+        decisions[playerId] = false;
+        const allDecided = Object.values(decisions).every(v => v !== null);
+        if (allDecided) {
+          try { this._startGusaRematch(); } catch { /* no-op */ }
+        }
+      }
+    }
+
+    // gusa-announce phase: 선이 disconnect → 즉시 재경기 시작
+    if (this.state.phase === 'gusa-announce' && player.isDealer) {
+      try { this._startGusaRematch(); } catch { /* no-op */ }
+    }
+
+    // attend-school phase: 아직 등교 안 한 disconnect 플레이어 → 자동 등교
+    if (this.state.phase === 'attend-school' && !this.state.attendedPlayerIds.includes(playerId)) {
+      try { this.attendSchool(playerId); } catch { /* no-op */ }
+    }
+
     if (!player.isAlive) return;
 
     // 베팅 phase: 현재 차례인 경우 자동 다이 처리
@@ -2001,6 +2060,11 @@ export class GameEngine {
   forcePlayerLeave(playerId: string): void {
     const player = this.state.players.find(p => p.id === playerId);
     if (!player) return;
+
+    // attend-school phase: 아직 등교 안 한 플레이어 → 자동 등교 후 퇴장
+    if (this.state.phase === 'attend-school' && !this.state.attendedPlayerIds.includes(playerId)) {
+      try { this.attendSchool(playerId); } catch { /* no-op */ }
+    }
 
     if (GameEngine.BETTING_PHASES.includes(this.state.phase) && player.isAlive) {
       try {
