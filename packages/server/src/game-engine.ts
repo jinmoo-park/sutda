@@ -1766,6 +1766,8 @@ export class GameEngine {
       p.cards = [];
       (p as any).selectedCards = undefined;
       p.openedCardIndex = undefined;
+      p.isAllIn = false;       // 재경기 시 올인 상태 해제
+      p.totalCommitted = 0;    // 사이드팟 추적 리셋
     });
 
     // 새 덱 생성
@@ -1866,6 +1868,8 @@ export class GameEngine {
       p.lastBetAction = undefined;
       (p as any).selectedCards = undefined;
       p.openedCardIndex = undefined;
+      p.isAllIn = false;       // 재경기 시 올인 상태 해제
+      p.totalCommitted = 0;    // 사이드팟 추적 리셋
     });
 
     // 새 덱 생성
