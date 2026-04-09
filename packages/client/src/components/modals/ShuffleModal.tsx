@@ -192,6 +192,16 @@ export function ShuffleModal({ open, roomId, readOnly = false, autoMode = false 
     };
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // autoMode: 2.5초 후 자동으로 shuffle emit
+  useEffect(() => {
+    if (!open || !autoMode) return;
+    play('auto_shuffle');
+    const timer = setTimeout(() => {
+      socket?.emit('shuffle', { roomId });
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [open, autoMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <Dialog open={open} modal={false}>
       <DialogContent

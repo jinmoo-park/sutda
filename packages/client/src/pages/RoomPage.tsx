@@ -503,7 +503,7 @@ export function RoomPage() {
   const isMyTurn = gameState !== null && currentPlayer?.id === myPlayerId;
   const isDealer = myPlayer?.isDealer ?? false;
   const isHost = roomState?.hostId === myPlayerId;
-  const autoShuffle = roomState?.autoShuffle ?? false;
+  const [autoShuffle, setAutoShuffle] = useState<boolean>(() => localStorage.getItem('sutda_auto_shuffle') === 'true');
   const nonAbsentCount = gameState?.players.filter((p) => !p.isAbsent).length ?? 0;
   const canSkip = nonAbsentCount > 2;
   const currentPlayerNickname = currentPlayer?.nickname;
@@ -695,7 +695,7 @@ export function RoomPage() {
       onToggleSfx={toggleSfx}
       isHost={isHost}
       autoShuffle={autoShuffle}
-      onToggleAutoShuffle={() => socket?.emit('set-auto-shuffle' as any, { roomId, enabled: !autoShuffle })}
+      onToggleAutoShuffle={() => setAutoShuffle(prev => { const next = !prev; localStorage.setItem('sutda_auto_shuffle', String(next)); return next; })}
     />
   );
 
@@ -847,15 +847,10 @@ export function RoomPage() {
       <SejangCardSelectModal open={phase === 'card-select' && (myPlayer?.isAlive ?? false)} roomId={roomId!} />
       <ModeSelectModal open={phase === 'mode-select'} isDealer={isDealer} roomId={roomId!} />
       <SharedCardSelectModal open={phase === 'shared-card-select'} roomId={roomId!} />
-      {/* AUTO ON 시: 모든 플레이어에게 autoMode 모달 표시 */}
-      {autoShuffle ? (
-        <ShuffleModal open={phase === 'shuffling'} roomId={roomId!} autoMode />
-      ) : (
-        <>
-          <ShuffleModal open={phase === 'shuffling' && isDealer} roomId={roomId!} />
-          <ShuffleModal open={phase === 'shuffling' && !isDealer} roomId={roomId!} readOnly />
-        </>
-      )}
+      {/* AUTO ON + 내가 선: autoMode / 그 외: 일반 or readOnly */}
+      <ShuffleModal open={phase === 'shuffling' && isDealer && autoShuffle} roomId={roomId!} autoMode />
+      <ShuffleModal open={phase === 'shuffling' && isDealer && !autoShuffle} roomId={roomId!} />
+      <ShuffleModal open={phase === 'shuffling' && !isDealer} roomId={roomId!} readOnly />
       <CutModal open={phase === 'cutting' && isMyTurn} roomId={roomId!} />
       {/* 기리 대기 — 본인 아닌 플레이어에게 실시간 더미 스트리밍 표시 */}
       <SpectatorCutView

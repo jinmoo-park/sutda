@@ -250,7 +250,7 @@ export function HandPanel({
       </div>
 
       {/* Row 4: BGM/SFX/AUTO 버튼 (props 제공 시만 렌더링) */}
-      {(onToggleBgm || onToggleSfx || (isHost && onToggleAutoShuffle)) && (
+      {(onToggleBgm || onToggleSfx || onToggleAutoShuffle) && (
         <div className="flex items-center gap-1.5">
           {onToggleBgm && (
             <button
@@ -272,11 +272,11 @@ export function HandPanel({
               <span aria-hidden="true">{sfxMuted ? '🔕' : '🔔'}</span>
             </button>
           )}
-          {isHost && onToggleAutoShuffle && (
+          {onToggleAutoShuffle && (
             <button
               onClick={onToggleAutoShuffle}
               aria-label={autoShuffle ? 'AUTO 끄기' : 'AUTO 켜기'}
-              title={autoShuffle ? 'AUTO 패섞기 끄기' : 'AUTO 패섞기 켜기'}
+              title={autoShuffle ? 'AUTO 패섞기 켜짐 — 선이 되면 자동으로 패를 섞습니다' : 'AUTO 패섞기 꺼짐'}
               className={`h-11 px-2 flex items-center justify-center rounded text-xs font-bold bg-black/40 border hover:bg-black/60 ${autoShuffle ? 'border-yellow-400 text-yellow-400 opacity-90' : 'border-white/20 text-white/60 opacity-50'}`}
             >
               AUTO
