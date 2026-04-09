@@ -15,6 +15,8 @@ interface ShuffleModalProps {
   roomId: string;
   /** 관전 모드: 자동 재생, 버튼 없음 */
   readOnly?: boolean;
+  /** AUTO 패섞기 모드: 자동 재생, 안내 텍스트 표시, 버튼 없음 */
+  autoMode?: boolean;
 }
 
 // --- 참조 구현 포팅 (sutda-shuffle.html) ---
@@ -28,7 +30,7 @@ function rnd(min: number, max: number) { return min + Math.random() * (max - min
 function easeInOut(t: number) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; }
 function easeOut(t: number) { return 1 - (1 - t) * (1 - t); }
 
-export function ShuffleModal({ open, roomId, readOnly = false }: ShuffleModalProps) {
+export function ShuffleModal({ open, roomId, readOnly = false, autoMode = false }: ShuffleModalProps) {
   const { socket, gameState } = useGameStore();
   const { play } = useSfxPlayer();
   const [isShuffling, setIsShuffling] = useState(false);
@@ -181,7 +183,7 @@ export function ShuffleModal({ open, roomId, readOnly = false }: ShuffleModalPro
       setHasShuffled(false);
       requestAnimationFrame(() => {
         buildDeck();
-        if (readOnly) startShuffle();
+        if (readOnly || autoMode) startShuffle();
       });
     }
     return () => {
@@ -199,7 +201,9 @@ export function ShuffleModal({ open, roomId, readOnly = false }: ShuffleModalPro
       >
         <DialogHeader>
           <DialogTitle>
-            {readOnly
+            {autoMode
+              ? '자동으로 패를 섞는 중...'
+              : readOnly
               ? `${dealerName}님이 카드를 섞는 중...`
               : isShuffling ? '섞는 중...' : hasShuffled ? '잘 섞였어요! 확인을 누르세요' : '카드 더미를 꾹 누르면 섞입니다'}
           </DialogTitle>
@@ -210,12 +214,12 @@ export function ShuffleModal({ open, roomId, readOnly = false }: ShuffleModalPro
           <div
             style={{
               perspective: '700px', perspectiveOrigin: '50% 50%',
-              cursor: readOnly ? 'default' : 'pointer', userSelect: 'none', WebkitUserSelect: 'none',
+              cursor: (readOnly || autoMode) ? 'default' : 'pointer', userSelect: 'none', WebkitUserSelect: 'none',
               overflow: 'visible',
             }}
-            onPointerDown={readOnly ? undefined : startShuffle}
-            onPointerUp={readOnly ? undefined : stopShuffle}
-            onPointerLeave={readOnly ? undefined : stopShuffle}
+            onPointerDown={(readOnly || autoMode) ? undefined : startShuffle}
+            onPointerUp={(readOnly || autoMode) ? undefined : stopShuffle}
+            onPointerLeave={(readOnly || autoMode) ? undefined : stopShuffle}
           >
             <div
               style={{
@@ -249,7 +253,16 @@ export function ShuffleModal({ open, roomId, readOnly = false }: ShuffleModalPro
           </div>
         </div>
 
-        {!readOnly && (
+        {autoMode && (
+          <div className="flex flex-col items-center gap-2 mt-2">
+            {/* auto_shuffle.png 준비 전 placeholder */}
+            <div className="w-32 h-20 bg-muted/40 border border-dashed border-muted-foreground/30 rounded flex items-center justify-center text-xs text-muted-foreground">
+              이미지 준비 중
+            </div>
+            <p className="text-sm text-muted-foreground">자동으로 패를 섞는 중...</p>
+          </div>
+        )}
+        {!readOnly && !autoMode && (
           <DialogFooter>
             <Button onClick={() => socket?.emit('shuffle', { roomId })} disabled={!hasShuffled}>
               확인

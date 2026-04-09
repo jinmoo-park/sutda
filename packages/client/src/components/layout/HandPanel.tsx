@@ -22,6 +22,12 @@ interface HandPanelProps {
   onToggleBgm?: () => void;
   sfxMuted?: boolean;
   onToggleSfx?: () => void;
+  /** AUTO 자동패섞기: 방장 여부 */
+  isHost?: boolean;
+  /** AUTO 자동패섞기: 현재 ON/OFF 상태 */
+  autoShuffle?: boolean;
+  /** AUTO 자동패섞기: 토글 콜백 (방장 전용) */
+  onToggleAutoShuffle?: () => void;
 }
 
 const HAND_TYPE_KOREAN: Record<string, string> = {
@@ -78,6 +84,9 @@ export function HandPanel({
   onToggleBgm,
   sfxMuted,
   onToggleSfx,
+  isHost,
+  autoShuffle,
+  onToggleAutoShuffle,
 }: HandPanelProps) {
   const [showReference, setShowReference] = useState(false);
   const [internalFlipped, setInternalFlipped] = useState<Set<number>>(new Set());
@@ -240,8 +249,8 @@ export function HandPanel({
         )}
       </div>
 
-      {/* Row 4: BGM/SFX 버튼 (모바일 전용, props 제공 시만 렌더링) */}
-      {(onToggleBgm || onToggleSfx) && (
+      {/* Row 4: BGM/SFX/AUTO 버튼 (모바일 전용, props 제공 시만 렌더링) */}
+      {(onToggleBgm || onToggleSfx || (isHost && onToggleAutoShuffle)) && (
         <div className="flex md:hidden items-center gap-1.5">
           {onToggleBgm && (
             <button
@@ -261,6 +270,16 @@ export function HandPanel({
               className={`h-11 w-11 flex items-center justify-center rounded text-base bg-black/40 border border-white/20 hover:bg-black/60 ${sfxMuted ? 'opacity-40' : 'opacity-70'}`}
             >
               <span aria-hidden="true">{sfxMuted ? '🔕' : '🔔'}</span>
+            </button>
+          )}
+          {isHost && onToggleAutoShuffle && (
+            <button
+              onClick={onToggleAutoShuffle}
+              aria-label={autoShuffle ? 'AUTO 끄기' : 'AUTO 켜기'}
+              title={autoShuffle ? 'AUTO 패섞기 끄기' : 'AUTO 패섞기 켜기'}
+              className={`h-11 px-2 flex items-center justify-center rounded text-xs font-bold bg-black/40 border hover:bg-black/60 ${autoShuffle ? 'border-yellow-400 text-yellow-400 opacity-90' : 'border-white/20 text-white/60 opacity-50'}`}
+            >
+              AUTO
             </button>
           )}
         </div>
