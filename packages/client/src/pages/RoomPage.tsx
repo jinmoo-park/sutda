@@ -399,6 +399,14 @@ export function RoomPage() {
     }
   }, [gameState?.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 구사 페이즈 진입 시 regame SFX 재생
+  useEffect(() => {
+    const currentPhase = gameState?.phase ?? null;
+    if (currentPhase === 'gusa-pending' || currentPhase === 'gusa-announce') {
+      playSfx('regame');
+    }
+  }, [gameState?.phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // 상대방 베팅 액션 SFX — lastBetAction 변화 감지 (상대 플레이어만, 본인은 BettingPanel에서 처리)
   useEffect(() => {
     if (!gameState) return;
