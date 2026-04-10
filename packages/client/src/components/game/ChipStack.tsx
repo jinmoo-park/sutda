@@ -18,13 +18,14 @@ const LAYERS_PER_CHIP = 18;
 const SPLIT_AT = 4;
 const MAX_CHIPS = 10;
 
-const SVG_W = 380;
-const SVG_H = 290;
+const SVG_W = 400;
+const SVG_H = 300;
 const CENTER = SVG_W / 2;
 
-// 뒷줄/앞줄 바닥: 85px 차이로 강한 원근감
-const FLOOR_BACK  = 165;  // 뒤 (화면 위쪽 = 멀리)
-const FLOOR_FRONT = 250;  // 앞 (화면 아래쪽 = 가까이)
+// 3열 원근
+const FLOOR_BACK  = 148;
+const FLOOR_MID   = 198;
+const FLOOR_FRONT = 252;
 
 function sr(seed: number) {
   const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
@@ -36,31 +37,31 @@ function topYFor(count: number, floor: number) {
 }
 
 /**
- * 뒷줄: 좌우 넓게 벌려 배치 (FLOOR_BACK)
- * 앞줄: 뒷줄 사이 중앙에 배치 (FLOOR_FRONT) → 뒷줄 하단만 자연스럽게 가림
+ * 단위별 고유 영역 배정 (primary + split secondary)
+ * 3열 지그재그: 각 단위가 서로 다른 깊이·위치에 놓임
+ * split 시 secondary는 다른 줄+다른 x로 이동
  */
-function clusterPositions(n: number): { cx: number; floor: number; depth: number }[] {
-  switch (n) {
-    case 1: return [
-      { cx: CENTER, floor: FLOOR_FRONT, depth: 0 },
-    ];
-    case 2: return [
-      { cx: CENTER - 45, floor: FLOOR_BACK,  depth: 0 },
-      { cx: CENTER + 15, floor: FLOOR_FRONT, depth: 1 },
-    ];
-    case 3: return [
-      { cx: CENTER - 68, floor: FLOOR_BACK,  depth: 0 },
-      { cx: CENTER + 62, floor: FLOOR_BACK,  depth: 1 },
-      { cx: CENTER + 2,  floor: FLOOR_FRONT, depth: 2 },
-    ];
-    default: return [
-      { cx: CENTER - 72, floor: FLOOR_BACK,  depth: 0 }, // back-left
-      { cx: CENTER + 72, floor: FLOOR_BACK,  depth: 1 }, // back-right
-      { cx: CENTER - 18, floor: FLOOR_FRONT, depth: 2 }, // front — 뒷줄 사이에
-      { cx: CENTER + 32, floor: FLOOR_FRONT, depth: 3 }, // front — 뒷줄 사이에
-    ];
-  }
-}
+const TOWER_POS: Record<number, {
+  primary:   { cx: number; floor: number; depth: number };
+  secondary: { cx: number; floor: number; depth: number };
+}> = {
+  10000: {
+    primary:   { cx: CENTER - 62, floor: FLOOR_BACK,  depth: 0 },
+    secondary: { cx: CENTER - 85, floor: FLOOR_MID,   depth: 2 },
+  },
+  5000: {
+    primary:   { cx: CENTER + 65, floor: FLOOR_BACK,  depth: 1 },
+    secondary: { cx: CENTER + 88, floor: FLOOR_MID,   depth: 3 },
+  },
+  1000: {
+    primary:   { cx: CENTER - 10, floor: FLOOR_MID,   depth: 4 },
+    secondary: { cx: CENTER - 40, floor: FLOOR_FRONT, depth: 6 },
+  },
+  500: {
+    primary:   { cx: CENTER + 35, floor: FLOOR_FRONT, depth: 5 },
+    secondary: { cx: CENTER + 75, floor: FLOOR_FRONT, depth: 7 },
+  },
+};
 
 interface PhysicalTower {
   denom: number;
@@ -87,39 +88,39 @@ export function ChipStack({ chips }: ChipStackProps) {
   const activeDenoms = CHIP_ORDER.filter((d) => (counts[d] ?? 0) > 0);
   if (activeDenoms.length === 0) return null;
 
-  const slots = clusterPositions(activeDenoms.length);
   const physicalTowers: PhysicalTower[] = [];
 
-  activeDenoms.forEach((denom, i) => {
+  for (const denom of activeDenoms) {
     const total = Math.min(counts[denom], MAX_CHIPS);
-    const slot  = slots[i];
-    const nudge = (sr(denom * 2) - 0.5) * 10;
-    const baseCx = slot.cx + nudge;
-    const lean = (sr(denom * 11) - 0.5) * 2.5;
+    const pos   = TOWER_POS[denom];
+    const p     = pos.primary;
+    const nudge = (sr(denom * 2) - 0.5) * 8;
+    const lean  = (sr(denom * 11) - 0.5) * 2.5;
 
     if (total <= SPLIT_AT) {
       physicalTowers.push({
         denom, count: total,
-        cx: baseCx, cy: topYFor(total, slot.floor),
-        floor: slot.floor, depth: slot.depth, lean,
+        cx: p.cx + nudge, cy: topYFor(total, p.floor),
+        floor: p.floor, depth: p.depth, lean,
       });
     } else {
-      const backCount  = Math.ceil(total / 2);
-      const frontCount = total - backCount;
+      const cnt1 = Math.ceil(total / 2);
+      const cnt2 = total - cnt1;
+      const s = pos.secondary;
+      // primary 탑
       physicalTowers.push({
-        denom, count: backCount,
-        cx: baseCx - R * 0.4,
-        cy: topYFor(backCount, slot.floor),
-        floor: slot.floor, depth: slot.depth - 0.3, lean: lean - 0.3,
+        denom, count: cnt1,
+        cx: p.cx + nudge, cy: topYFor(cnt1, p.floor),
+        floor: p.floor, depth: p.depth, lean,
       });
+      // secondary 탑 — 다른 줄, 다른 x
       physicalTowers.push({
-        denom, count: frontCount,
-        cx: baseCx + R * 0.35,
-        cy: topYFor(frontCount, slot.floor),
-        floor: slot.floor, depth: slot.depth + 0.3, lean: lean + 0.5,
+        denom, count: cnt2,
+        cx: s.cx + nudge * 0.6, cy: topYFor(cnt2, s.floor),
+        floor: s.floor, depth: s.depth, lean: lean * 0.8,
       });
     }
-  });
+  }
 
   physicalTowers.sort((a, b) => a.depth - b.depth);
 
@@ -133,7 +134,7 @@ export function ChipStack({ chips }: ChipStackProps) {
       <svg
         viewBox={`0 0 ${SVG_W} ${SVG_H}`}
         width="100%"
-        style={{ display: 'block', maxWidth: '180px', margin: '0 auto', overflow: 'visible' }}
+        style={{ display: 'block', maxWidth: '190px', margin: '0 auto', overflow: 'visible' }}
       >
         <defs>
           {CHIP_ORDER.map((denom) => {
@@ -163,7 +164,6 @@ export function ChipStack({ chips }: ChipStackProps) {
 
         {physicalTowers.map(({ denom, count, cx, cy, floor, lean }, towerIdx) => (
           <g key={`${denom}-${towerIdx}`}>
-            {/* 그림자 — 각 줄의 floor에 고정 */}
             <ellipse
               cx={cx} cy={floor + R * 0.1}
               rx={R * 0.38} ry={R * 0.1}
