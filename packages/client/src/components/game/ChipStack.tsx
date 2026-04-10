@@ -21,16 +21,22 @@ const MAX_CHIPS = 10;
 const SVG_W = 380;
 const SVG_H = 260;
 
-// 모든 탑의 시각적 바닥선 (SVG y 좌표)
-// 칩 하단 타원 중심 = cy + stackH → 이게 FLOOR_Y에 맞춰짐
+/**
+ * FLOOR_Y: 모든 탑의 시각적 바닥 y (SVG 좌표)
+ * cy = FLOOR_Y - count*LAYERS_PER_CHIP - R*0.45
+ */
 const FLOOR_Y = 230;
 
-// 단위별 x 위치 + depth (draw order: 낮은 depth = 뒤)
+/**
+ * 슬롯 cx 평균 = SVG_W/2 = 190 으로 맞춤 → 중앙 정렬
+ * (93+279+151+239)/4 = 190.5
+ * depth: 낮을수록 뒤에 그림
+ */
 const DENOM_SLOTS: Record<number, { cx: number; depth: number }> = {
-  10000: { cx: 78,  depth: 1 },
-  5000:  { cx: 264, depth: 0 },
-  1000:  { cx: 136, depth: 3 },
-  500:   { cx: 224, depth: 2 },
+  10000: { cx: 93,  depth: 1 },
+  5000:  { cx: 279, depth: 0 },
+  1000:  { cx: 151, depth: 3 },
+  500:   { cx: 239, depth: 2 },
 };
 
 function sr(seed: number) {
@@ -38,8 +44,7 @@ function sr(seed: number) {
   return x - Math.floor(x);
 }
 
-/** count 장 탑의 top-face y 좌표 (바닥 기준 역산) */
-function topY(count: number): number {
+function topYFor(count: number) {
   return FLOOR_Y - count * LAYERS_PER_CHIP - R * 0.45;
 }
 
@@ -47,8 +52,7 @@ interface PhysicalTower {
   denom: number;
   count: number;
   cx: number;
-  cy: number;   // top-face y
-  tilt: number;
+  cy: number;
   depth: number;
 }
 
@@ -70,34 +74,35 @@ export function ChipStack({ chips }: ChipStackProps) {
   const physicalTowers: PhysicalTower[] = [];
 
   for (const denom of activeDenoms) {
-    const total = Math.min(counts[denom], MAX_CHIPS);
-    const slot  = DENOM_SLOTS[denom];
-    const baseCx   = slot.cx + (sr(denom * 2) - 0.5) * 12;
-    const baseTilt = (sr(denom * 5 + 2) - 0.5) * 14;
+    const total   = Math.min(counts[denom], MAX_CHIPS);
+    const slot    = DENOM_SLOTS[denom];
+    // 슬롯별 작은 랜덤 x 오프셋 (±10px)
+    const baseCx  = slot.cx + (sr(denom * 2) - 0.5) * 20;
 
     if (total <= SPLIT_AT) {
       physicalTowers.push({
         denom, count: total,
-        cx: baseCx, cy: topY(total),
-        tilt: baseTilt, depth: slot.depth,
+        cx: baseCx, cy: topYFor(total),
+        depth: slot.depth,
       });
     } else {
       const backCount  = Math.ceil(total / 2);
       const frontCount = total - backCount;
       physicalTowers.push({
         denom, count: backCount,
-        cx: baseCx - R * 0.6, cy: topY(backCount),
-        tilt: baseTilt - 4, depth: slot.depth - 0.5,
+        cx: baseCx - R * 0.65,
+        cy: topYFor(backCount),
+        depth: slot.depth - 0.5,
       });
       physicalTowers.push({
         denom, count: frontCount,
-        cx: baseCx + R * 0.5, cy: topY(frontCount),
-        tilt: baseTilt + 3, depth: slot.depth + 0.5,
+        cx: baseCx + R * 0.55,
+        cy: topYFor(frontCount),
+        depth: slot.depth + 0.5,
       });
     }
   }
 
-  // depth 오름차순 = 뒤→앞
   physicalTowers.sort((a, b) => a.depth - b.depth);
 
   const da = R * 0.4189;
@@ -138,30 +143,35 @@ export function ChipStack({ chips }: ChipStackProps) {
           </linearGradient>
         </defs>
 
-        {physicalTowers.map(({ denom, count, cx, cy, tilt }, idx) => {
+        {physicalTowers.map(({ denom, count, cx, cy }, towerIdx) => {
           const stackH = count * LAYERS_PER_CHIP;
           return (
-            <g key={`${denom}-${idx}`} transform={`rotate(${tilt}, ${cx}, ${FLOOR_Y})`}>
-              {/* 그림자 — 항상 FLOOR_Y에 */}
+            // 타워 레벨 rotate 제거 — FLOOR_Y 정렬 보장
+            <g key={`${denom}-${towerIdx}`}>
+              {/* 그림자 — FLOOR_Y 고정 */}
               <ellipse
-                cx={cx} cy={FLOOR_Y + R * 0.12}
-                rx={R * 0.38} ry={R * 0.1}
+                cx={cx} cy={FLOOR_Y + R * 0.1}
+                rx={R * 0.4} ry={R * 0.1}
                 fill="rgba(0,0,0,0.3)"
               />
-              {/* 아래→위로 각 칩 독립 렌더링 */}
+              {/* 칩 아래→위 렌더링, 칩마다 독립 top-face */}
               {Array.from({ length: count }, (_, chipIdx) => {
+                // 칩마다 작은 x 오프셋으로 "어수선한" 느낌 (y는 FLOOR 유지)
+                const chipDx = (sr(denom * 7 + chipIdx * 13 + towerIdx) - 0.5) * 6;
+                const chipCx = cx + chipDx;
                 const chipTopY = cy + (count - 1 - chipIdx) * LAYERS_PER_CHIP;
+
                 return (
                   <g key={chipIdx}>
                     {Array.from({ length: LAYERS_PER_CHIP }, (_, j) => (
-                      <g key={j} transform={`translate(${cx},${chipTopY + LAYERS_PER_CHIP - j}) scale(1,0.45) rotate(25)`}>
+                      <g key={j} transform={`translate(${chipCx},${chipTopY + LAYERS_PER_CHIP - j}) scale(1,0.45) rotate(25)`}>
                         <use href={`#cse-${denom}`} />
                       </g>
                     ))}
-                    <g transform={`translate(${cx},${chipTopY}) scale(1,0.45) rotate(25)`}>
+                    <g transform={`translate(${chipCx},${chipTopY}) scale(1,0.45) rotate(25)`}>
                       <use href={`#cst-${denom}`} />
                     </g>
-                    <g transform={`translate(${cx},${chipTopY}) scale(1,0.45) rotate(25)`}>
+                    <g transform={`translate(${chipCx},${chipTopY}) scale(1,0.45) rotate(25)`}>
                       <ellipse rx={R} ry={R} fill="url(#cs-light)" />
                     </g>
                   </g>
