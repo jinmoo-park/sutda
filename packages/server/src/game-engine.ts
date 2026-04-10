@@ -326,13 +326,23 @@ export class GameEngine {
       winnerHandLabel: winnerHand ? winnerHand.handType : 'unknown',
       pot: this.state.pot,
       hasTtaengPayment: !!this.state.ttaengPayments && this.state.ttaengPayments.length > 0,
-      playerChipChanges: this.state.players.map(p => ({
-        playerId: p.id,
-        nickname: p.nickname,
-        chipDelta: p.chips - (chipsBeforeSettle.get(p.id) ?? p.chips),
-        balance: p.chips,
-      })),
+      playerChipChanges: this.state.players.map(p => {
+        const settleDelta = p.chips - (chipsBeforeSettle.get(p.id) ?? p.chips);
+        // 순수익 = 정산 이득 - 베팅/앤티 지출
+        // chipsBeforeSettle는 베팅/앤티 차감 후 스냅샷이므로
+        // roundStartChips = chipsBeforeSettle + totalBet
+        // netDelta = p.chips - roundStartChips = settleDelta - totalBet
+        return {
+          playerId: p.id,
+          nickname: p.nickname,
+          chipDelta: settleDelta - p.totalBet,
+          balance: p.chips,
+        };
+      }),
     };
+
+    // game-state emit 시 클라이언트에서 접근 가능하도록 state에도 저장
+    (this.state as any).lastRoundHistory = this.lastRoundHistory;
   }
 
   /**

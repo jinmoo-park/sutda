@@ -307,13 +307,26 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
               ? gameState.ttaengPayments.reduce((sum, t) => sum + t.amount, 0)
               : 0;
 
-          // 칩 변동 계산 (totalBet = 앤티 + 전체 베팅 누적액 포함)
-          const baseChipDelta = isWinner
-            ? gameState.pot - player.totalBet
-            : -player.totalBet;
-          const chipDelta = isWinner
-            ? baseChipDelta + totalTtaengReceived
-            : baseChipDelta - (myTtaengPayment?.amount ?? 0);
+          // 서버 이력의 chipDelta 우선 사용 (정확한 정산 기반)
+          const serverChipChange = (gameState as any).lastRoundHistory?.playerChipChanges?.find(
+            (c: any) => c.playerId === player.id
+          );
+
+          let chipDelta: number;
+          if (serverChipChange) {
+            // 서버 chipDelta(순수익) + 땡값 반영
+            chipDelta = isWinner
+              ? serverChipChange.chipDelta + totalTtaengReceived
+              : serverChipChange.chipDelta - (myTtaengPayment?.amount ?? 0);
+          } else {
+            // fallback: 클라이언트 계산
+            const baseChipDelta = isWinner
+              ? gameState.pot - player.totalBet
+              : -player.totalBet;
+            chipDelta = isWinner
+              ? baseChipDelta + totalTtaengReceived
+              : baseChipDelta - (myTtaengPayment?.amount ?? 0);
+          }
 
           return (
             <div
