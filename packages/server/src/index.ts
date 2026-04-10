@@ -787,10 +787,49 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('reveal-my-card', ({ roomId, cardIndex }) => {
-    handleGameAction(socket, roomId, () => {
-      getEngine(roomId).revealMyCard(socket.data.playerId, cardIndex as number);
-    });
+  socket.on('reveal-my-card', async ({ roomId, cardIndex }) => {
+    try {
+      const engine = getEngine(roomId);
+      const phaseBefore = engine.getState().phase;
+      engine.revealMyCard(socket.data.playerId, cardIndex as number);
+      const phaseAfter = engine.getState().phase;
+
+      // 구사 감지 시: 카드 공개 상태를 3초 보여준 뒤 gusa phase로 전환
+      const isGusaTransition = phaseBefore === 'card-reveal' &&
+        (phaseAfter === 'gusa-pending' || phaseAfter === 'gusa-announce');
+
+      if (isGusaTransition) {
+        // 1) 임시로 card-reveal 복원 → 모든 카드 공개 상태 broadcast
+        const savedPhase = phaseAfter;
+        (engine.getState() as any).phase = 'card-reveal';
+        const sockets = await io.in(roomId).fetchSockets();
+        for (const s of sockets) {
+          s.emit('game-state', engine.getStateFor(s.data?.playerId) as GameState);
+        }
+        // 2) 3초 후 실제 gusa phase 적용 및 재broadcast
+        setTimeout(async () => {
+          try {
+            (engine.getState() as any).phase = savedPhase;
+            const socks = await io.in(roomId).fetchSockets();
+            for (const s of socks) {
+              s.emit('game-state', engine.getStateFor(s.data?.playerId) as GameState);
+            }
+          } catch { /* room may have been cleaned up */ }
+        }, 3000);
+      } else {
+        // 일반 흐름
+        const sockets = await io.in(roomId).fetchSockets();
+        for (const s of sockets) {
+          s.emit('game-state', engine.getStateFor(s.data?.playerId) as GameState);
+        }
+        await maybeAutoShuffle(roomId);
+      }
+    } catch (err: any) {
+      socket.emit('game-error', {
+        code: err.message || 'UNKNOWN_ERROR',
+        message: ERROR_MESSAGES[err.message] || err.message || '알 수 없는 오류',
+      });
+    }
   });
 
   socket.on('reveal-card', ({ roomId }) => {

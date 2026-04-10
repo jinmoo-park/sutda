@@ -195,14 +195,15 @@ export function ShuffleModal({ open, roomId, readOnly = false, autoMode = false 
     };
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // autoMode: 선 플레이어만 브로드캐스트 + SFX + 자동 emit (readOnly = 비선 → 스킵)
+  // autoMode: 선 플레이어 → 브로드캐스트 + SFX + 자동 emit / 비선 → SFX만
   useEffect(() => {
-    if (!open || !autoMode || readOnly) return;
-    socket?.emit('auto-shuffle-notify' as any, { roomId });
+    if (!open || !autoMode) return;
     play('auto_shuffle');
+    if (readOnly) return; // 비선: SFX만, emit 불필요
+    socket?.emit('auto-shuffle-notify' as any, { roomId });
     const timer = setTimeout(() => {
       socket?.emit('shuffle', { roomId });
-    }, 2500);
+    }, 3500);
     return () => clearTimeout(timer);
   }, [open, autoMode]); // eslint-disable-line react-hooks/exhaustive-deps
 

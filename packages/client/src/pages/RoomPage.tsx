@@ -611,20 +611,45 @@ export function RoomPage() {
             <WaitingTable roomState={roomState} myPlayerId={myPlayerId} roomId={roomId!} />
           </div>
           <div className="flex flex-col border-l border-border overflow-hidden">
+            {roundHistory.length > 0 && (
+              <div className="shrink-0 flex items-center justify-end px-3 py-1.5 border-b border-border">
+                <button
+                  onClick={() => setHistoryOpen(true)}
+                  className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground rounded transition-colors"
+                  aria-label="게임 이력"
+                >
+                  <Clock className="h-3.5 w-3.5" />
+                  이력
+                </button>
+              </div>
+            )}
             <div className="flex-1 min-h-0 overflow-hidden">
               <ChatPanel />
             </div>
           </div>
         </div>
-        {/* 모바일: 수직 flex */}
+        {/* 모바일: 수직 flex — 대기실은 공간 넉넉하므로 full ChatPanel 표시 */}
         <div className="md:hidden flex flex-col h-dvh overflow-hidden">
-          <div className="relative flex-1 min-h-0 overflow-hidden">
+          <div className="relative shrink-0 overflow-hidden">
             <WaitingTable roomState={roomState} myPlayerId={myPlayerId} roomId={roomId!} />
+            {roundHistory.length > 0 && (
+              <div className="absolute top-2 right-2 z-10 bg-black/50 rounded backdrop-blur-sm">
+                <button
+                  onClick={() => setHistoryOpen(true)}
+                  className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground rounded transition-colors"
+                  aria-label="게임 이력"
+                >
+                  <Clock className="h-3.5 w-3.5" />
+                  이력
+                </button>
+              </div>
+            )}
           </div>
-          <div className="shrink-0 border-t border-border">
-            <MobileChatInput />
+          <div className="flex-1 min-h-0 flex flex-col border-t border-border overflow-hidden">
+            <ChatPanel />
           </div>
         </div>
+        <HistoryModal entries={roundHistory} open={historyOpen} onOpenChange={setHistoryOpen} />
         <Toaster />
       </div>
     );
@@ -789,12 +814,10 @@ export function RoomPage() {
         {/* 상단: GameTable or ResultScreen (flex-1) */}
         <div ref={node => { if (node && node.offsetWidth > 0) setModalContainer(node); }} className="relative flex-1 min-h-0 overflow-hidden">
           {centerNode}
-          {/* 우상단: 이력 버튼 (결과화면 제외) */}
-          {!isResultPhase && (
-            <div className="absolute top-2 right-2 z-10 bg-black/50 rounded backdrop-blur-sm">
-              {historyButtonNode}
-            </div>
-          )}
+          {/* 우상단: 이력 버튼 (항상 표시) */}
+          <div className="absolute top-2 right-2 z-10 bg-black/50 rounded backdrop-blur-sm">
+            {historyButtonNode}
+          </div>
         </div>
 
         {/* 하단: 채팅(최하단 고정) + 채팅 입력 + HandPanel + BettingPanel */}
