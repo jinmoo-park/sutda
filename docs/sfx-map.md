@@ -19,7 +19,8 @@
 | `bet-raise` | `bet-raise.mp3` | 0.7 | 베팅 패널 "레이즈" 버튼 클릭 시 | `BettingPanel.tsx` 레이즈 버튼 onClick |
 | `bet-die` | `bet-die.mp3` | 0.7 | 베팅 패널 "다이" 버튼 클릭 시 | `BettingPanel.tsx` 다이 버튼 onClick |
 | `card-reveal` | `card-reveal.mp3` | 0.6 | `betting` / `betting-1` / `betting-2` / `card-select` → `card-reveal` phase 전환 시 (루프 재생). **정지 조건:** ① RoomPage: `dealer-select`, `attend-school`, `mode-select`, `shuffling` phase 진입 시 ② ResultScreen: `result` phase 진입 시 `stop('card-reveal')` | `RoomPage.tsx` card-reveal 감지 useEffect / `ResultScreen.tsx` result phase useEffect |
-| `win-normal` | `win-normal.mp3` | 0.2 | result phase 진입, 내가 승자이고 손패가 땡이 아닐 때 | `ResultScreen.tsx` result phase useEffect |
+| `win-normal` | `win-normal.mp3` | 0.2 | result phase 진입, 내가 승자이고 손패가 땡/한끗~여덟끗이 아닐 때 | `ResultScreen.tsx` result phase useEffect |
+| `win-alt` | `win-alt.mp3` | 0.4 | result phase 진입, 내가 승자이고 손패가 한끗~여덟끗(kkut, score 1~8)일 때 | `ResultScreen.tsx` result phase useEffect |
 | `win-ddaeng` | `win-ddaeng.mp3` | 0.6 | result phase 진입, 내가 승자이고 손패가 땡일 때 | `ResultScreen.tsx` result phase useEffect |
 | `win-ddaeng-loser` | `win-ddaeng.mp3` | 0.15 | result phase 진입, 내가 패자이고 **승자** 손패가 땡일 때 (낮은 볼륨으로 추가 재생) | `ResultScreen.tsx` result phase useEffect |
 | `lose-normal` | `lose-normal.mp3` | 0.6 | result phase 진입, 내가 패자이고 ① 땡값도 없고 ② 내 패도 땡이 아닐 때 | `ResultScreen.tsx` result phase useEffect |
@@ -81,5 +82,6 @@
 | 16 | `16.학교가기 버튼.mp3` | `school-go.mp3` |
 | 17 | `17.학교대납.mp3` | `school-proxy.mp3` |
 | 18 | `regame_join.mp3` | `regame-join.mp3` |
+| 19 | `win_alt.mp3` | `win-alt.mp3` |
 | BGM | `bgm_bigpot.mp3` | `bgm_bigpot.mp3` |
 | BGM | `main_bgm.mp3` | `main_bgm.mp3` |

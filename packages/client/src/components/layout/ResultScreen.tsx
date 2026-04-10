@@ -159,6 +159,8 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
             play('win-ddaeng');
           } else if (oneRankApart) {
             play('lose-ddaeng-but-lost');
+          } else if (myResult.handType === 'kkut' && myResult.score >= 1 && myResult.score <= 8) {
+            play('win-alt');
           } else {
             play('win-normal');
           }
