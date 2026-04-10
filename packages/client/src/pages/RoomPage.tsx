@@ -636,9 +636,9 @@ export function RoomPage() {
             </div>
           </div>
         </div>
-        {/* 모바일: 수직 flex — 대기실은 공간 넉넉하므로 full ChatPanel 표시 */}
+        {/* 모바일: 수직 flex — 대기실 채팅은 하단 절반 이하 */}
         <div className="md:hidden flex flex-col h-dvh overflow-hidden">
-          <div className="relative shrink-0 overflow-hidden">
+          <div className="relative flex-1 min-h-0 overflow-hidden">
             <WaitingTable roomState={roomState} myPlayerId={myPlayerId} roomId={roomId!} />
             {roundHistory.length > 0 && (
               <div className="absolute top-2 right-2 z-10 bg-black/50 rounded backdrop-blur-sm">
@@ -653,7 +653,7 @@ export function RoomPage() {
               </div>
             )}
           </div>
-          <div className="flex-1 min-h-0 flex flex-col border-t border-border overflow-hidden">
+          <div className="shrink-0 flex flex-col border-t border-border overflow-hidden" style={{ maxHeight: '35dvh' }}>
             <ChatPanel />
           </div>
         </div>
