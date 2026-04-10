@@ -13,24 +13,39 @@ const CHIP_COLORS: Record<number, {
 
 const CHIP_ORDER = [10000, 5000, 1000, 500];
 
-const R = 65;               // 칩 반지름 (SVG 좌표계)
-const LAYERS_PER_CHIP = 16; // 장당 edge-layer 수 → 두께감
-const MAX_CHIPS = 6;        // 최대 표시 장 수
+const R = 65;
+const LAYERS_PER_CHIP = 16;
+const SPLIT_AT = 4;   // 이 수 초과 시 같은 단위를 2탑으로 분리
+const MAX_CHIPS = 8;  // 단위당 최대 장 수
 
-const SVG_W = 380;
-const SVG_H = 260;
+const SVG_W = 420;
+const SVG_H = 270;
 
-// 2행 산포: cy 작을수록 뒤, 클수록 앞 (draw order는 cy 오름차순)
-const SCATTER_SLOTS = [
-  { cx: 85,  cy: 88  },
-  { cx: 268, cy: 82  },
-  { cx: 140, cy: 116 },
-  { cx: 230, cy: 110 },
+// 단위별 기본 슬롯 (최대 4단위 × 최대 2탑 = 8 물리 탑)
+// 각 단위는 슬롯 하나를 가지며, 2탑으로 분리 시 ±offset으로 좌우 배치
+const DENOM_SLOTS = [
+  { cx: 90,  cy: 86  },  // 10000
+  { cx: 290, cy: 80  },  // 5000
+  { cx: 148, cy: 118 },  // 1000
+  { cx: 245, cy: 112 },  // 500
 ];
 
 function sr(seed: number) {
   const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
   return x - Math.floor(x);
+}
+
+// 단위 슬롯 인덱스 (CHIP_ORDER 기준)
+const DENOM_SLOT_IDX: Record<number, number> = {
+  10000: 0, 5000: 1, 1000: 2, 500: 3,
+};
+
+interface PhysicalTower {
+  denom: number;
+  count: number;   // 이 탑이 담당하는 장 수
+  cx: number;
+  cy: number;
+  tilt: number;
 }
 
 interface ChipStackProps {
@@ -48,18 +63,43 @@ export function ChipStack({ chips }: ChipStackProps) {
   const activeDenoms = CHIP_ORDER.filter((d) => (counts[d] ?? 0) > 0);
   if (activeDenoms.length === 0) return null;
 
-  const towers = activeDenoms
-    .map((denom, i) => {
-      const slot = SCATTER_SLOTS[i % SCATTER_SLOTS.length];
-      return {
-        denom,
-        count: counts[denom],
-        cx:   slot.cx + (sr(denom * 2)     - 0.5) * 14,
-        cy:   slot.cy + (sr(denom * 3 + 1) - 0.5) * 10,
-        tilt: (sr(denom * 5 + 2)           - 0.5) * 14,
-      };
-    })
-    .sort((a, b) => a.cy - b.cy);
+  // 물리 탑 목록 생성
+  const physicalTowers: PhysicalTower[] = [];
+
+  for (const denom of activeDenoms) {
+    const total = counts[denom];
+    const slotIdx = DENOM_SLOT_IDX[denom] ?? 0;
+    const slot = DENOM_SLOTS[slotIdx];
+    const baseCx = slot.cx + (sr(denom * 2)     - 0.5) * 12;
+    const baseCy = slot.cy + (sr(denom * 3 + 1) - 0.5) * 8;
+    const baseTilt = (sr(denom * 5 + 2) - 0.5) * 14;
+
+    if (total <= SPLIT_AT) {
+      // 단일 탑
+      physicalTowers.push({ denom, count: total, cx: baseCx, cy: baseCy, tilt: baseTilt });
+    } else {
+      // 2탑으로 분리: 앞탑(많은 장) + 뒷탑(나머지)
+      const backCount  = Math.ceil(total / 2);
+      const frontCount = total - backCount;
+      // 뒷탑: 슬롯에서 약간 왼쪽·위로
+      physicalTowers.push({
+        denom, count: backCount,
+        cx: baseCx - R * 0.55,
+        cy: baseCy - 10,
+        tilt: baseTilt - 4,
+      });
+      // 앞탑: 슬롯에서 약간 오른쪽·아래로
+      physicalTowers.push({
+        denom, count: frontCount,
+        cx: baseCx + R * 0.45,
+        cy: baseCy + 8,
+        tilt: baseTilt + 3,
+      });
+    }
+  }
+
+  // cy 오름차순(뒤→앞) draw order
+  physicalTowers.sort((a, b) => a.cy - b.cy);
 
   return (
     <div style={isGrowing ? { animation: 'chip-slide-up 0.3s ease-out' } : undefined}>
@@ -71,7 +111,7 @@ export function ChipStack({ chips }: ChipStackProps) {
         <defs>
           {CHIP_ORDER.map((denom) => {
             const c = CHIP_COLORS[denom];
-            const da = R * 0.4189; // dasharray (비율 고정)
+            const da = R * 0.4189;
             return (
               <g key={denom}>
                 <g id={`cs-edge-${denom}`}>
@@ -95,27 +135,23 @@ export function ChipStack({ chips }: ChipStackProps) {
           </linearGradient>
         </defs>
 
-        {towers.map(({ denom, count, cx, cy, tilt }) => {
+        {physicalTowers.map(({ denom, count, cx, cy, tilt }, idx) => {
           const totalLayers = count * LAYERS_PER_CHIP;
           return (
-            <g key={denom} transform={`rotate(${tilt}, ${cx}, ${cy})`}>
-              {/* 그림자 */}
+            <g key={`${denom}-${idx}`} transform={`rotate(${tilt}, ${cx}, ${cy})`}>
               <ellipse
-                cx={cx} cy={cy + totalLayers + R * 0.2}
-                rx={R * 0.42} ry={R * 0.12}
-                fill="rgba(0,0,0,0.3)"
+                cx={cx} cy={cy + totalLayers + R * 0.18}
+                rx={R * 0.4} ry={R * 0.11}
+                fill="rgba(0,0,0,0.28)"
               />
-              {/* edge-layers: 아래(i=0)부터 위(i=totalLayers-1)까지 */}
               {Array.from({ length: totalLayers }, (_, i) => (
                 <g key={i} transform={`translate(${cx},${cy + totalLayers - i}) scale(1,0.45) rotate(25)`}>
                   <use href={`#cs-edge-${denom}`} />
                 </g>
               ))}
-              {/* 상단 면 */}
               <g transform={`translate(${cx},${cy}) scale(1,0.45) rotate(25)`}>
                 <use href={`#cs-top-${denom}`} />
               </g>
-              {/* 하이라이트 */}
               <g transform={`translate(${cx},${cy}) scale(1,0.45) rotate(25)`}>
                 <ellipse rx={R} ry={R} fill="url(#cs-light)" />
               </g>
