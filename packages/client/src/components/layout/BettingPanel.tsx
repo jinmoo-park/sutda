@@ -41,7 +41,10 @@ export function BettingPanel({
 
   const callAmount = currentBetAmount - myCurrentBet;
   // 내 잔액에서 콜금액을 뺀 나머지가 최대 레이즈 가능 금액
-  const maxRaiseAmount = Math.max(0, myChips - callAmount);
+  // effectiveMaxBet: 상대 잔액 상한 (1:1에서 상대보다 많이 베팅 불가)
+  const maxFromMyChips = myChips - callAmount;
+  const effectiveCap = effectiveMaxBet != null ? effectiveMaxBet - callAmount : Infinity;
+  const maxRaiseAmount = Math.max(0, Math.min(maxFromMyChips, effectiveCap));
 
   const emitAction = (action: BetAction) => {
     const socket = useGameStore.getState().socket;
