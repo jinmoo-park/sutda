@@ -277,7 +277,10 @@ async function tryAdvanceNextRound(roomId: string): Promise<void> {
     }
     for (const obs of observers) {
       obs.isObserver = false;
-      obs.chips = obs.observerChips ?? 100000;
+      // observerChips가 있으면 사용, 없거나 0이면 디폴트 100000
+      // chips가 옵저버 기간 중 0으로 설정되어 있으므로 반드시 덮어쓰기
+      const targetChips = obs.observerChips || 100000;
+      obs.chips = targetChips;
       obs.observerChips = undefined;
     }
     const currentState = engine.getState();
