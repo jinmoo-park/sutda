@@ -29,6 +29,7 @@ export function BettingPanel({
   myCurrentBet,
   myChips,
   roomId,
+  effectiveMaxBet,
   currentPlayerNickname,
   isEffectiveSen,
 }: BettingPanelProps) {
