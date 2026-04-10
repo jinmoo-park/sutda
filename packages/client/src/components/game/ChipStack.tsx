@@ -19,12 +19,12 @@ const SPLIT_AT = 4;
 const MAX_CHIPS = 10;
 
 const SVG_W = 380;
-const SVG_H = 270;
+const SVG_H = 290;
 const CENTER = SVG_W / 2;
 
-// 뒷줄/앞줄 바닥 높이를 분리해서 원근감 생성
-const FLOOR_BACK  = 208;  // 뒤 (화면 위쪽 = 멀리)
-const FLOOR_FRONT = 240;  // 앞 (화면 아래쪽 = 가까이)
+// 뒷줄/앞줄 바닥: 85px 차이로 강한 원근감
+const FLOOR_BACK  = 165;  // 뒤 (화면 위쪽 = 멀리)
+const FLOOR_FRONT = 250;  // 앞 (화면 아래쪽 = 가까이)
 
 function sr(seed: number) {
   const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
@@ -36,9 +36,8 @@ function topYFor(count: number, floor: number) {
 }
 
 /**
- * 활성 단위 수 기반 동적 배치
- * 뒷줄(depth 0,1): 좌우 넓게, FLOOR_BACK
- * 앞줄(depth 2,3): 중앙 모여서, FLOOR_FRONT → 뒷줄을 일부 가림
+ * 뒷줄: 좌우 넓게 벌려 배치 (FLOOR_BACK)
+ * 앞줄: 뒷줄 사이 중앙에 배치 (FLOOR_FRONT) → 뒷줄 하단만 자연스럽게 가림
  */
 function clusterPositions(n: number): { cx: number; floor: number; depth: number }[] {
   switch (n) {
@@ -46,19 +45,19 @@ function clusterPositions(n: number): { cx: number; floor: number; depth: number
       { cx: CENTER, floor: FLOOR_FRONT, depth: 0 },
     ];
     case 2: return [
-      { cx: CENTER - 55, floor: FLOOR_BACK,  depth: 0 },
-      { cx: CENTER + 20, floor: FLOOR_FRONT, depth: 1 },
+      { cx: CENTER - 45, floor: FLOOR_BACK,  depth: 0 },
+      { cx: CENTER + 15, floor: FLOOR_FRONT, depth: 1 },
     ];
     case 3: return [
-      { cx: CENTER - 62, floor: FLOOR_BACK,  depth: 0 },
-      { cx: CENTER + 58, floor: FLOOR_BACK,  depth: 1 },
-      { cx: CENTER + 5,  floor: FLOOR_FRONT, depth: 2 },
+      { cx: CENTER - 68, floor: FLOOR_BACK,  depth: 0 },
+      { cx: CENTER + 62, floor: FLOOR_BACK,  depth: 1 },
+      { cx: CENTER + 2,  floor: FLOOR_FRONT, depth: 2 },
     ];
     default: return [
-      { cx: CENTER - 62, floor: FLOOR_BACK,  depth: 0 }, // back-left
-      { cx: CENTER + 65, floor: FLOOR_BACK,  depth: 1 }, // back-right
-      { cx: CENTER - 12, floor: FLOOR_FRONT, depth: 2 }, // front-center-left
-      { cx: CENTER + 30, floor: FLOOR_FRONT, depth: 3 }, // front-center-right
+      { cx: CENTER - 72, floor: FLOOR_BACK,  depth: 0 }, // back-left
+      { cx: CENTER + 72, floor: FLOOR_BACK,  depth: 1 }, // back-right
+      { cx: CENTER - 18, floor: FLOOR_FRONT, depth: 2 }, // front — 뒷줄 사이에
+      { cx: CENTER + 32, floor: FLOOR_FRONT, depth: 3 }, // front — 뒷줄 사이에
     ];
   }
 }
