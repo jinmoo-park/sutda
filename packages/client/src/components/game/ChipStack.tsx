@@ -19,43 +19,46 @@ const SPLIT_AT = 4;
 const MAX_CHIPS = 10;
 
 const SVG_W = 380;
-const SVG_H = 260;
-const FLOOR_Y = 230;
-const CENTER = SVG_W / 2; // 190
+const SVG_H = 270;
+const CENTER = SVG_W / 2;
+
+// 뒷줄/앞줄 바닥 높이를 분리해서 원근감 생성
+const FLOOR_BACK  = 208;  // 뒤 (화면 위쪽 = 멀리)
+const FLOOR_FRONT = 240;  // 앞 (화면 아래쪽 = 가까이)
 
 function sr(seed: number) {
   const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
   return x - Math.floor(x);
 }
 
-function topYFor(count: number) {
-  return FLOOR_Y - count * LAYERS_PER_CHIP - R * 0.45;
+function topYFor(count: number, floor: number) {
+  return floor - count * LAYERS_PER_CHIP - R * 0.45;
 }
 
 /**
- * 활성 단위 수에 맞게 타이트한 클러스터 배치 반환
- * 간격 ~60px (칩 겹침 허용), 중앙 정렬
+ * 활성 단위 수 기반 동적 배치
+ * 뒷줄(depth 0,1): 좌우 넓게, FLOOR_BACK
+ * 앞줄(depth 2,3): 중앙 모여서, FLOOR_FRONT → 뒷줄을 일부 가림
  */
-function clusterPositions(n: number): { cx: number; depth: number }[] {
-  const G = 78; // center-to-center gap (R=50 칩 겹침 최소화)
+function clusterPositions(n: number): { cx: number; floor: number; depth: number }[] {
   switch (n) {
     case 1: return [
-      { cx: CENTER, depth: 0 },
+      { cx: CENTER, floor: FLOOR_FRONT, depth: 0 },
     ];
     case 2: return [
-      { cx: CENTER - G * 0.45, depth: 0 },
-      { cx: CENTER + G * 0.45, depth: 1 },
+      { cx: CENTER - 55, floor: FLOOR_BACK,  depth: 0 },
+      { cx: CENTER + 20, floor: FLOOR_FRONT, depth: 1 },
     ];
     case 3: return [
-      { cx: CENTER - G * 0.55, depth: 0 },
-      { cx: CENTER + G * 0.6,  depth: 1 },
-      { cx: CENTER + G * 0.05, depth: 2 },
+      { cx: CENTER - 62, floor: FLOOR_BACK,  depth: 0 },
+      { cx: CENTER + 58, floor: FLOOR_BACK,  depth: 1 },
+      { cx: CENTER + 5,  floor: FLOOR_FRONT, depth: 2 },
     ];
-    default: return [ // 4
-      { cx: CENTER - G * 0.75, depth: 0 }, // back-left
-      { cx: CENTER + G * 0.8,  depth: 1 }, // back-right
-      { cx: CENTER - G * 0.15, depth: 2 }, // front-center-left
-      { cx: CENTER + G * 0.4,  depth: 3 }, // front-center-right
+    default: return [
+      { cx: CENTER - 62, floor: FLOOR_BACK,  depth: 0 }, // back-left
+      { cx: CENTER + 65, floor: FLOOR_BACK,  depth: 1 }, // back-right
+      { cx: CENTER - 12, floor: FLOOR_FRONT, depth: 2 }, // front-center-left
+      { cx: CENTER + 30, floor: FLOOR_FRONT, depth: 3 }, // front-center-right
     ];
   }
 }
@@ -65,8 +68,9 @@ interface PhysicalTower {
   count: number;
   cx: number;
   cy: number;
+  floor: number;
   depth: number;
-  lean: number; // 위로 갈수록 기울어지는 px/chip
+  lean: number;
 }
 
 interface ChipStackProps {
@@ -90,16 +94,15 @@ export function ChipStack({ chips }: ChipStackProps) {
   activeDenoms.forEach((denom, i) => {
     const total = Math.min(counts[denom], MAX_CHIPS);
     const slot  = slots[i];
-    const nudge = (sr(denom * 2) - 0.5) * 12; // ±6px
+    const nudge = (sr(denom * 2) - 0.5) * 10;
     const baseCx = slot.cx + nudge;
-    // 타워마다 고유 lean 방향 (위로 갈수록 한쪽으로 기울어짐)
-    const lean = (sr(denom * 11) - 0.5) * 2.5; // ±1.25 px/chip
+    const lean = (sr(denom * 11) - 0.5) * 2.5;
 
     if (total <= SPLIT_AT) {
       physicalTowers.push({
         denom, count: total,
-        cx: baseCx, cy: topYFor(total),
-        depth: slot.depth, lean,
+        cx: baseCx, cy: topYFor(total, slot.floor),
+        floor: slot.floor, depth: slot.depth, lean,
       });
     } else {
       const backCount  = Math.ceil(total / 2);
@@ -107,14 +110,14 @@ export function ChipStack({ chips }: ChipStackProps) {
       physicalTowers.push({
         denom, count: backCount,
         cx: baseCx - R * 0.4,
-        cy: topYFor(backCount),
-        depth: slot.depth - 0.3, lean: lean - 0.3,
+        cy: topYFor(backCount, slot.floor),
+        floor: slot.floor, depth: slot.depth - 0.3, lean: lean - 0.3,
       });
       physicalTowers.push({
         denom, count: frontCount,
         cx: baseCx + R * 0.35,
-        cy: topYFor(frontCount),
-        depth: slot.depth + 0.3, lean: lean + 0.5,
+        cy: topYFor(frontCount, slot.floor),
+        floor: slot.floor, depth: slot.depth + 0.3, lean: lean + 0.5,
       });
     }
   });
@@ -159,19 +162,16 @@ export function ChipStack({ chips }: ChipStackProps) {
           </linearGradient>
         </defs>
 
-        {physicalTowers.map(({ denom, count, cx, cy, lean }, towerIdx) => (
+        {physicalTowers.map(({ denom, count, cx, cy, floor, lean }, towerIdx) => (
           <g key={`${denom}-${towerIdx}`}>
-            {/* 그림자 */}
+            {/* 그림자 — 각 줄의 floor에 고정 */}
             <ellipse
-              cx={cx} cy={FLOOR_Y + R * 0.1}
+              cx={cx} cy={floor + R * 0.1}
               rx={R * 0.38} ry={R * 0.1}
               fill="rgba(0,0,0,0.3)"
             />
-            {/* 아래→위로 칩별 독립 렌더링 */}
             {Array.from({ length: count }, (_, chipIdx) => {
-              // lean: 위로 갈수록 한 방향으로 기울어짐 (바닥 칩=0, 맨 위=최대 lean)
-              const leanDx = chipIdx * lean;
-              // 랜덤 미세 흔들림
+              const leanDx   = chipIdx * lean;
               const jitterDx = (sr(denom * 7 + chipIdx * 13 + towerIdx) - 0.5) * 4;
               const chipCx   = cx + leanDx + jitterDx;
               const chipTopY = cy + (count - 1 - chipIdx) * LAYERS_PER_CHIP;
