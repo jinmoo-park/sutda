@@ -10,23 +10,28 @@ const CHIP_STYLE: Record<number, { fill: string; side: string; edge: string; das
 
 const CHIP_ORDER = [10000, 5000, 1000, 500];
 
-// 칩 치수
-const RX = 18;   // 타원 x 반지름
-const RY = 6;    // 타원 y 반지름
-const BODY = 12; // 칩 한 장 두께
+// 칩 치수 — 얇은 코인 형태
+const RX = 20;
+const RY = 8;
+const BODY = 7;  // 얇게
 
-/** 결정론적 pseudo-random 0..1 */
-function sr(seed: number): number {
+/** deterministic pseudo-random 0..1 */
+function sr(seed: number) {
   const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
   return x - Math.floor(x);
 }
 
-interface Tower {
-  denom: number;
-  count: number;
-  cx: number;       // SVG 내 x 중심
-  tilt: number;     // 전체 기울기 (도)
-}
+// 고정 산포 좌표: 앞줄/뒷줄 2행으로 불규칙 배치
+// baseY가 클수록 앞(뷰어 가까이) → 그림 뒤에서부터 그려야 함
+const SCATTER_SLOTS = [
+  { cx: 32,  baseY: 58, tilt: -5 },
+  { cx: 82,  baseY: 52, tilt: 4  },
+  { cx: 55,  baseY: 84, tilt: -3 },
+  { cx: 108, baseY: 78, tilt: 6  },
+];
+
+const CANVAS_W = 148;
+const CANVAS_H = 108;
 
 interface ChipStackProps {
   chips: number[];
@@ -44,96 +49,82 @@ export function ChipStack({ chips }: ChipStackProps) {
   const activeDenoms = CHIP_ORDER.filter((d) => (counts[d] ?? 0) > 0);
   if (activeDenoms.length === 0) return null;
 
-  // 타워 배치: 단위별로 불규칙한 x 간격 + 기울기
-  // 기준 간격 30px, ±8px 랜덤 오프셋
-  const towers: Tower[] = [];
-  let curX = RX + 4;
-  for (const denom of activeDenoms) {
-    const nudge = (sr(denom) - 0.5) * 16;   // ±8px
-    const tilt = (sr(denom * 3 + 1) - 0.5) * 12; // ±6도
-    towers.push({ denom, count: counts[denom], cx: curX + nudge, tilt });
-    curX += 30 + (sr(denom * 7) - 0.5) * 10; // 간격 25~35px
-  }
-
-  // SVG 크기 계산
-  const maxCount = Math.max(...towers.map((t) => t.count));
-  const svgH = RY + maxCount * BODY + RY + 16; // 여유 패딩
-  const svgW = curX + RX + 8;
-
-  // 각 타워를 SVG 아래쪽 기준(baseY)에서 위로 그림
-  const baseY = svgH - RY - 4;
+  // 활성 단위에 scatter slot 할당 후 baseY 기준 정렬 (뒤→앞)
+  const towers = activeDenoms
+    .map((denom, i) => {
+      const slot = SCATTER_SLOTS[i % SCATTER_SLOTS.length];
+      // slot마다 약간의 랜덤 nudge 추가
+      return {
+        denom,
+        count: counts[denom],
+        cx:    slot.cx    + (sr(denom * 2)     - 0.5) * 10,
+        baseY: slot.baseY + (sr(denom * 3 + 1) - 0.5) * 8,
+        tilt:  slot.tilt  + (sr(denom * 5 + 2) - 0.5) * 4,
+      };
+    })
+    .sort((a, b) => a.baseY - b.baseY); // 뒤(작은 baseY) → 앞 순서로 draw
 
   return (
     <div style={isGrowing ? { animation: 'chip-slide-up 0.3s ease-out' } : undefined}>
       <svg
-        width={svgW}
-        height={svgH}
-        viewBox={`0 0 ${svgW} ${svgH}`}
-        style={{ overflow: 'visible', display: 'block' }}
+        width={CANVAS_W}
+        height={CANVAS_H}
+        viewBox={`0 0 ${CANVAS_W} ${CANVAS_H}`}
+        style={{ overflow: 'visible', display: 'block', margin: '0 auto' }}
       >
-        {towers.map(({ denom, count, cx, tilt }) => {
+        {towers.map(({ denom, count, cx, baseY, tilt }) => {
           const s = CHIP_STYLE[denom] ?? CHIP_STYLE[500];
 
           // 칩 i: 0=맨 아래, count-1=맨 위
-          // SVG drawOrder: 아래 칩 먼저(뒤) → 위 칩 나중(앞)
           const chipNodes = Array.from({ length: count }, (_, i) => {
-            // 각 칩 개별 오프셋
-            const dx = (sr(denom * 11 + i * 7) - 0.5) * 4;   // ±2px
-            const dy = (sr(denom * 13 + i * 5) - 0.5) * 2;   // ±1px
-            const chipRot = (sr(denom * 17 + i * 3) - 0.5) * 5; // ±2.5도
+            const dx      = (sr(denom * 11 + i * 7)  - 0.5) * 4;
+            const dy      = (sr(denom * 13 + i * 5)  - 0.5) * 2;
+            const chipRot = (sr(denom * 17 + i * 3)  - 0.5) * 5;
 
-            const chipTopY = baseY - (i + 1) * BODY + dy;
-            const chipCx = cx + dx;
-            const isBottom = i === 0;
+            const topY  = baseY - (i + 1) * BODY + dy;
+            const chipX = cx + dx;
 
             return (
-              <g key={i} transform={`rotate(${chipRot}, ${chipCx}, ${chipTopY})`}>
-                {/* 측면 */}
+              <g key={i} transform={`rotate(${chipRot}, ${chipX}, ${topY})`}>
+                {/* 측면 밴드 */}
                 <rect
-                  x={chipCx - RX + 1}
-                  y={chipTopY}
-                  width={(RX - 1) * 2}
-                  height={BODY + RY}
+                  x={chipX - RX + 1} y={topY}
+                  width={(RX - 1) * 2} height={BODY + RY}
                   fill={s.side}
                 />
-                {/* 측면 점 */}
+                {/* 측면 점 (대시 패턴) */}
                 {[0.2, 0.4, 0.6, 0.8].map((frac, di) => (
                   <rect
                     key={di}
-                    x={chipCx - RX + 1 + (RX - 1) * 2 * frac - 1.5}
-                    y={chipTopY + (BODY - 2.5) / 2}
+                    x={chipX - RX + 1 + (RX - 1) * 2 * frac - 1.5}
+                    y={topY + (BODY - 2.5) / 2}
                     width={3} height={2.5} rx={0.5}
                     fill={s.dash} opacity={0.7}
                   />
                 ))}
                 {/* 하단 타원 (맨 아래 칩만) */}
-                {isBottom && (
-                  <ellipse cx={chipCx} cy={chipTopY + BODY} rx={RX} ry={RY} fill={s.edge} />
+                {i === 0 && (
+                  <ellipse cx={chipX} cy={topY + BODY} rx={RX} ry={RY} fill={s.edge} />
                 )}
                 {/* 상단 면 */}
-                <ellipse cx={chipCx} cy={chipTopY} rx={RX} ry={RY} fill={s.fill} />
-                {/* 대시 링 */}
+                <ellipse cx={chipX} cy={topY} rx={RX} ry={RY} fill={s.fill} />
+                {/* 대시 링 — 원본 SVG 패턴 */}
                 <ellipse
-                  cx={chipCx} cy={chipTopY}
-                  rx={RX * 0.78} ry={RY * 0.78}
+                  cx={chipX} cy={topY} rx={RX * 0.78} ry={RY * 0.78}
                   fill="none" stroke={s.dash}
-                  strokeWidth={4} strokeDasharray="5 3.5"
-                  opacity={0.88}
+                  strokeWidth={4.5} strokeDasharray="5 3.5" opacity={0.88}
                 />
                 {/* 내부 링 */}
                 <ellipse
-                  cx={chipCx} cy={chipTopY}
-                  rx={RX * 0.5} ry={RY * 0.5}
-                  fill="none" stroke={s.dash}
-                  strokeWidth={0.8} opacity={0.6}
+                  cx={chipX} cy={topY} rx={RX * 0.5} ry={RY * 0.5}
+                  fill="none" stroke={s.dash} strokeWidth={0.8} opacity={0.6}
                 />
-                {/* 중앙 */}
-                <ellipse cx={chipCx} cy={chipTopY} rx={RX * 0.44} ry={RY * 0.44} fill={s.fill} />
+                {/* 중앙 원 */}
+                <ellipse cx={chipX} cy={topY} rx={RX * 0.44} ry={RY * 0.44} fill={s.fill} />
               </g>
             );
           });
 
-          // 타워 전체를 cx, baseY 기준으로 기울임
           return (
             <g key={denom} transform={`rotate(${tilt}, ${cx}, ${baseY})`}>
               {chipNodes}
