@@ -720,6 +720,7 @@ export function RoomPage() {
       myPlayerId={myPlayerId}
       currentPlayerIndex={gameState.currentPlayerIndex}
       pot={gameState.pot}
+      potChipLog={gameState.potChipLog}
       visibleCardCounts={Object.keys(visibleCardCounts).length > 0 ? visibleCardCounts : undefined}
       sharedCard={gameState.sharedCard}
       mode={gameState.mode}

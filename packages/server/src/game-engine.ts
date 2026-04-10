@@ -3,6 +3,22 @@ import type { Card, GameState, GameMode, PlayerState, RoomPlayer, BetAction, Chi
 import type { HandResult } from '@sutda/shared';
 
 /**
+ * 금액을 칩 단위로 분해 (콜/앤티 등 chips 배열 없을 때 사용)
+ * 예: 8500 → [5000, 1000, 1000, 1000, 500]
+ */
+function decomposeChips(amount: number): number[] {
+  const DENOMS = [10000, 5000, 1000, 500];
+  const result: number[] = [];
+  let remaining = amount;
+  for (const d of DENOMS) {
+    const count = Math.floor(remaining / d);
+    for (let i = 0; i < count; i++) result.push(d);
+    remaining %= d;
+  }
+  return result;
+}
+
+/**
  * 승자 땡 등급에 따른 땡값 금액 계산
  * - score >= 1010 (장땡/광땡) → 1000원
  * - score >= 1001 (일땡~구땡) → 500원
@@ -490,6 +506,7 @@ export class GameEngine {
       player.totalCommitted = (player.totalCommitted ?? 0) + 500;  // 올인 정산용 기여액 추적
     }
     this.state.pot += 500;
+    this.state.potChipLog = [...(this.state.potChipLog ?? []), 500];
     this.state.attendedPlayerIds.push(playerId);
 
     this._updateChipBreakdowns();
@@ -1232,6 +1249,9 @@ export class GameEngine {
         player.totalBet += callAmount;
         player.totalCommitted = (player.totalCommitted ?? 0) + callAmount;
         this.state.pot += callAmount;
+        if (callAmount > 0) {
+          this.state.potChipLog = [...(this.state.potChipLog ?? []), ...decomposeChips(callAmount)];
+        }
         if (player.chips === 0) {
           player.isAllIn = true;
         }
@@ -1249,6 +1269,11 @@ export class GameEngine {
         player.totalBet += callAmount + action.amount;
         player.totalCommitted = (player.totalCommitted ?? 0) + totalDeducted;
         this.state.pot += callAmount + action.amount;
+        // 클라이언트가 실제 칩 누름 배열을 보냈으면 그대로 사용, 아니면 분해
+        const raiseChips = action.chips && action.chips.length > 0
+          ? [...(callAmount > 0 ? decomposeChips(callAmount) : []), ...action.chips]
+          : decomposeChips(totalDeducted);
+        this.state.potChipLog = [...(this.state.potChipLog ?? []), ...raiseChips];
         this.state.currentBetAmount = player.currentBet;
         if (player.chips === 0) {
           player.isAllIn = true;
@@ -2107,6 +2132,7 @@ export class GameEngine {
 
     // 수혜자는 무료 참여 (chips 차감 없음, totalBet도 0 유지)
     this.state.pot += 500;
+    this.state.potChipLog = [...(this.state.potChipLog ?? []), 500];
     this.state.attendedPlayerIds.push(beneficiaryId);
 
     this._updateChipBreakdowns();
@@ -2133,6 +2159,7 @@ export class GameEngine {
 
     this.state.roundNumber += 1;
     this.state.pot = 0;
+    this.state.potChipLog = [];
     this.state.currentBetAmount = 0;
     this.state.winnerId = undefined;
     this.state.tiedPlayerIds = undefined;

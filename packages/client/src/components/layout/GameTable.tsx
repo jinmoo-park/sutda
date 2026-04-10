@@ -20,6 +20,7 @@ interface GameTableProps {
   myPlayerId: string | null;
   currentPlayerIndex: number;
   pot: number;
+  potChipLog?: number[];
   visibleCardCounts?: Record<string, number>;
   sharedCard?: Card;
   mode?: GameMode;
@@ -60,7 +61,7 @@ function mobileCellToGridArea(cell: number): string {
   return cellToGridArea(cell);
 }
 
-export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibleCardCounts, sharedCard, mode, dealingComplete = true, myFlippedCardIndices, roomState, showMyTurnAlert }: GameTableProps) {
+export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, potChipLog, visibleCardCounts, sharedCard, mode, dealingComplete = true, myFlippedCardIndices, roomState, showMyTurnAlert }: GameTableProps) {
   // 빅팟 BGM useEffect
   useEffect(() => {
     setBigPot(pot >= 20000);
@@ -189,7 +190,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, visibl
                 {/* 칩 스택 시각화 (데스크탑 전용) */}
                 {pot > 0 && (
                   <div className="my-2">
-                    <ChipStack pot={pot} />
+                    <ChipStack chips={potChipLog ?? []} />
                   </div>
                 )}
                 <p className="text-[28px] font-semibold tabular-nums">{pot.toLocaleString()}원</p>

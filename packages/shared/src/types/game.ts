@@ -44,7 +44,7 @@ export type GameMode =
 /** 베팅 액션 */
 export type BetAction =
   | { type: 'call' }
-  | { type: 'raise'; amount: number }
+  | { type: 'raise'; amount: number; chips?: number[] }  // chips: 실제 눌린 칩 단위 배열 (시각화용)
   | { type: 'die' }
   | { type: 'check' };
 
@@ -84,6 +84,7 @@ export interface GameState {
   mode: GameMode;
   players: PlayerState[];
   pot: number;                    // 현재 판돈
+  potChipLog?: number[];          // 판돈에 투입된 칩 단위 배열 (시각화용, 예: [500, 1000, 1000])
   currentPlayerIndex: number;     // 현재 턴 플레이어 인덱스
   currentBetAmount: number;       // 현재 콜해야 하는 금액
   roundNumber: number;            // 현재 판 번호

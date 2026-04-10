@@ -33,6 +33,7 @@ export function BettingPanel({
   isEffectiveSen,
 }: BettingPanelProps) {
   const [raiseAmount, setRaiseAmount] = useState(0);
+  const [chipPresses, setChipPresses] = useState<number[]>([]);
   const { gameState, myPlayerId } = useGameStore();
   const { play } = useSfxPlayer();
   const me = gameState?.players.find(p => p.id === myPlayerId);
@@ -47,6 +48,7 @@ export function BettingPanel({
     if (!socket || !isMyTurn) return;
     socket.emit('bet-action', { roomId, action });
     setRaiseAmount(0);
+    setChipPresses([]);
   };
 
   const totalRaisePayment = callAmount + raiseAmount;
@@ -92,7 +94,7 @@ export function BettingPanel({
           </p>
           <button
             disabled={!isMyTurn}
-            onClick={() => setRaiseAmount(0)}
+            onClick={() => { setRaiseAmount(0); setChipPresses([]); }}
             className="text-xs border border-border rounded px-3 py-2 min-h-[44px] text-muted-foreground hover:text-foreground hover:border-foreground transition-colors disabled:opacity-30"
           >
             초기화
@@ -108,7 +110,15 @@ export function BettingPanel({
             <button
               key={amount}
               disabled={chipDisabled}
-              onClick={() => { play('chip'); setRaiseAmount((prev) => Math.min(prev + amount, maxRaiseAmount)); }}
+              onClick={() => {
+              play('chip');
+              const newAmount = Math.min(raiseAmount + amount, maxRaiseAmount);
+              const actualAdded = newAmount - raiseAmount;
+              if (actualAdded > 0) {
+                setChipPresses((prev) => [...prev, actualAdded]);
+              }
+              setRaiseAmount(newAmount);
+            }}
               className={cn(
                 'relative flex items-center justify-center transition-transform active:scale-95',
                 chipDisabled ? 'opacity-20 pointer-events-none' : 'hover:scale-105'
@@ -157,7 +167,7 @@ export function BettingPanel({
         <Button
           variant="secondary"
           disabled={!isMyTurn || raiseAmount === 0}
-          onClick={() => { play('bet-raise'); emitAction({ type: 'raise', amount: raiseAmount }); }}
+          onClick={() => { play('bet-raise'); emitAction({ type: 'raise', amount: raiseAmount, chips: chipPresses }); }}
           className={cn('h-14 md:h-12 text-sm bg-yellow-400 hover:bg-yellow-500 text-primary-foreground', (!isMyTurn || raiseAmount === 0) && 'opacity-20')}
         >
           레이즈
