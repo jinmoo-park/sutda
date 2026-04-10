@@ -1,5 +1,6 @@
 /* 데스크탑 판돈 카드 전용 — 모바일에서 사용 금지 */
 /* 칩 렌더링: Gemini SVG 방식 — scale(1, 0.45) rotate(25) 비스듬히 보기 */
+/* 각 칩을 개별 top-face로 렌더링 → 장 수 경계 명확 */
 import { useEffect, useRef } from 'react';
 
 const CHIP_COLORS: Record<number, {
@@ -13,36 +14,33 @@ const CHIP_COLORS: Record<number, {
 
 const CHIP_ORDER = [10000, 5000, 1000, 500];
 
-const R = 65;
-const LAYERS_PER_CHIP = 16;
-const SPLIT_AT = 4;   // 이 수 초과 시 같은 단위를 2탑으로 분리
-const MAX_CHIPS = 8;  // 단위당 최대 장 수
+const R = 50;               // 칩 반지름
+const LAYERS_PER_CHIP = 18; // 칩 한 장 두께 (edge-layer 수)
+const SPLIT_AT = 4;         // 초과 시 2탑으로 분리
+const MAX_CHIPS = 10;       // 단위당 최대 장 (10장 넘으면 overflow)
 
-const SVG_W = 420;
-const SVG_H = 270;
+const SVG_W = 380;
+const SVG_H = 300;
 
-// 단위별 기본 슬롯 (최대 4단위 × 최대 2탑 = 8 물리 탑)
-// 각 단위는 슬롯 하나를 가지며, 2탑으로 분리 시 ±offset으로 좌우 배치
 const DENOM_SLOTS = [
-  { cx: 90,  cy: 86  },  // 10000
-  { cx: 290, cy: 80  },  // 5000
-  { cx: 148, cy: 118 },  // 1000
-  { cx: 245, cy: 112 },  // 500
+  { cx: 80,  cy: 82  },  // 10000
+  { cx: 262, cy: 76  },  // 5000
+  { cx: 134, cy: 112 },  // 1000
+  { cx: 222, cy: 106 },  // 500
 ];
+
+const DENOM_SLOT_IDX: Record<number, number> = {
+  10000: 0, 5000: 1, 1000: 2, 500: 3,
+};
 
 function sr(seed: number) {
   const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
   return x - Math.floor(x);
 }
 
-// 단위 슬롯 인덱스 (CHIP_ORDER 기준)
-const DENOM_SLOT_IDX: Record<number, number> = {
-  10000: 0, 5000: 1, 1000: 2, 500: 3,
-};
-
 interface PhysicalTower {
   denom: number;
-  count: number;   // 이 탑이 담당하는 장 수
+  count: number;
   cx: number;
   cy: number;
   tilt: number;
@@ -58,67 +56,60 @@ export function ChipStack({ chips }: ChipStackProps) {
   useEffect(() => { prevLenRef.current = chips.length; });
 
   const counts: Record<number, number> = {};
-  for (const c of chips) counts[c] = Math.min((counts[c] ?? 0) + 1, MAX_CHIPS);
+  for (const c of chips) counts[c] = (counts[c] ?? 0) + 1; // MAX_CHIPS 이상은 overflow 허용
 
   const activeDenoms = CHIP_ORDER.filter((d) => (counts[d] ?? 0) > 0);
   if (activeDenoms.length === 0) return null;
 
-  // 물리 탑 목록 생성
   const physicalTowers: PhysicalTower[] = [];
 
   for (const denom of activeDenoms) {
-    const total = counts[denom];
-    const slotIdx = DENOM_SLOT_IDX[denom] ?? 0;
-    const slot = DENOM_SLOTS[slotIdx];
-    const baseCx = slot.cx + (sr(denom * 2)     - 0.5) * 12;
-    const baseCy = slot.cy + (sr(denom * 3 + 1) - 0.5) * 8;
+    const total = Math.min(counts[denom], MAX_CHIPS);
+    const slot = DENOM_SLOTS[DENOM_SLOT_IDX[denom] ?? 0];
+    const baseCx   = slot.cx + (sr(denom * 2)     - 0.5) * 12;
+    const baseCy   = slot.cy + (sr(denom * 3 + 1) - 0.5) * 8;
     const baseTilt = (sr(denom * 5 + 2) - 0.5) * 14;
 
     if (total <= SPLIT_AT) {
-      // 단일 탑
       physicalTowers.push({ denom, count: total, cx: baseCx, cy: baseCy, tilt: baseTilt });
     } else {
-      // 2탑으로 분리: 앞탑(많은 장) + 뒷탑(나머지)
       const backCount  = Math.ceil(total / 2);
       const frontCount = total - backCount;
-      // 뒷탑: 슬롯에서 약간 왼쪽·위로
       physicalTowers.push({
         denom, count: backCount,
-        cx: baseCx - R * 0.55,
-        cy: baseCy - 10,
-        tilt: baseTilt - 4,
+        cx: baseCx - R * 0.6, cy: baseCy - 10, tilt: baseTilt - 4,
       });
-      // 앞탑: 슬롯에서 약간 오른쪽·아래로
       physicalTowers.push({
         denom, count: frontCount,
-        cx: baseCx + R * 0.45,
-        cy: baseCy + 8,
-        tilt: baseTilt + 3,
+        cx: baseCx + R * 0.5, cy: baseCy + 8, tilt: baseTilt + 3,
       });
     }
   }
 
-  // cy 오름차순(뒤→앞) draw order
   physicalTowers.sort((a, b) => a.cy - b.cy);
 
+  const da = R * 0.4189; // dasharray
+
   return (
-    <div style={isGrowing ? { animation: 'chip-slide-up 0.3s ease-out' } : undefined}>
+    <div style={{
+      overflow: 'visible',
+      ...(isGrowing ? { animation: 'chip-slide-up 0.3s ease-out' } : {}),
+    }}>
       <svg
         viewBox={`0 0 ${SVG_W} ${SVG_H}`}
         width="100%"
-        style={{ display: 'block', maxWidth: '140px', margin: '0 auto', overflow: 'visible' }}
+        style={{ display: 'block', maxWidth: '180px', margin: '0 auto', overflow: 'visible' }}
       >
         <defs>
           {CHIP_ORDER.map((denom) => {
             const c = CHIP_COLORS[denom];
-            const da = R * 0.4189;
             return (
               <g key={denom}>
-                <g id={`cs-edge-${denom}`}>
+                <g id={`cse-${denom}`}>
                   <circle r={R} fill={c.edge} />
                   <circle r={R * 0.8} fill="none" stroke={c.edgeDash} strokeWidth={R * 0.4} strokeDasharray={da} />
                 </g>
-                <g id={`cs-top-${denom}`}>
+                <g id={`cst-${denom}`}>
                   <circle r={R} fill={c.top} />
                   <circle r={R * 0.8} fill="none" stroke={c.dash} strokeWidth={R * 0.4} strokeDasharray={da} />
                   <circle r={R * 0.62} fill={c.top} />
@@ -129,32 +120,52 @@ export function ChipStack({ chips }: ChipStackProps) {
             );
           })}
           <linearGradient id="cs-light" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%"   stopColor="#ffffff" stopOpacity="0.35" />
+            <stop offset="0%"   stopColor="#ffffff" stopOpacity="0.3" />
             <stop offset="45%"  stopColor="#ffffff" stopOpacity="0" />
             <stop offset="100%" stopColor="#000000" stopOpacity="0.2" />
           </linearGradient>
         </defs>
 
-        {physicalTowers.map(({ denom, count, cx, cy, tilt }, idx) => {
-          const totalLayers = count * LAYERS_PER_CHIP;
+        {physicalTowers.map(({ denom, count, cx, cy, tilt }, towerIdx) => {
+          const stackH = count * LAYERS_PER_CHIP;
           return (
-            <g key={`${denom}-${idx}`} transform={`rotate(${tilt}, ${cx}, ${cy})`}>
+            <g key={`${denom}-${towerIdx}`} transform={`rotate(${tilt}, ${cx}, ${cy})`}>
+              {/* 그림자 */}
               <ellipse
-                cx={cx} cy={cy + totalLayers + R * 0.18}
-                rx={R * 0.4} ry={R * 0.11}
-                fill="rgba(0,0,0,0.28)"
+                cx={cx} cy={cy + stackH + R * 0.18}
+                rx={R * 0.38} ry={R * 0.1}
+                fill="rgba(0,0,0,0.3)"
               />
-              {Array.from({ length: totalLayers }, (_, i) => (
-                <g key={i} transform={`translate(${cx},${cy + totalLayers - i}) scale(1,0.45) rotate(25)`}>
-                  <use href={`#cs-edge-${denom}`} />
-                </g>
-              ))}
-              <g transform={`translate(${cx},${cy}) scale(1,0.45) rotate(25)`}>
-                <use href={`#cs-top-${denom}`} />
-              </g>
-              <g transform={`translate(${cx},${cy}) scale(1,0.45) rotate(25)`}>
-                <ellipse rx={R} ry={R} fill="url(#cs-light)" />
-              </g>
+
+              {/*
+               * 칩을 아래(0)에서 위(count-1) 순으로 그림.
+               * 각 칩마다 edge-layer + top-face 독립 렌더링
+               * → top-face가 아래 칩의 edge-layer를 덮어 경계가 명확하게 보임
+               */}
+              {Array.from({ length: count }, (_, chipIdx) => {
+                // chipIdx=0: 맨 아래 칩, chipIdx=count-1: 맨 위 칩
+                // 맨 위 칩의 top-face = cy, 그 아래 칩은 LAYERS_PER_CHIP씩 내려감
+                const chipTopY = cy + (count - 1 - chipIdx) * LAYERS_PER_CHIP;
+
+                return (
+                  <g key={chipIdx}>
+                    {/* 이 칩의 edge-layers */}
+                    {Array.from({ length: LAYERS_PER_CHIP }, (_, j) => (
+                      <g key={j} transform={`translate(${cx},${chipTopY + LAYERS_PER_CHIP - j}) scale(1,0.45) rotate(25)`}>
+                        <use href={`#cse-${denom}`} />
+                      </g>
+                    ))}
+                    {/* 이 칩의 top-face */}
+                    <g transform={`translate(${cx},${chipTopY}) scale(1,0.45) rotate(25)`}>
+                      <use href={`#cst-${denom}`} />
+                    </g>
+                    {/* 하이라이트 */}
+                    <g transform={`translate(${cx},${chipTopY}) scale(1,0.45) rotate(25)`}>
+                      <ellipse rx={R} ry={R} fill="url(#cs-light)" />
+                    </g>
+                  </g>
+                );
+              })}
             </g>
           );
         })}

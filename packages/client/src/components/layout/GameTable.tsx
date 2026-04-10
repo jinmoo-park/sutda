@@ -180,7 +180,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, potChi
               className="flex items-center justify-center pointer-events-none"
               style={{ gridArea: '2 / 2' }}
             >
-              <div className="text-center bg-background/60 border border-border rounded-2xl px-8 py-5 shadow-inner min-w-[160px]">
+              <div className="text-center bg-background/60 border border-border rounded-2xl px-6 py-4 shadow-inner min-w-[220px] overflow-visible">
                 {mode && (
                   <Badge variant="outline" className="border-primary text-primary text-[10px] mb-1">
                     {MODE_LABELS[mode] ?? mode}
@@ -189,7 +189,7 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, potChi
                 <p className="text-sm text-muted-foreground tracking-widest uppercase">판돈</p>
                 {/* 칩 스택 시각화 (데스크탑 전용) */}
                 {pot > 0 && (
-                  <div className="my-2">
+                  <div className="my-2" style={{ overflow: 'visible' }}>
                     <ChipStack chips={potChipLog ?? []} />
                   </div>
                 )}
