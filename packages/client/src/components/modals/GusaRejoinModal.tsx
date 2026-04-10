@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import { Button } from '@/components/ui/button';
+import { useSfxPlayer } from '@/hooks/useSfxPlayer';
 
 interface GusaRejoinModalProps {
   roomId: string;
@@ -10,6 +11,7 @@ interface GusaRejoinModalProps {
 
 export function GusaRejoinModal({ roomId, potAmount, myChips }: GusaRejoinModalProps) {
   const { socket } = useGameStore();
+  const { play } = useSfxPlayer();
   const [countdown, setCountdown] = useState(15);
   const [decided, setDecided] = useState(false);
 
@@ -19,6 +21,7 @@ export function GusaRejoinModal({ roomId, potAmount, myChips }: GusaRejoinModalP
   const handleJoin = () => {
     if (decided) return;
     setDecided(true);
+    play('regame-join');
     socket?.emit('gusa-rejoin', { roomId, join: true });
   };
 

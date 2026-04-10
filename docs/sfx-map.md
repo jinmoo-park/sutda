@@ -27,6 +27,7 @@
 | `lose-ddaeng-but-lost` | `lose-ddaeng-but-lost.mp3` | 0.6 | result phase 진입. 아래 3가지 경우에 재생됨:<br>**(a) 승자 — 한 단계 차이:** 내 score와 최상위 패자 score가 `SCORE_RANK_ORDER`에서 인접할 때 (isOneRankApart) 추가 재생<br>**(b) 패자(기본):** 땡값 납부가 없고 내 패가 땡(ttaeng)인데 패자인 경우<br>**(c) 패자 — 한 단계 차이:** 승자 카드가 공개된 상태에서 승자-내 score가 한 단계 차이이고, 땡값 납부도 아니고 내 패도 땡이 아닌 경우 추가 재생 | `ResultScreen.tsx` result phase useEffect |
 | `school-go` | `school-go.mp3` | 0.7 | ResultScreen에서 "학교 가기" 버튼 클릭 시 | `ResultScreen.tsx` 학교가기 버튼 onClick |
 | `school-proxy` | `school-proxy.mp3` | 0.7 | ① 승자가 학교 대신 가주기 확인 버튼 클릭 시 ② 수혜자 측: `proxy-ante-applied` 소켓 이벤트 수신 시 (`beneficiaryNicknames`에 내 닉네임 포함) | `ResultScreen.tsx` handleProxyConfirm / `proxy-ante-applied` socket handler |
+| `regame-join` | `regame-join.mp3` | 0.7 | 구사 재경기 참여 결정 시 ("참여" 버튼 클릭) | `GusaRejoinModal.tsx` handleJoin |
 
 ---
 
@@ -52,6 +53,7 @@
 | `packages/client/src/components/modals/ShuffleModal.tsx` | `shuffle` |
 | `packages/client/src/components/modals/CutModal.tsx` | `giri`(본인) |
 | `packages/client/src/components/modals/DealerSelectModal.tsx` | `flip`(밤일낮장 카드 선택) |
+| `packages/client/src/components/modals/GusaRejoinModal.tsx` | `regame-join`(구사 재경기 참여) |
 
 ---
 
@@ -78,5 +80,6 @@
 | 15 | `15.패배-땡이지만 패배.mp3` | `lose-ddaeng-but-lost.mp3` |
 | 16 | `16.학교가기 버튼.mp3` | `school-go.mp3` |
 | 17 | `17.학교대납.mp3` | `school-proxy.mp3` |
+| 18 | `regame_join.mp3` | `regame-join.mp3` |
 | BGM | `bgm_bigpot.mp3` | `bgm_bigpot.mp3` |
 | BGM | `main_bgm.mp3` | `main_bgm.mp3` |

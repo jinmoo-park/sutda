@@ -22,6 +22,7 @@ const SFX_MAP: Record<string, SfxEntry> = {
   'school-go':            { file: 'school-go.mp3',            volume: 0.7 },
   'school-proxy':         { file: 'school-proxy.mp3',         volume: 0.7 },
   'auto_shuffle':         { file: 'auto_shuffle.mp3',         volume: 0.7 },
+  'regame-join':          { file: 'regame-join.mp3',          volume: 0.7 },
 };
 
 // 모듈 레벨 싱글턴 캐시 — 컴포넌트 인스턴스에 상관없이 동일한 Audio 객체 공유
