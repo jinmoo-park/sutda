@@ -1677,6 +1677,8 @@ export class GameEngine {
     }
 
     this.state.winnerId = best.player.id;
+    // 세장섯다 쇼다운: 카드 자동 공개 (패 숨기기 불가)
+    alivePlayers.forEach(p => { p.isRevealed = true; });
     const chipsSnapshotSejang = new Map(this.state.players.map(p => [p.id, p.chips]));
     this.settleChipsWithAllIn();
     this._generateRoundHistory(chipsSnapshotSejang);
@@ -1738,6 +1740,8 @@ export class GameEngine {
     }
 
     this.state.winnerId = best.player.id;
+    // 한장공유 쇼다운: 카드 자동 공개
+    alivePlayers.forEach(p => { p.isRevealed = true; });
     const chipsSnapshotHanjang = new Map(this.state.players.map(p => [p.id, p.chips]));
     this.settleChipsWithAllIn();
     this._generateRoundHistory(chipsSnapshotHanjang);
