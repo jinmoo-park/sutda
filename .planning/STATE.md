@@ -5,7 +5,7 @@ milestone_name: milestone
 status: verifying
 stopped_at: Completed quick-260404-vl1-PLAN.md
 last_updated: "2026-04-04T13:47:43.025Z"
-last_activity: "2026-04-04 - Completed quick task 260404-vl1: 한장공유 결과화면 공유카드 포함 2장 표시 + 족보 뱃지"
+last_activity: "2026-04-10 - Completed quick task 260411-00g: 5가지 버그수정: SFX조건, 골라골라모드 금액, 한끗차이SFX, 오링후 금액계승, 이력기록 금액"
 progress:
   total_phases: 18
   completed_phases: 17
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 Phase: 16
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-05 - Completed quick tasks 260405-v5z, 260405-v63: sfx-map.md 최신화 + 이력 join-room 영속
+Last activity: 2026-04-10 - Completed quick task 260411-00g: 5가지 버그수정
 
 Progress: [████░░░░░░] 44%
 
@@ -254,6 +254,7 @@ None yet.
 | 260409-urd | 밤일낮장 시간기반 강조 수정, 올인재경기 팟분배 버그, 3장섯다 disconnect 게임멈춤 | 2026-04-09 | 2f5bde9 | [260409-urd-3-disconn](./quick/260409-urd-3-disconn/) |
 | 260409-v42 | AUTO 자동패섞기 옵션 버튼 신설 — 방장 토글, autoMode ShuffleModal, SFX 연동 | 2026-04-09 | ce97622 | [260409-v42-auto](./quick/260409-v42-auto/) |
 | 260409-voi | 칩 SVG 아이콘 교체(500/1k/5k/10k) 및 데스크탑 판돈 칩 스택 애니메이션 | 2026-04-09 | 732be27 | [260409-voi-svg](./quick/260409-voi-svg/) |
+| 260411-00g | 5가지 버그수정: SFX조건, 골라골라모드 금액, 한끗차이SFX, 오링후 금액계승, 이력기록 금액 | 2026-04-10 | ef001b8 | [260411-00g-5-sfx-sfx](./quick/260411-00g-5-sfx-sfx/) |
 
 ### Blockers/Concerns
 
