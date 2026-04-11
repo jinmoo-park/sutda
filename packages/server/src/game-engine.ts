@@ -368,8 +368,8 @@ export class GameEngine {
     const perPlayerAmount = getTtaengValueAmount(winnerHand);
     if (perPlayerAmount === 0) return;  // 땡 미만이면 땡값 없음
 
-    // 다이한 플레이어만 납부 대상
-    const diedPlayers = this.state.players.filter(p => !p.isAlive);
+    // 다이한 플레이어만 납부 대상 (자리비움 플레이어는 이번 판에 참여하지 않았으므로 제외)
+    const diedPlayers = this.state.players.filter(p => !p.isAlive && !p.isAbsent);
     if (diedPlayers.length === 0) return;
 
     const ttaengPayments: { playerId: string; amount: number }[] = [];
@@ -1816,12 +1816,12 @@ export class GameEngine {
     this.state.currentBetAmount = 0;
     this._bettingActed = new Set();
 
-    // dealer 결정: 이전 선의 반시계 다음 동점자
+    // dealer 결정: 현재 선이 동점자에 포함되면 유지, 아니면 반시계 첫 번째 동점자
     let dealerId = this.state.rematchDealerId;
     if (!dealerId) {
       const prevDealerSeatIndex = this.getDealerSeatIndex();
       const totalPlayers = this.state.players.length;
-      for (let i = 1; i <= totalPlayers; i++) {
+      for (let i = 0; i <= totalPlayers; i++) {  // i=0: 현재 dealer 자신 먼저 확인
         const candidateSeat = (prevDealerSeatIndex - i + totalPlayers) % totalPlayers;
         const candidate = this.state.players.find(p => p.seatIndex === candidateSeat);
         if (candidate && tiedIds.includes(candidate.id)) {
