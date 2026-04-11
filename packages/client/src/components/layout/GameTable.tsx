@@ -78,14 +78,22 @@ export function GameTable({ players, myPlayerId, currentPlayerIndex, pot, potChi
   const isBigPot = pot >= 20000;
 
   const me = players.find(p => p.id === myPlayerId);
-  // 반시계 방향 정렬: 내 seatIndex 기준으로 1씩 감소하며 상대방 수집
-  const mySeatIndex = me?.seatIndex ?? 0;
-  const totalPlayers = players.length;
-  const opponents: PlayerState[] = [];
-  for (let i = 1; i < totalPlayers; i++) {
-    const seatIdx = (mySeatIndex - i + totalPlayers) % totalPlayers;
-    const p = players.find(p => p.seatIndex === seatIdx && p.id !== myPlayerId);
-    if (p) opponents.push(p);
+  const isObserver = !me; // gameState.players에 없으면 관전자
+
+  let opponents: PlayerState[];
+  if (isObserver) {
+    // 관전자: 모든 플레이어를 opponents로 표시, seatIndex 오름차순 정렬
+    opponents = [...players].sort((a, b) => a.seatIndex - b.seatIndex);
+  } else {
+    // 플레이어: 반시계 방향 정렬 — 내 seatIndex 기준으로 1씩 감소하며 상대방 수집
+    const mySeatIndex = me!.seatIndex;
+    const totalPlayers = players.length;
+    opponents = [];
+    for (let i = 1; i < totalPlayers; i++) {
+      const seatIdx = (mySeatIndex - i + totalPlayers) % totalPlayers;
+      const p = players.find(p => p.seatIndex === seatIdx && p.id !== myPlayerId);
+      if (p) opponents.push(p);
+    }
   }
   const opponentCells = getOpponentCells(opponents.length);
 
