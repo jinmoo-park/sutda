@@ -313,11 +313,26 @@ export class GameEngine {
     const winner = this.state.players.find(p => p.id === this.state.winnerId);
     if (!winner) return;
 
-    // 세장섯다: 선택된 카드로 족보 판정
+    // 세장섯다: 선택된 카드로 족보 판정. 미선택(카드 3장)이면 최강 조합 사용
     const selected = (winner as any).selectedCards as Card[] | undefined;
-    const c1 = selected?.[0] ?? winner.cards[0];
-    const c2 = selected?.[1] ?? winner.cards[1];
-    const winnerHand = c1 && c2 ? evaluateHand(c1, c2) : null;
+    let winnerHand: ReturnType<typeof evaluateHand> | null = null;
+    if (selected?.[0] && selected?.[1]) {
+      winnerHand = evaluateHand(selected[0]!, selected[1]!);
+    } else if (winner.cards.length >= 3) {
+      const combos: [Card, Card][] = [
+        [winner.cards[0]!, winner.cards[1]!],
+        [winner.cards[0]!, winner.cards[2]!],
+        [winner.cards[1]!, winner.cards[2]!],
+      ];
+      const best = combos.filter(([a, b]) => a && b).reduce((acc, combo) => {
+        const h = evaluateHand(combo[0]!, combo[1]!);
+        const a = evaluateHand(acc[0]!, acc[1]!);
+        return h.score > a.score ? combo : acc;
+      });
+      if (best[0] && best[1]) winnerHand = evaluateHand(best[0], best[1]);
+    } else if (winner.cards[0] && winner.cards[1]) {
+      winnerHand = evaluateHand(winner.cards[0]!, winner.cards[1]!);
+    }
 
     this.lastRoundHistory = {
       roundNumber: this.state.roundNumber,

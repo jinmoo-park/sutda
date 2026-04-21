@@ -79,7 +79,7 @@ export interface ServerToClientEvents {
   'room-created': (data: { roomId: string; roomState: RoomState }) => void;
   'room-state': (data: RoomState) => void;
   'player-joined': (data: RoomPlayer) => void;
-  'player-left': (data: { playerId: string; newHostId?: string; nickname?: string }) => void;
+  'player-left': (data: { playerId: string; newHostId?: string; nickname?: string; reason?: 'left' | 'disconnected' | 'broke' }) => void;
   'error': (data: ErrorPayload) => void;
   'game-state': (data: GameState) => void;
   'game-error': (data: { code: string; message: string }) => void;

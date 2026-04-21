@@ -174,6 +174,9 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
       const hasDdaengPenalty = gameState.ttaengPayments?.some(t => t.playerId === myPlayerId);
       if (hasDdaengPenalty) {
         play('lose-ddaeng-penalty');
+      } else if (!winnerCardsVisible) {
+        // 승자가 패를 공개하지 않은 경우 → 무조건 lose-normal
+        play('lose-normal');
       } else if (myHandCards.length >= 2) {
         try {
           const result = evaluateHand(myHandCards[0]!, myHandCards[1]!);
@@ -291,7 +294,22 @@ export function ResultScreen({ gameState, myPlayerId, roomId, isRematch, isRemat
           let handLabel: string | null = null;
           if (!isDied && displayCards.length >= 2 && player.isRevealed) {
             try {
-              handLabel = getHandLabel(evaluateHand(displayCards[0]!, displayCards[1]!));
+              if (displayCards.length >= 3) {
+                // 세장섯다에서 selectedCards 없이 3장인 경우: C(3,2) 최강 조합
+                const combos: [Card, Card][] = [
+                  [displayCards[0]!, displayCards[1]!],
+                  [displayCards[0]!, displayCards[2]!],
+                  [displayCards[1]!, displayCards[2]!],
+                ];
+                const best = combos.reduce((acc, combo) => {
+                  const h = evaluateHand(combo[0], combo[1]);
+                  const a = evaluateHand(acc[0], acc[1]);
+                  return h.score > a.score ? combo : acc;
+                });
+                handLabel = getHandLabel(evaluateHand(best[0], best[1]));
+              } else {
+                handLabel = getHandLabel(evaluateHand(displayCards[0]!, displayCards[1]!));
+              }
             } catch {
               // 평가 불가한 경우 무시
             }

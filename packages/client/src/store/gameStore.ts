@@ -5,11 +5,12 @@ import type { GameState, RoomState, ServerToClientEvents, ClientToServerEvents, 
 
 type AppSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
-interface ChatMessage {
+export interface ChatMessage {
   playerId: string;
   nickname: string;
   text: string;
   timestamp: number;
+  type?: 'system';
 }
 
 interface GameStore {
@@ -123,14 +124,34 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }));
     });
 
-    socket.on('player-left', ({ nickname }) => {
-      if (nickname) {
-        toast.error(`${nickname}님 연결이 끊어졌습니다`);
-      }
+    socket.on('player-left', ({ nickname, reason }) => {
+      if (!nickname) return;
+      const text = reason === 'broke'
+        ? `${nickname}님이 올인으로 퇴장되었습니다`
+        : `${nickname}님이 게임을 떠났습니다`;
+      if (reason !== 'broke') toast.error(text);
+      set(state => ({
+        chatMessages: [...state.chatMessages, {
+          playerId: `__system__${Date.now()}`,
+          nickname: '',
+          text,
+          timestamp: Date.now(),
+          type: 'system' as const,
+        }],
+      }));
     });
 
     socket.on('player-disconnected', ({ nickname }) => {
       toast(`${nickname}님이 나갔습니다 (재접속 대기 중...)`, { duration: 5000 });
+      set(state => ({
+        chatMessages: [...state.chatMessages, {
+          playerId: `__system__${Date.now()}`,
+          nickname: '',
+          text: `${nickname}님의 연결이 끊어졌습니다`,
+          timestamp: Date.now(),
+          type: 'system' as const,
+        }],
+      }));
     });
 
     socket.on('player-reconnected', ({ nickname }) => {

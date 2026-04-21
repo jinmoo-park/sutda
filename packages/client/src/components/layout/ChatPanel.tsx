@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { useGameStore } from '../../store/gameStore';
+import { useGameStore, type ChatMessage } from '../../store/gameStore';
 import { Send } from 'lucide-react';
 
 interface ChatPanelProps {
@@ -113,6 +113,13 @@ export function ChatPanel({ mobile = false }: ChatPanelProps) {
         {/* 메시지 목록 (최근 3개만 표시) */}
         <div className="px-3 py-2 space-y-1 max-h-24 overflow-hidden">
           {chatMessages.slice(-3).map((msg, i) => {
+            if (msg.type === 'system') {
+              return (
+                <div key={`${msg.timestamp}-${i}`} className="flex justify-center">
+                  <span className="text-xs text-white/50 italic truncate max-w-full">{msg.text}</span>
+                </div>
+              );
+            }
             const isMe = msg.playerId === myPlayerId;
             return (
               <div key={`${msg.timestamp}-${i}`} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
@@ -163,6 +170,15 @@ export function ChatPanel({ mobile = false }: ChatPanelProps) {
           </div>
         ) : (
           chatMessages.map((msg, i) => {
+            if (msg.type === 'system') {
+              return (
+                <div key={`${msg.timestamp}-${i}`} className="flex justify-center my-1">
+                  <span className="text-xs text-muted-foreground/70 px-2 py-0.5 rounded bg-muted/30 italic">
+                    {msg.text}
+                  </span>
+                </div>
+              );
+            }
             const isMe = msg.playerId === myPlayerId;
             return (
               <div key={`${msg.timestamp}-${i}`} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>

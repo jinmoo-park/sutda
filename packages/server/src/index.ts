@@ -210,6 +210,17 @@ async function tryAdvanceNextRound(roomId: string): Promise<void> {
   nextRoundVotes.delete(roomId);
   schoolResponded.delete(roomId);
 
+  // 이력 수집 — 칩 0원 강퇴 및 게임 종료 early return 전에 먼저 실행
+  const lastHistory = (engine as any).lastRoundHistory;
+  if (lastHistory) {
+    if (!gameHistories.has(roomId)) gameHistories.set(roomId, []);
+    const histories = gameHistories.get(roomId)!;
+    if (!histories.some((h: any) => h.roundNumber === lastHistory.roundNumber)) {
+      histories.push(lastHistory);
+    }
+    io.to(roomId).emit('game-history', { entries: histories });
+  }
+
   // 칩 0원 플레이어 강제 퇴장 (다음 판 앤티 납부 불가)
   const brokePlayers = state.players.filter(p => p.chips === 0 && !p.isAbsent);
   for (const broke of brokePlayers) {
@@ -218,6 +229,12 @@ async function tryAdvanceNextRound(roomId: string): Promise<void> {
       io.to(broke.id).emit('kicked', { reason: 'NO_CHIPS' });
       const brokenSocket = io.sockets.sockets.get(broke.id);
       if (brokenSocket) brokenSocket.leave(roomId);
+      // 방 전체에 퇴장 알림 (올인 퇴장 채팅 표시용)
+      io.to(roomId).emit('player-left', {
+        playerId: broke.id,
+        nickname: broke.nickname,
+        reason: 'broke',
+      });
     }
   }
   if (brokePlayers.length > 0) {
@@ -245,14 +262,6 @@ async function tryAdvanceNextRound(roomId: string): Promise<void> {
     );
     // seatIndex 재정렬
     (engineState as any).players.forEach((p: any, i: number) => { p.seatIndex = i; });
-  }
-
-  // 이력 수집
-  const lastHistory = (engine as any).lastRoundHistory;
-  if (lastHistory) {
-    if (!gameHistories.has(roomId)) gameHistories.set(roomId, []);
-    gameHistories.get(roomId)!.push(lastHistory);
-    io.to(roomId).emit('game-history', { entries: gameHistories.get(roomId)! });
   }
 
   // proxy-ante 데이터 보존
