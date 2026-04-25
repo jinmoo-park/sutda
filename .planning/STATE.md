@@ -5,7 +5,7 @@ milestone_name: milestone
 status: verifying
 stopped_at: Completed quick-260404-vl1-PLAN.md
 last_updated: "2026-04-04T13:47:43.025Z"
-last_activity: "2026-04-10 - Completed quick task 260411-00g: 5가지 버그수정: SFX조건, 골라골라모드 금액, 한끗차이SFX, 오링후 금액계승, 이력기록 금액"
+last_activity: "2026-04-26 - Completed quick task 260426-19d: 최초 접속페이지 배경 이미지 전체 화면 적용"
 progress:
   total_phases: 18
   completed_phases: 17
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 Phase: 16
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-10 - Completed quick task 260411-00g: 5가지 버그수정
+Last activity: 2026-04-26 - Completed quick task 260426-19d: 최초 접속페이지 배경 이미지 전체 화면 적용
 
 Progress: [████░░░░░░] 44%
 
@@ -256,6 +256,7 @@ None yet.
 | 260409-voi | 칩 SVG 아이콘 교체(500/1k/5k/10k) 및 데스크탑 판돈 칩 스택 애니메이션 | 2026-04-09 | 732be27 | [260409-voi-svg](./quick/260409-voi-svg/) |
 | 260411-00g | 5가지 버그수정: SFX조건, 골라골라모드 금액, 한끗차이SFX, 오링후 금액계승, 이력기록 금액 | 2026-04-10 | ef001b8 | [260411-00g-5-sfx-sfx](./quick/260411-00g-5-sfx-sfx/) |
 | 260411-w10 | 관전자 플레이어시트 누락, 재경기 선결정 규칙, 자리비움 땡값 표기 버그 3건 수정 | 2026-04-11 | 503bded | [260411-w10-observer-bugs](./quick/260411-w10-observer-bugs/) |
+| 260426-19d | 최초 접속페이지 배경 이미지 전체 화면 적용 및 입력 폼 오버레이 디자인 | 2026-04-26 | 9f9a5c0 | [260426-19d-entry-background-overlay](./quick/260426-19d-entry-background-overlay/) |
 
 ### Blockers/Concerns
 
