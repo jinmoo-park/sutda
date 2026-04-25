@@ -48,9 +48,9 @@
     min-height: 100dvh;
     overflow: hidden;
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
-    padding: clamp(24px, 6vw, 64px) 20px calc(24px + env(safe-area-inset-bottom));
+    padding: calc(24px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom));
     background-color: hsl(18 22% 5%);
     background-image: url('/title_mobile.jpg');
     background-size: cover;
@@ -117,7 +117,7 @@
   @media (min-width: 768px) {
     .entry-page {
       align-items: center;
-      justify-content: flex-end;
+      justify-content: center;
       padding: clamp(40px, 6vw, 96px);
       background-image: url('/title.jpg');
       background-position: center;
@@ -132,7 +132,6 @@
     .entry-panel {
       width: min(30vw, 380px);
       min-width: 320px;
-      margin-right: clamp(0px, 4vw, 72px);
     }
   }
 }
