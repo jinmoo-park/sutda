@@ -132,6 +132,7 @@
     .entry-panel {
       width: min(30vw, 380px);
       min-width: 320px;
+      transform: translateY(clamp(56px, 8vh, 112px));
     }
   }
 }
