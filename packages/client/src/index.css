@@ -100,6 +100,49 @@
     color: rgba(246, 225, 176, 0.48);
   }
 
+  .entry-chip-stepper {
+    display: grid;
+    grid-template-columns: 44px 1fr 44px;
+    align-items: center;
+    height: 44px;
+    border: 1px solid rgba(248, 232, 184, 0.26);
+    border-radius: calc(var(--radius) - 2px);
+    background: rgba(12, 8, 6, 0.68);
+    color: hsl(45 28% 95%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    overflow: hidden;
+  }
+
+  .entry-chip-stepper__button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    color: rgba(246, 225, 176, 0.82);
+    background: rgba(255, 255, 255, 0.04);
+    transition: background 140ms ease, color 140ms ease;
+  }
+
+  .entry-chip-stepper__button:hover:not(:disabled) {
+    background: rgba(255, 219, 128, 0.16);
+    color: hsl(45 28% 95%);
+  }
+
+  .entry-chip-stepper__button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .entry-chip-stepper__value {
+    min-width: 0;
+    padding: 0 10px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
   .entry-button {
     width: 100%;
     height: 46px;

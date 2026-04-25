@@ -26,6 +26,7 @@ import { MuckChoiceModal } from '@/components/modals/MuckChoiceModal';
 import { DealerResultOverlay } from '@/components/modals/DealerResultOverlay';
 import type { DealerSelectResult } from '@/components/modals/DealerResultOverlay';
 import { HwatuCard } from '@/components/game/HwatuCard';
+import { InitialChipsStepper } from '@/components/entry/InitialChipsStepper';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { HistoryModal } from '@/components/modals/HistoryModal';
@@ -579,17 +580,13 @@ export function RoomPage() {
             />
           </div>
           <div className="space-y-2">
-            <label className="entry-label" htmlFor="chips-input">
+            <label id="chips-input-label" className="entry-label" htmlFor="chips-input">
               시작 칩
             </label>
-            <Input
+            <InitialChipsStepper
               id="chips-input"
-              className="entry-input"
-              type="number"
               value={initialChips}
-              onChange={(e) => setInitialChips(Number(e.target.value))}
-              min={10000}
-              step={10000}
+              onChange={setInitialChips}
             />
           </div>
           <Button

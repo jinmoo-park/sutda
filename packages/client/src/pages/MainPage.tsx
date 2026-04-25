@@ -4,6 +4,7 @@ import { toast, Toaster } from 'sonner';
 import { useGameStore } from '@/store/gameStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { InitialChipsStepper } from '@/components/entry/InitialChipsStepper';
 
 export function MainPage() {
   const [nickname, setNickname] = useState('');
@@ -74,17 +75,13 @@ export function MainPage() {
           />
         </div>
         <div className="space-y-2">
-          <label htmlFor="initial-chips" className="entry-label">
+          <label id="initial-chips-label" htmlFor="initial-chips" className="entry-label">
             시작 칩
           </label>
-          <Input
+          <InitialChipsStepper
             id="initial-chips"
-            className="entry-input"
-            type="number"
             value={initialChips}
-            min={10000}
-            step={10000}
-            onChange={(e) => setInitialChips(Number(e.target.value))}
+            onChange={setInitialChips}
           />
         </div>
         <Button className="entry-button" type="submit" disabled={!socket}>
