@@ -554,33 +554,37 @@ export function RoomPage() {
 
   if (!hasJoined) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
-        <div className="w-full max-w-sm space-y-4 p-6">
-          <div
-            role="img"
-            aria-label="섯다"
-            style={{ width: '100%', maxWidth: '360px', aspectRatio: '1632/656', backgroundImage: 'url(/img/main_title_alt.webp)', backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center', margin: '0 auto 8px' }}
-          />
-          <div className="space-y-2">
-            <label className="text-sm font-normal text-muted-foreground" htmlFor="nickname-input">
+      <main className="entry-page entry-page--join">
+        <h1 className="sr-only">섯다 입장</h1>
+        <form
+          className="entry-panel"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleJoinRoom();
+          }}
+        >
+          <div className="space-y-3">
+            <label className="sr-only" htmlFor="nickname-input">
               닉네임
             </label>
             <Input
               id="nickname-input"
+              className="entry-input"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
-              placeholder="닉네임을 입력하세요"
+              placeholder="닉네임"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleJoinRoom();
               }}
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-normal text-muted-foreground" htmlFor="chips-input">
-              시작 칩 (원)
+            <label className="entry-label" htmlFor="chips-input">
+              시작 칩
             </label>
             <Input
               id="chips-input"
+              className="entry-input"
               type="number"
               value={initialChips}
               onChange={(e) => setInitialChips(Number(e.target.value))}
@@ -589,15 +593,15 @@ export function RoomPage() {
             />
           </div>
           <Button
-            className="w-full"
+            className="entry-button"
+            type="submit"
             disabled={!nickname.trim()}
-            onClick={handleJoinRoom}
           >
             입장
           </Button>
-        </div>
+        </form>
         <Toaster />
-      </div>
+      </main>
     );
   }
 

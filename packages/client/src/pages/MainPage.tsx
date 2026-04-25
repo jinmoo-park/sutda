@@ -14,7 +14,7 @@ export function MainPage() {
 
   const serverUrl = import.meta.env.VITE_SERVER_URL || '';
 
-  // 마운트 시 미리 연결 — 클릭 시 lazy-connect는 race condition 유발
+  // Mount 시 미리 연결해 첫 클릭 때 lazy-connect race condition을 줄인다.
   useEffect(() => {
     connect(serverUrl);
   }, [connect, serverUrl]);
@@ -36,60 +36,62 @@ export function MainPage() {
     s.emit('create-room', { nickname: nickname.trim(), initialChips, password: password.trim() || undefined });
     s.once('room-created', ({ roomId }) => {
       s.off('error', errorHandler);
-      // isHost: true → RoomPage에서 join-room 폼 건너뜀 (이미 create-room으로 입장됨)
+      // isHost: true -> RoomPage에서 join-room 폼을 건너뛴다.
       navigate(`/room/${roomId}`, { state: { nickname: nickname.trim(), initialChips, isHost: true } });
     });
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background gap-6 p-6">
-      <div
-        role="img"
-        aria-label="섯다"
-        style={{ width: '100%', maxWidth: '480px', aspectRatio: '1632/656', backgroundImage: 'url(/img/main_title_alt.webp)', backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center' }}
-      />
-      <div className="w-full max-w-sm space-y-6">
-
+    <main className="entry-page entry-page--host">
+      <h1 className="sr-only">섯다</h1>
+      <form
+        className="entry-panel"
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleCreateRoom();
+        }}
+      >
         <div className="space-y-3">
-            <div className="space-y-1">
-              <label htmlFor="nickname" className="sr-only">닉네임</label>
-              <Input
-                id="nickname"
-                placeholder="닉네임"
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-                maxLength={10}
-              />
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="room-password" className="sr-only">암구호</label>
-              <Input
-                id="room-password"
-                type="password"
-                placeholder="암구호"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="initial-chips" className="text-xs text-muted-foreground">
-                초기 칩 금액 (만원 단위)
-              </label>
-              <Input
-                id="initial-chips"
-                type="number"
-                value={initialChips}
-                min={10000}
-                step={10000}
-                onChange={(e) => setInitialChips(Number(e.target.value))}
-              />
-            </div>
-            <Button className="w-full" onClick={handleCreateRoom} disabled={!socket}>
-              {socket ? '방 만들기' : '연결 중...'}
-            </Button>
-          </div>
-      </div>
+          <label htmlFor="nickname" className="sr-only">닉네임</label>
+          <Input
+            id="nickname"
+            className="entry-input"
+            placeholder="닉네임"
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            maxLength={10}
+          />
+        </div>
+        <div className="space-y-3">
+          <label htmlFor="room-password" className="sr-only">암구호</label>
+          <Input
+            id="room-password"
+            className="entry-input"
+            type="password"
+            placeholder="암구호"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <label htmlFor="initial-chips" className="entry-label">
+            시작 칩
+          </label>
+          <Input
+            id="initial-chips"
+            className="entry-input"
+            type="number"
+            value={initialChips}
+            min={10000}
+            step={10000}
+            onChange={(e) => setInitialChips(Number(e.target.value))}
+          />
+        </div>
+        <Button className="entry-button" type="submit" disabled={!socket}>
+          {socket ? '방 만들기' : '연결 중...'}
+        </Button>
+      </form>
       <Toaster />
-    </div>
+    </main>
   );
 }
