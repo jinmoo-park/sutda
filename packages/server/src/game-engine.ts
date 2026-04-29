@@ -1577,6 +1577,27 @@ export class GameEngine {
   }
 
   /**
+   * 생존자 1명 이하인 상태에서 라운드를 즉시 종료한다 — 260429-urr Task 3
+   *
+   * 사용처: 세장섯다 sejang-open / card-select phase에서 disconnect로 자동 다이 처리한 결과
+   * 생존자가 1명만 남았을 때 호출. 카드 공개 없이 정산하고 phase='result'로 전환.
+   *
+   * - 생존자 1명: 그 플레이어를 winnerId로 확정하고 settle/_settleTtaengValue/_generateRoundHistory 실행
+   * - 생존자 0명: phase='result'만 설정 (이론상 거의 발생 안 함)
+   */
+  private _finalizeAsSingleSurvivor(): void {
+    const alivePlayers = this.state.players.filter(p => p.isAlive);
+    if (alivePlayers.length === 1) {
+      this.state.winnerId = alivePlayers[0].id;
+      const chipsSnapshot = new Map(this.state.players.map(p => [p.id, p.chips]));
+      this.settleChipsWithAllIn();
+      this._settleTtaengValue();  // mode!=='original' 이면 내부에서 무시
+      this._generateRoundHistory(chipsSnapshot);
+    }
+    this.state.phase = 'result';
+  }
+
+  /**
    * 쇼다운 해결: evaluateHand + findRoundWinner로 승자/동점 판정
    * 구사 재경기 조건도 확인하며, 해당 시 구사 보유자가 재경기 선이 됨
    */
@@ -2033,6 +2054,42 @@ export class GameEngine {
     // attend-school phase: 아직 등교 안 한 disconnect 플레이어 → 자동 등교
     if (this.state.phase === 'attend-school' && !this.state.attendedPlayerIds.includes(playerId)) {
       try { this.attendSchool(playerId); } catch { /* no-op */ }
+    }
+
+    // sejang-open phase: 자동 다이 (선택 안 한 상태로 fold) — 260429-urr Task 3
+    // 카드 공개를 안 했어도 alive 필터링으로 자동 제외, 나머지 선택 완료 시 betting-1 진행.
+    if (this.state.phase === 'sejang-open' && player.isAlive) {
+      player.isAlive = false;
+      const alive = this.state.players.filter(p => p.isAlive);
+      if (alive.length <= 1) {
+        // 생존자 1명 이하 → 즉시 결과 (단일 생존자 정산)
+        this._finalizeAsSingleSurvivor();
+      } else if (alive.every(p => p.openedCardIndex !== undefined)) {
+        // 나머지 모두 선택 완료 → betting-1 진입
+        const dealerSeatIndex = this.getDealerSeatIndex();
+        this.state.phase = 'betting-1';
+        this.state.currentPlayerIndex = dealerSeatIndex;
+        this.state.openingBettorSeatIndex = dealerSeatIndex;
+        this._bettingActed = new Set();
+        this._updateChipBreakdowns();
+        this._updateEffectiveMaxBet();
+      }
+    }
+
+    // card-select phase: 자동 다이 (3장 중 2장 선택 안 한 상태로 fold) — 260429-urr Task 3
+    if (this.state.phase === 'card-select' && player.isAlive) {
+      player.isAlive = false;
+      const alive = this.state.players.filter(p => p.isAlive);
+      if (alive.length <= 1) {
+        this._finalizeAsSingleSurvivor();
+      } else if (alive.every(p => (p as any).selectedCards?.length === 2)) {
+        // 나머지 모두 카드 선택 완료 → card-reveal 진입
+        alive.forEach(p => {
+          p.isRevealed = false;
+          p.revealedCardIndices = [];
+        });
+        this.state.phase = 'card-reveal';
+      }
     }
 
     if (!player.isAlive) return;
