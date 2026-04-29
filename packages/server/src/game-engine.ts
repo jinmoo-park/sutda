@@ -1,4 +1,4 @@
-import { createDeck, evaluateHand, compareHands, checkGusaTrigger } from '@sutda/shared';
+import { createDeck, evaluateHand, compareHands, findRoundWinner, checkGusaTrigger } from '@sutda/shared';
 import type { Card, GameState, GameMode, PlayerState, RoomPlayer, BetAction, ChipBreakdown, RoundHistoryEntry } from '@sutda/shared';
 import type { HandResult } from '@sutda/shared';
 
@@ -1577,7 +1577,7 @@ export class GameEngine {
   }
 
   /**
-   * 쇼다운 해결: evaluateHand + compareHands로 승자/동점 판정
+   * 쇼다운 해결: evaluateHand + findRoundWinner로 승자/동점 판정
    * 구사 재경기 조건도 확인하며, 해당 시 구사 보유자가 재경기 선이 됨
    */
   private _resolveShowdownOriginal(): void {
@@ -1591,13 +1591,10 @@ export class GameEngine {
     const allHands = hands.map(h => h.hand);
 
     // 최강 패 먼저 계산 (D-07 구사 면제 판단용)
-    let best = hands[0];
-    let tiedPlayers = [hands[0]];
-    for (const h of hands.slice(1)) {
-      const result = compareHands(best.hand, h.hand);
-      if (result === 'b') { best = h; tiedPlayers = [h]; }
-      else if (result === 'tie') { tiedPlayers.push(h); }
-    }
+    // findRoundWinner: 다인전 컨텍스트(땡잡이 catch 등)를 인식한 명시적 우선순위 규칙
+    const { winnerIndices } = findRoundWinner(allHands);
+    const tiedPlayers = winnerIndices.map(i => hands[i]);
+    const best = tiedPlayers[0];
     const winnerHand = best.hand;
 
     // 구사 재경기 체크 (구사 보유자가 선) — D-07 특수패 면제 포함
@@ -1662,13 +1659,10 @@ export class GameEngine {
     const allHands = hands.map(h => h.hand);
 
     // 최강 패 먼저 계산 (D-07 구사 면제 판단용)
-    let best = hands[0];
-    let tiedPlayers = [hands[0]];
-    for (const h of hands.slice(1)) {
-      const result = compareHands(best.hand, h.hand);
-      if (result === 'b') { best = h; tiedPlayers = [h]; }
-      else if (result === 'tie') { tiedPlayers.push(h); }
-    }
+    // findRoundWinner: 다인전 컨텍스트(땡잡이 catch 등)를 인식한 명시적 우선순위 규칙
+    const { winnerIndices } = findRoundWinner(allHands);
+    const tiedPlayers = winnerIndices.map(i => hands[i]);
+    const best = tiedPlayers[0];
     const winnerHand = best.hand;
 
     // 구사 재경기 체크 — D-07 특수패 면제 포함
@@ -1725,13 +1719,10 @@ export class GameEngine {
     const allHands = hands.map(h => h.hand);
 
     // 최강 패 먼저 계산 (D-07 구사 면제 판단용)
-    let best = hands[0];
-    let tiedPlayers = [hands[0]];
-    for (const h of hands.slice(1)) {
-      const result = compareHands(best.hand, h.hand);
-      if (result === 'b') { best = h; tiedPlayers = [h]; }
-      else if (result === 'tie') { tiedPlayers.push(h); }
-    }
+    // findRoundWinner: 다인전 컨텍스트(땡잡이 catch 등)를 인식한 명시적 우선순위 규칙
+    const { winnerIndices } = findRoundWinner(allHands);
+    const tiedPlayers = winnerIndices.map(i => hands[i]);
+    const best = tiedPlayers[0];
     const winnerHand = best.hand;
 
     // 구사 재경기 체크 — D-07 특수패 면제 포함
