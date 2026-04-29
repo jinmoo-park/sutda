@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 status: verifying
 stopped_at: Completed quick-260404-vl1-PLAN.md
-last_updated: "2026-04-26T01:28:00+09:00"
-last_activity: "2026-04-26 - Completed quick task 260426-1xi: 시작 칩 100,000원 만원 단위 증감 UI"
+last_updated: "2026-04-29T22:30:00+09:00"
+last_activity: "2026-04-29 - Completed quick task 260429-urr: 3인 땡잡이 승자 오판정 + 세장섯다 disconnect 자동 다이"
 progress:
   total_phases: 18
   completed_phases: 17
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 Phase: 16
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-26 - Completed quick task 260426-1xi: 시작 칩 100,000원 만원 단위 증감 UI
+Last activity: 2026-04-29 - Completed quick task 260429-urr: 3인 땡잡이 승자 오판정 + 세장섯다 disconnect 자동 다이
 
 Progress: [████░░░░░░] 44%
 
@@ -215,6 +215,7 @@ None yet.
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 260429-urr | 3인 이상 땡잡이 승자 오판정 + 세장섯다 sejang-open/card-select disconnect 자동 다이 처리 | 2026-04-29 | f97dc42 | [260429-urr-engine-3way-disconnect](./quick/260429-urr-engine-3way-disconnect/) |
 | 260426-1xi | 시작 칩 설정을 직접 숫자 입력 대신 100,000 기본값과 만원 단위 증감 UI로 변경 | 2026-04-26 | c36e49f | [260426-1xi-100-000-ui](./quick/260426-1xi-100-000-ui/) |
 | 260404-i8w | 결과 공개 플로우 수정 — 카드 클릭 한장씩 공개 후 최종 승패 노출 | 2026-04-04 | a4ef055 | [260404-i8w-card-reveal-flow](./quick/260404-i8w-card-reveal-flow/) |
 | 260404-jn6 | SFX 시스템 구현 — 17개 이벤트 매핑 및 트리거 조건 적용 | 2026-04-04 | 00146f9 | [260404-jn6-sfx-17](./quick/260404-jn6-sfx-17/) |
