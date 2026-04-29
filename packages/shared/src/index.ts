@@ -6,6 +6,7 @@ export type { HandType, HandResult } from './types/hand.js';
 export { createDeck } from './deck.js';
 export { evaluateHand } from './hand/evaluator.js';
 export { compareHands } from './hand/compare.js';
+export { findRoundWinner } from './hand/winner.js';
 export { checkGusaTrigger } from './hand/gusa.js';
 export type { RoomState, RoomPlayer } from './types/room.js';
 export type { ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData, ErrorPayload } from './types/protocol.js';
